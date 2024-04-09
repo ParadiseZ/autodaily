@@ -51,20 +51,20 @@ class HomeViewModel @Inject constructor(
     }
 
     fun checkBoxClick( index:Int, sc: ScriptInfo){
-        dataList[index] =  sc.copy(isChecked = !sc.isChecked)
+        dataList[index] =  sc.copy(checkedFlag = !sc.checkedFlag)
     }
 
     fun smallRunButtonClick( index:Int ){
-        if ( dataList[index].isChecked ){
-            ScreenUtil.showMsg(" 已选择："+ dataList[index].gameName, context)
+        if ( dataList[index].checkedFlag ){
+            ScreenUtil.showMsg(" 已选择："+ dataList[index].scriptName, context)
         }
     }
 
     fun runButtonClick(ct : Context){
         ScreenUtil.showMsg(" 数据量："+ dataList.size, ct)
         dataList.forEach {
-            if ( it.isChecked ){
-                ScreenUtil.showMsg(" 已选择："+ it.gameName, ct)
+            if ( it.checkedFlag ){
+                ScreenUtil.showMsg(" 已选择："+ it.scriptName, ct)
             }
         }
     }
