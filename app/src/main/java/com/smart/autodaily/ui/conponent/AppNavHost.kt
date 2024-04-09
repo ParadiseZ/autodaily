@@ -1,6 +1,6 @@
 package com.smart.autodaily.ui.conponent
 
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -8,22 +8,34 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.smart.autodaily.constant.NavigationItem
-import com.smart.autodaily.ui.Screen.HomeScreen
-import com.smart.autodaily.ui.Screen.PersonalScreen
-import com.smart.autodaily.ui.Screen.SettingScreen
+import com.smart.autodaily.constant.Ui
+import com.smart.autodaily.ui.screen.HomeScreen
+import com.smart.autodaily.ui.screen.LogScreen
+import com.smart.autodaily.ui.screen.PersonalScreen
+import com.smart.autodaily.ui.screen.SearchScreen
+import com.smart.autodaily.ui.screen.SettingScreen
+import com.smart.autodaily.viewmodel.HomeViewModel
 
 @Composable
 fun AppNavHost(
     modifier: Modifier = Modifier,
-    navController: NavHostController
+    navController: NavHostController,
+    homeViewModel: HomeViewModel
 ) {
     NavHost(
-        modifier = modifier,
+        modifier = Modifier.padding( Ui.SPACE_5 ),
         navController = navController,
-        startDestination = NavigationItem.SETTING.route,
+        startDestination = NavigationItem.HOME.route,
     ) {
+
+        composable(NavigationItem.Search.route) {
+            SearchScreen(modifier)
+        }
         composable(NavigationItem.HOME.route) {
-            HomeScreen(modifier, navController)
+            LogScreen(modifier)
+        }
+        composable(NavigationItem.HOME.route) {
+            HomeScreen(modifier, navController, homeViewModel)
         }
         composable(NavigationItem.SETTING.route) {
             SettingScreen(modifier, navController)

@@ -58,6 +58,16 @@ dependencies {
 
     implementation libs.androidx.navigation.compose
     implementation libs.androidx.material.android
+    implementation libs.androidx.lifecycle.viewmodel.compose
+    //数据库
+    implementation libs.androidx.room.compiler
+    implementation libs.androidx.room.ktx
+    implementation libs.androidx.sqlite.ktx
+    implementation libs.androidx.sqlite.framework
+    implementation libs.androidx.room.migration
+    //hilt
+    implementation libs.hilt.android.compiler
+    implementation libs.hilt.android
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
