@@ -53,7 +53,7 @@ import androidx.navigation.NavHostController
 import com.smart.autodaily.R
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
-import com.smart.autodaily.viewmodel.HomeViewModel
+import com.smart.autodaily.viewmodel.HomeViewMode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -62,7 +62,7 @@ import kotlinx.coroutines.launch
 fun HomeScreen(
     modifier: Modifier,
     nhc: NavHostController,
-    homeViewModel: HomeViewModel
+    homeViewModel : HomeViewMode
 ) {
     //弹窗
     val openDialog = remember { mutableStateOf(false) }
@@ -98,7 +98,7 @@ fun HomeScreen(
                     onclick = {
                         homeViewModel.checkBoxClick( idx,it )
                     },
-                    isChecked = homeViewModel.dataList[idx].checkedFlag.toBooleanStrict(),
+                    isChecked = homeViewModel.dataList[idx].checkedFlag,
                     onSmallRunClick = { homeViewModel.smallRunButtonClick( idx ) }
                 )
             }
@@ -112,7 +112,7 @@ fun HomeScreen(
 * 脚本列表单行内容
 * */
 @Composable
-fun RowList(
+private fun RowList(
     scriptInfo: ScriptInfo,
     openDialog: MutableState<Boolean>,
     onclick: ()->Unit = {},

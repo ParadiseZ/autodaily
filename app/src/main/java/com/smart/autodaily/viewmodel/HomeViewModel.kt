@@ -6,20 +6,15 @@ import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import com.smart.autodaily.base.BaseViewModel
+import com.smart.autodaily.data.AppDb
+import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.repository.ScriptInfoRepository
 import com.smart.autodaily.utils.ScreenUtil
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 
-@HiltViewModel
-class HomeViewModel @Inject constructor(
-    application: Application,
-    private val scriptInfoRepository: ScriptInfoRepository
-) : ViewModel() {
+class HomeViewMode(application: Application) : BaseViewModel(application = application) {
     var refreshing  =  mutableStateOf(false)
-    @SuppressLint("StaticFieldLeak")
-    val context: Context = application.applicationContext
     /*
     https://developer.android.google.cn/codelabs/basic-android-kotlin-compose-viewmodel-and-state?hl=zh-cn#4
     private val _uiState = MutableStateFlow( list )//在 Android 中，StateFlow 适用于必须维护可观察的不可变状态的类
@@ -34,9 +29,7 @@ class HomeViewModel @Inject constructor(
     */
     val dataList = mutableStateListOf<ScriptInfo>()
     suspend fun loadLocalScriptInfo() : List<ScriptInfo> {
-        scriptInfoRepository.scriptInfoFlow.collect{
-            dataList += it.toList()
-        }
+        appDb?.scriptInfoDao?.getScriptInfoFlow()
         return dataList
     }
 

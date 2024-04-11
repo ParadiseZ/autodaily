@@ -14,13 +14,13 @@ import com.smart.autodaily.ui.screen.LogScreen
 import com.smart.autodaily.ui.screen.PersonalScreen
 import com.smart.autodaily.ui.screen.SearchScreen
 import com.smart.autodaily.ui.screen.SettingScreen
-import com.smart.autodaily.viewmodel.HomeViewModel
+import com.smart.autodaily.viewmodel.HomeViewMode
 
 @Composable
 fun AppNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController,
-    homeViewModel: HomeViewModel
+    homeViewModel: HomeViewMode
 ) {
     NavHost(
         modifier = Modifier.padding( Ui.SPACE_5 ),
@@ -31,7 +31,7 @@ fun AppNavHost(
         composable(NavigationItem.Search.route) {
             SearchScreen(modifier)
         }
-        composable(NavigationItem.HOME.route) {
+        composable(NavigationItem.Log.route) {
             LogScreen(modifier)
         }
         composable(NavigationItem.HOME.route) {

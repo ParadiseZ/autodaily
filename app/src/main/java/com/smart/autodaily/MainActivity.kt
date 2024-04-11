@@ -46,7 +46,7 @@ import com.smart.autodaily.ui.conponent.AppNavHost
 import com.smart.autodaily.ui.conponent.navSingleTopTo
 import com.smart.autodaily.ui.theme.AutoDailyTheme
 import com.smart.autodaily.utils.ScreenUtil
-import com.smart.autodaily.viewmodel.HomeViewModel
+import com.smart.autodaily.viewmodel.HomeViewMode
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,8 +74,7 @@ fun MainScreen() {
     val currentDestination = navBackStackEntry?.destination
     //activity注入@AndroidEntryPoint
     //private val viewModel: MyDatabaseViewModel by viewModels()
-    val homeViewModel : HomeViewModel = viewModel()
-    val modelList  = listOf(homeViewModel)
+    val homeViewModel :  HomeViewMode=  viewModel()
     val context : Context = LocalContext.current
 
     Scaffold (

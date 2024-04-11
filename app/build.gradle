@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    id 'com.google.devtools.ksp' version '1.9.23-1.0.20'
 }
 
 android {
@@ -37,7 +38,7 @@ android {
         compose true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion '1.5.1'
+        kotlinCompilerExtensionVersion '1.5.11'
     }
     packaging {
         resources {
@@ -60,14 +61,18 @@ dependencies {
     implementation libs.androidx.material.android
     implementation libs.androidx.lifecycle.viewmodel.compose
     //数据库
-    implementation libs.androidx.room.compiler
     implementation libs.androidx.room.ktx
-    implementation libs.androidx.sqlite.ktx
-    implementation libs.androidx.sqlite.framework
+    implementation libs.androidx.room.runtime
+    ksp libs.androidx.room.compiler
     implementation libs.androidx.room.migration
-    //hilt
-    implementation libs.hilt.android.compiler
-    implementation libs.hilt.android
+    //hilt注入application
+    //网络
+    implementation libs.retrofit
+    implementation libs.converter.kotlinx.serialization
+    //解析json
+    implementation libs.converter.gson
+    //分页工具
+    implementation libs.androidx.paging.compose
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
