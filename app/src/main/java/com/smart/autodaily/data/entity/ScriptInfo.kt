@@ -6,15 +6,15 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "script_info")
 data class ScriptInfo(
-    @PrimaryKey(autoGenerate = true) val uid : Int,
-    @ColumnInfo(name = "Script_Id") val scriptId : Int,
-    @ColumnInfo(name = "Script_Name") var scriptName : String,  //脚本名称
-    @ColumnInfo(name = "Script_Version") var scriptVersion: String, //脚本版本号
-    @ColumnInfo(name = "Last_Version") val lastVersion : String,   //最新版本号
-    @ColumnInfo(name = "Checked_Flag") var checkedFlag : Boolean,     //是否选中
-    @ColumnInfo(name = "Expiration_Time") var expirationTime : String,    //到期时间
-    @ColumnInfo(name = "Package_Name") val packageName : String = "", //包名
-    @ColumnInfo(name = "Runs_Max_Num") var runsMaxNum : Int = 1, //最大运行次数
-    @ColumnInfo(name = "Next_Run_Date") var nextRunDate : String,   //下次运行日期
-    @ColumnInfo(name = "DOWNLOAD_TIME") var downLoadTime : String //下载日期
+    @PrimaryKey(autoGenerate = true) val uid: Int,
+    @ColumnInfo(name = "script_id") val script_id: Int,
+    @ColumnInfo(name = "script_name") var script_name: String,  // 脚本名称
+    @ColumnInfo(name = "script_version") var script_version: String, // 脚本版本号
+    @ColumnInfo(name = "last_version") val last_version: String,   // 最新版本号
+    @ColumnInfo(name = "checked_flag") var checked_flag: Boolean,     // 是否选中
+    @ColumnInfo(name = "expiration_time") var expiration_time: String,    // 到期时间
+    @ColumnInfo(name = "package_name") val package_name: String = "", // 包名
+    @ColumnInfo(name = "runs_max_num") var runs_max_num: Int = 1, // 最大运行次数
+    @ColumnInfo(name = "next_run_date") var next_run_date: String,   // 下次运行日期
+    @ColumnInfo(name = "download_time") var download_time: String // 下载日期
 )

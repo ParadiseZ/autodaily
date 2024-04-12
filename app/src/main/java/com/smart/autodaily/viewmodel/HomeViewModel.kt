@@ -44,20 +44,20 @@ class HomeViewMode(application: Application) : BaseViewModel(application = appli
     }
 
     fun checkBoxClick( index:Int, sc: ScriptInfo){
-        dataList[index] =  sc.copy(checkedFlag = !sc.checkedFlag)
+        dataList[index] =  sc.copy(checked_flag = !sc.checked_flag)
     }
 
     fun smallRunButtonClick( index:Int ){
-        if ( dataList[index].checkedFlag ){
-            ScreenUtil.showMsg(" 已选择："+ dataList[index].scriptName, context)
+        if ( dataList[index].checked_flag ){
+            ScreenUtil.showMsg(" 已选择："+ dataList[index].script_name, context)
         }
     }
 
     fun runButtonClick(ct : Context){
         ScreenUtil.showMsg(" 数据量："+ dataList.size, ct)
         dataList.forEach {
-            if ( it.checkedFlag ){
-                ScreenUtil.showMsg(" 已选择："+ it.scriptName, ct)
+            if ( it.checked_flag ){
+                ScreenUtil.showMsg(" 已选择："+ it.script_name, ct)
             }
         }
     }

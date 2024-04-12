@@ -63,16 +63,18 @@ dependencies {
     //数据库
     implementation libs.androidx.room.ktx
     implementation libs.androidx.room.runtime
+    implementation libs.androidx.paging.compose
+    implementation libs.androidx.paging.runtime
+    implementation libs.retrofit
+    implementation libs.converter.gson
     ksp libs.androidx.room.compiler
     implementation libs.androidx.room.migration
     //hilt注入application
     //网络
-    implementation libs.retrofit
-    implementation libs.converter.kotlinx.serialization
+
     //解析json
-    implementation libs.converter.gson
+
     //分页工具
-    implementation libs.androidx.paging.compose
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit

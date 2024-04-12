@@ -98,7 +98,7 @@ fun HomeScreen(
                     onclick = {
                         homeViewModel.checkBoxClick( idx,it )
                     },
-                    isChecked = homeViewModel.dataList[idx].checkedFlag,
+                    isChecked = homeViewModel.dataList[idx].checked_flag,
                     onSmallRunClick = { homeViewModel.smallRunButtonClick( idx ) }
                 )
             }
@@ -156,8 +156,8 @@ private fun RowList(
                 )
                 //脚本名称信息等
                 Column(){
-                    Text(text = scriptInfo.scriptName, fontSize = Ui.SIZE_16 )
-                    Text(text = scriptInfo.scriptVersion, fontSize = Ui.SIZE_10 )
+                    Text(text = scriptInfo.script_name, fontSize = Ui.SIZE_16 )
+                    Text(text = scriptInfo.script_version, fontSize = Ui.SIZE_10 )
                 }
             }
 

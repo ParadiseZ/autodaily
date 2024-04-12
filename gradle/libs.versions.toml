@@ -1,5 +1,5 @@
 [versions]
-agp = "8.3.1"
+agp = "8.3.2"
 kotlin = "1.9.23"
 coreKtx = "1.12.0"
 junit = "4.13.2"
@@ -15,10 +15,11 @@ roomCompiler = "2.6.1"
 roomKtx = "2.6.1"
 roomMigration = "2.6.1"
 roomRuntime = "2.6.1"
-retrofit = "2.11.0"
-converterKotlinxSerialization = "2.11.0"
-converterGson = "2.11.0"
 pagingCompose = "3.3.0-beta01"
+pagingRuntime = "3.3.0-beta01"
+retrofit = "2.11.0"
+converterGson = "2.11.0"
+
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -42,11 +43,12 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "roomRuntime" }
 androidx-room-migration = { group = "androidx.room", name = "room-migration", version.ref = "roomMigration" }
-
-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
-converter-kotlinx-serialization = { group = "com.squareup.retrofit2", name = "converter-kotlinx-serialization", version.ref = "converterKotlinxSerialization" }
-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "converterGson" }
 androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "pagingCompose" }
+androidx-paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "pagingRuntime" }
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "converterGson" }
+
+
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

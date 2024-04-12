@@ -33,12 +33,11 @@ fun SearchScreen(
     searchViewModel: SearchViewModel = viewModel()
 ){
     val netSearScriptList = searchViewModel.getPagingData().collectAsLazyPagingItems()
-    if (netSearScriptList.itemSnapshotList.size >0 ){
+    if (netSearScriptList.itemSnapshotList.size >0) {
         HasScriptInfo(modifier = modifier, searchViewModel, netSearScriptList)
     }else{
         EmptyInfo(modifier = modifier)
     }
-
 }
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -75,7 +74,7 @@ private fun HasScriptInfo(
 private fun RowList(
     scriptInfo : ScriptInfo
 ){
-    Text(text = scriptInfo.scriptName)
+    Text(text = scriptInfo.script_name)
 }
 
 @Composable

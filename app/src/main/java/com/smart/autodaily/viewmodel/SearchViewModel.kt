@@ -1,7 +1,5 @@
 package com.smart.autodaily.viewmodel
 
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,10 +14,10 @@ import kotlinx.coroutines.flow.Flow
 
 class SearchViewModel : ViewModel()  {
     var refreshing  =  mutableStateOf(false)
-    val dataList = mutableStateListOf<ScriptInfo>()
     
-    fun getPagingData(): Flow<PagingData<ScriptInfo>> {
-        //return ScriptNetRepository.getPagingData().cachedIn(viewModelScope)
-        return ScriptNetRepository.getPagingData().cachedIn(viewModelScope)
+     fun getPagingData(): Flow<PagingData<ScriptInfo>> {
+         return Pager(PagingConfig(pageSize = 2)) {
+             ScriptNetDataSource(ScriptNetRepository)
+         }.flow.cachedIn(viewModelScope)
     }
 }

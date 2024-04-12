@@ -72,8 +72,7 @@ fun MainScreen() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    //activity注入@AndroidEntryPoint
-    //private val viewModel: MyDatabaseViewModel by viewModels()
+
     val homeViewModel :  HomeViewMode=  viewModel()
     val context : Context = LocalContext.current
 
