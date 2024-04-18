@@ -37,12 +37,12 @@ fun SearchScreen(
     modifier: Modifier,
     searchViewModel: SearchViewModel = viewModel()
 ){
-    val netSearScriptList = searchViewModel.resultDataFlow.collectAsLazyPagingItems()
+    val netSearScriptList = searchViewModel.searchScriptByPage().collectAsLazyPagingItems()
     SwipeRefreshList(
         collectAsLazyPagingItems = netSearScriptList,
         modifier =modifier,
         listContent ={
-            RowListSearch(it , downButtonClick = { searchViewModel.downScriptSetByScriptId( it.script_id ) })
+            RowListSearch(it , downButtonClick = { searchViewModel.downScriptByScriptId( it ) })
         }
     )
 }
@@ -98,13 +98,23 @@ fun RowListSearch(
                             )
                             .size(Ui.ICON_SIZE_40),
                         content ={
-                            Icon(
-                                painter = painterResource(id = R.drawable.baseline_download_24),
-                                contentDescription = null
-                            )
+                            if (scriptInfo.is_downloaded == 1){
+                                Icon(
+                                    painter = painterResource(id = R.drawable.baseline_download_done_24),
+                                    contentDescription = null
+                                )
+                            }else{
+                                Icon(
+                                    painter = painterResource(id = R.drawable.baseline_download_24),
+                                    contentDescription = null
+                                )
+                            }
+
                         },
                         onClick = {
-                            downButtonClick()
+                            if (scriptInfo.is_downloaded != 1){
+                                downButtonClick()
+                            }
                         }
                     )
                 }

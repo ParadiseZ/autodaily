@@ -50,9 +50,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.smart.autodaily.R
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
+import com.smart.autodaily.ui.conponent.SwipeRefreshList
 import com.smart.autodaily.viewmodel.HomeViewMode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -66,11 +68,29 @@ fun HomeScreen(
 ) {
     //弹窗
     val openDialog = remember { mutableStateOf(false) }
+    val localScriptList = homeViewModel.getLocalScriptList().collectAsLazyPagingItems()
+    SwipeRefreshList(
+        collectAsLazyPagingItems = localScriptList,
+        modifier =modifier,
+        listContent ={
+            RowList(
+                scriptInfo = it,
+                openDialog = openDialog,
+                onclick = {
+                    homeViewModel.checkBoxClick( it.is_downloaded,it )
+                },
+                isChecked = false,//homeViewModel.dataList[idx].checked_flag,
+                onSmallRunClick = {
+                    //homeViewModel.smallRunButtonClick( idx )
+                }
+            )
+        }
+    )
     //列表下拉刷新状态记录
     /*var refreshing  by remember {
         mutableStateOf(false)
     }*/
-    val state = rememberPullRefreshState(refreshing = homeViewModel.refreshing.value, onRefresh = {
+    /*val state = rememberPullRefreshState(refreshing = homeViewModel.refreshing.value, onRefresh = {
         //加载数据
         homeViewModel.viewModelScope.launch {
             homeViewModel.refreshing.value = true
@@ -88,10 +108,10 @@ fun HomeScreen(
             contentPadding = PaddingValues(horizontal = Ui.SPACE_10, vertical = Ui.SPACE_5),
             verticalArrangement = Arrangement.spacedBy( Ui.SPACE_5 )
         ){
-            this.itemsIndexed( homeViewModel.dataList ){ idx, it->
-                /*val isChecked = remember {
+            this.itemsIndexed( homeViewModel. ){ idx, it->
+                *//*val isChecked = remember {
                     mutableStateOf( it.isChecked )
-                }*/
+                }*//*
                 RowList(
                     scriptInfo = it,
                     openDialog = openDialog,
@@ -105,7 +125,7 @@ fun HomeScreen(
         }
         //下拉刷新更新数据
         PullRefreshIndicator(homeViewModel.refreshing.value, state, Modifier.align(Alignment.TopCenter))
-    }
+    }*/
 }
 
 /*
