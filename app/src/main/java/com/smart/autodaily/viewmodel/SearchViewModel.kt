@@ -26,11 +26,7 @@ class SearchViewModel : ViewModel()  {
     var refreshing  =  mutableStateOf(false)
 
     /*
-   * 搜索脚本信息
-   * */
-
-    /*
-    * 搜索脚本信息
+    * 搜索脚本信息，并和数据库比对，更新flow流以更新is_downloaded标志
     * */
     fun searchScriptByPage(): Flow<PagingData<ScriptInfo>> {
         var updatedNetSearchResult : Flow<PagingData<ScriptInfo>>? = null
