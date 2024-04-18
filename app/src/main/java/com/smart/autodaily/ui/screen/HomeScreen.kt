@@ -112,7 +112,7 @@ fun HomeScreen(
 * 脚本列表单行内容
 * */
 @Composable
-private fun RowList(
+fun RowList(
     scriptInfo: ScriptInfo,
     openDialog: MutableState<Boolean>,
     onclick: ()->Unit = {},

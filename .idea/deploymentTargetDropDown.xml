@@ -21,6 +21,9 @@
       <entry key="app">
         <State />
       </entry>
+      <entry key="appUninstall">
+        <State />
+      </entry>
     </value>
   </component>
 </project>

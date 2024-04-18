@@ -20,9 +20,13 @@ object Ui {
 
     val SPACE_30 = 30.dp
 
+    val SPACE_80 = 80.dp
+
     val SIZE_5 = 5.sp
 
     val SIZE_10 = 10.sp
+
+    val SIZE_12 = 12.sp
 
     val SIZE_15 = 15.sp
 

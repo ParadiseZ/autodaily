@@ -10,7 +10,9 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteOpenHelper
 import com.smart.autodaily.data.dao.ScriptInfoDao
+import com.smart.autodaily.data.dao.ScriptSetInfoDao
 import com.smart.autodaily.data.entity.ScriptInfo
+import com.smart.autodaily.data.entity.ScriptSetInfo
 import java.util.Locale
 
 
@@ -18,13 +20,14 @@ import java.util.Locale
 
 @Database(version = 1,
     exportSchema = false,
-    entities = [ScriptInfo::class],
+    entities = [ScriptInfo::class, ScriptSetInfo::class],
 /*    autoMigrations = [
         AutoMigration(from = 2, to = 3)
     ]*/
 )
 abstract class AppDb  :  RoomDatabase(){
     abstract val scriptInfoDao : ScriptInfoDao
+    abstract val scriptSetInfoDao : ScriptSetInfoDao
     companion object {
         // For Singleton instantiation
 

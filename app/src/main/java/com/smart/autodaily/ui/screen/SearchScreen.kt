@@ -1,90 +1,113 @@
 package com.smart.autodaily.ui.screen
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.ExperimentalMaterialApi
-//noinspection UsingMaterialAndMaterial3Libraries
-import androidx.compose.material.Text
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewModelScope
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.smart.autodaily.R
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
+import com.smart.autodaily.ui.conponent.SwipeRefreshList
 import com.smart.autodaily.viewmodel.SearchViewModel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-
 
 @Composable
 fun SearchScreen(
     modifier: Modifier,
     searchViewModel: SearchViewModel = viewModel()
 ){
-    val netSearScriptList = searchViewModel.getPagingData().collectAsLazyPagingItems()
-    if (netSearScriptList.itemSnapshotList.size >0) {
-        HasScriptInfo(modifier = modifier, searchViewModel, netSearScriptList)
-    }else{
-        EmptyInfo(modifier = modifier)
-    }
-}
-
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-private fun HasScriptInfo(
-    modifier: Modifier,
-    searchViewModel: SearchViewModel,
-    netSearScriptList  : LazyPagingItems<ScriptInfo>
-){
-    val state = rememberPullRefreshState(refreshing = searchViewModel.refreshing.value, onRefresh = {
-        //加载数据
-        searchViewModel.viewModelScope.launch {
-            searchViewModel.refreshing.value = true
-            delay(3000)
-            searchViewModel.refreshing.value = false
+    val netSearScriptList = searchViewModel.resultDataFlow.collectAsLazyPagingItems()
+    SwipeRefreshList(
+        collectAsLazyPagingItems = netSearScriptList,
+        modifier =modifier,
+        listContent ={
+            RowListSearch(it , downButtonClick = { searchViewModel.downScriptSetByScriptId( it.script_id ) })
         }
-    })
-    Box(modifier = Modifier){
-        LazyColumn(
-            modifier = Modifier
-                .pullRefresh(state),
-            contentPadding = PaddingValues(horizontal = Ui.SPACE_10, vertical = Ui.SPACE_5),
-            verticalArrangement = Arrangement.spacedBy( Ui.SPACE_5 )
-        ){
-            this.itemsIndexed(items =  netSearScriptList.itemSnapshotList.items ){ idx, it->
-                RowList(
-                    scriptInfo = it,
-                )
-            }
-        }
-    }
+    )
 }
 @Composable
-private fun RowList(
-    scriptInfo : ScriptInfo
+fun RowListSearch(
+    scriptInfo : ScriptInfo,
+    downButtonClick : () -> Unit = {}
 ){
-    Text(text = scriptInfo.script_name)
-}
-
-@Composable
-fun EmptyInfo(
-    modifier: Modifier
-){
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+    Card(
+        modifier = Modifier
+            .clickable {
+            },
     ){
-        Text(text = "没找到数据")
+            Row (
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = Ui.SPACE_5),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ){
+                Row (
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy( Ui.SPACE_5   ),
+                    //modifier = Modifier.padding(vertical = Ui.SPACE_5)
+                ){
+                    Spacer(modifier = Modifier.width( Ui.SPACE_5 ))
+                    //图标信息
+                    Text(text = scriptInfo.script_id.toString() )
+                    Image(
+                        painter = painterResource( id = R.drawable.bh3_offi),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .clip(shape = RoundedCornerShape(20))
+                            .size(Ui.IMG_SIZE_50)
+                    )
+                    //脚本名称信息等
+                    Column{
+                        Text(text = scriptInfo.script_name, fontSize = Ui.SIZE_12 )
+                        Text(text = scriptInfo.script_version, fontSize = Ui.SIZE_10 )
+                    }
+                }
+                //操作按钮
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy( Ui.SPACE_5),
+                ) {
+                    IconButton(
+                        modifier = Modifier
+                            .border(
+                                width = Ui.SPACE_1,
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(50)
+                            )
+                            .size(Ui.ICON_SIZE_40),
+                        content ={
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_download_24),
+                                contentDescription = null
+                            )
+                        },
+                        onClick = {
+                            downButtonClick()
+                        }
+                    )
+                }
+            }
     }
 }

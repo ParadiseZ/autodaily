@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     id 'com.google.devtools.ksp' version '1.9.23-1.0.20'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.9.23'
 }
 
 android {
@@ -57,24 +58,26 @@ dependencies {
     implementation libs.androidx.ui.tooling.preview
     implementation libs.androidx.material3
 
+    //导航
     implementation libs.androidx.navigation.compose
     implementation libs.androidx.material.android
-    implementation libs.androidx.lifecycle.viewmodel.compose
+    //ViewModel
+    implementation libs.androidx.lifecycle.viewmodel.ktx
     //数据库
     implementation libs.androidx.room.ktx
     implementation libs.androidx.room.runtime
+    implementation libs.androidx.room.migration
+    ksp libs.androidx.room.compiler
+    //日志
+    implementation libs.logback.android
+    implementation libs.slf4j.api
+    //分页
     implementation libs.androidx.paging.compose
-    implementation libs.androidx.paging.runtime
+    //网络和转换
     implementation libs.retrofit
     implementation libs.converter.gson
-    ksp libs.androidx.room.compiler
-    implementation libs.androidx.room.migration
-    //hilt注入application
-    //网络
-
-    //解析json
-
-    //分页工具
+    //weishu反射
+    implementation libs.freereflection
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit

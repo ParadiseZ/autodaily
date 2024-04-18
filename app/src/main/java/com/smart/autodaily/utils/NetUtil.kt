@@ -5,7 +5,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object NetUtil {
-    lateinit var okHttpClient: OkHttpClient
+    private lateinit var okHttpClient: OkHttpClient
 
     private const val BASE_URL = "https://api.github.com/search/repositories?sort=stars&q=Android"       //根路径
 
