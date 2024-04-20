@@ -4,11 +4,13 @@ import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.smart.autodaily.api.SearchDownloadApi
+import com.smart.autodaily.constant.ResponseCode
 import com.smart.autodaily.data.entity.ScriptInfo
+import com.smart.autodaily.utils.PageUtil
 import retrofit2.HttpException
 import java.io.IOException
 
-open class ScriptNetDataSource (private val sda: SearchDownloadApi): PagingSource<Int, ScriptInfo>() {
+open class ScriptNetDataSource (private val sda: SearchDownloadApi, private val searchKey: String?): PagingSource<Int, ScriptInfo>() {
     override fun getRefreshKey(state: PagingState<Int, ScriptInfo>): Int? {
         //返回null表示刷新时从第一页开始
         return null
@@ -17,14 +19,17 @@ open class ScriptNetDataSource (private val sda: SearchDownloadApi): PagingSourc
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, ScriptInfo> {
 
         return try {
-            val page = params.key ?: 1
+            val page = params.key ?: PageUtil.FIRST_PAGE
             val pageSize = params.loadSize
-            val response =sda.getAllScriptByPage("181" , page, pageSize)
+            val response =if (searchKey?.isNotBlank() == true) {
+                sda.getAllScriptByPage("181",searchKey , page, pageSize)
+            } else{
+                sda.getAllScriptByPage("181" , page, pageSize)
+            }
             LoadResult.Page(
-                data = response.data,
-                prevKey =  if (page > 1) page - 1 else null,
-                nextKey = if (response.data.isNotEmpty())  page + 1 else null
-                //nextKey = response.data.size+1
+                data = response.data!!,
+                prevKey =  PageUtil.prevKey(page),
+                nextKey = PageUtil.nextKey(page, response.data!!)
             )
         } catch (e: HttpException) {
             Log.e("ScriptNetDataSource",e.message.toString())

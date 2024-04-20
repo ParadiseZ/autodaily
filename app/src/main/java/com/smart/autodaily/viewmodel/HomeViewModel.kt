@@ -15,6 +15,7 @@ import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.dataresource.ScriptLocalDataSource
 import com.smart.autodaily.data.dataresource.ScriptNetDataSource
 import com.smart.autodaily.data.entity.ScriptInfo
+import com.smart.autodaily.utils.PageUtil
 import com.smart.autodaily.utils.ScreenUtil
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
@@ -44,9 +45,14 @@ class HomeViewMode(application: Application) : BaseViewModel(application = appli
     )*/
 
     //val dataList = mutableStateListOf<ScriptInfo>()
-    fun getLocalScriptList() :  Flow<PagingData<ScriptInfo>> {
-        return  Pager(PagingConfig(pageSize = 10, initialLoadSize =20,enablePlaceholders = true, prefetchDistance = 3)) {
-            ScriptLocalDataSource()
+    fun getLocalScriptList(searchedText: String? = null) :  Flow<PagingData<ScriptInfo>> {
+        return  Pager(PagingConfig(
+            pageSize = PageUtil.PAGE_SIZE,
+            initialLoadSize = PageUtil.INITIALOAD_SIZE,
+            enablePlaceholders = true,
+            prefetchDistance = PageUtil.PREFETCH_DISTANCE
+        )) {
+            ScriptLocalDataSource(searchedText)
         }.flow.cachedIn(viewModelScope)
     }
 
@@ -70,7 +76,7 @@ class HomeViewMode(application: Application) : BaseViewModel(application = appli
         }*/
     }
 
-    fun runButtonClick(ct : Context){
+    fun runButtonClick(){
         /*ScreenUtil.showMsg(" 数据量："+ dataList.size, ct)
         dataList.forEach {
             if ( it.checked_flag ){

@@ -2,27 +2,24 @@
 <project version="4">
   <component name="deploymentTargetDropDown">
     <value>
-      <entry key="MainScreen">
+      <entry key="app">
+        <State />
+      </entry>
+      <entry key="appUninstall">
         <State>
           <runningDeviceTargetSelectedWithDropDown>
             <Target>
               <type value="RUNNING_DEVICE_TARGET" />
               <deviceKey>
                 <Key>
-                  <type value="SERIAL_NUMBER" />
-                  <value value="127.0.0.1:16384" />
+                  <type value="VIRTUAL_DEVICE_PATH" />
+                  <value value="C:\Users\PA\.android\avd\Resizable_Experimental_API_33.avd" />
                 </Key>
               </deviceKey>
             </Target>
           </runningDeviceTargetSelectedWithDropDown>
-          <timeTargetWasSelectedWithDropDown value="2024-04-01T06:25:40.289884500Z" />
+          <timeTargetWasSelectedWithDropDown value="2024-04-20T08:23:05.632708500Z" />
         </State>
-      </entry>
-      <entry key="app">
-        <State />
-      </entry>
-      <entry key="appUninstall">
-        <State />
       </entry>
     </value>
   </component>

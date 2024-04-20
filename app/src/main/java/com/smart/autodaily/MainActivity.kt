@@ -4,14 +4,21 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.ExperimentalMaterial3Api
 
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -29,11 +36,14 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.smart.autodaily.constant.NavigationItem
+import com.smart.autodaily.constant.ScreenText
 import com.smart.autodaily.ui.conponent.AppNavHost
+import com.smart.autodaily.ui.conponent.SearchTopAppBar
 import com.smart.autodaily.ui.conponent.navSingleTopTo
 import com.smart.autodaily.ui.screen.TestScreen
 import com.smart.autodaily.ui.theme.AutoDailyTheme
 import com.smart.autodaily.viewmodel.HomeViewMode
+import com.smart.autodaily.viewmodel.SearchViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,19 +65,15 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun MainScreen() {
-    //Greeting("Android")
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
-
-    val homeViewModel :  HomeViewMode=  viewModel()
-    val context : Context = LocalContext.current
+    val currentDestination = navBackStackEntry?.destination?.hierarchy
 
     Scaffold (
         bottomBar = {
             NavigationBar{
                 NavigationItem.allItems.forEach{ screen ->
-                    val isSelected =  currentDestination?.hierarchy?.any { it.route == screen.route }
+                    val isSelected =  currentDestination?.any { it.route == screen.route }
                     NavigationBarItem(
                         icon = {
                             if (isSelected == true){
@@ -90,25 +96,8 @@ fun MainScreen() {
 
             }
         },
-        //脚本页面运行按钮
-        floatingActionButtonPosition = FabPosition.End,
-        floatingActionButton = {
-            if (
-                currentDestination?.hierarchy?.any{
-                    it.route == NavigationItem.HOME.route
-                } == true
-            ){
-                FloatingActionButton(
-                    onClick = {
-                        homeViewModel.runButtonClick(context)
-                    }
-                ) {
-                    Icon(Icons.Filled.PlayArrow, contentDescription = "开始运行")
-                }
-            }
-        },
         content = {
-            AppNavHost( modifier = Modifier.padding(it), navController = navController, homeViewModel)
+            AppNavHost( modifier = Modifier.padding(it), navController = navController)
         }
     )
 }

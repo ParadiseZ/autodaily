@@ -1,6 +1,7 @@
 package com.smart.autodaily.ui.conponent
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -15,12 +16,12 @@ import com.smart.autodaily.ui.screen.PersonalScreen
 import com.smart.autodaily.ui.screen.SearchScreen
 import com.smart.autodaily.ui.screen.SettingScreen
 import com.smart.autodaily.viewmodel.HomeViewMode
+import com.smart.autodaily.viewmodel.SearchViewModel
 
 @Composable
 fun AppNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController,
-    homeViewModel: HomeViewMode
 ) {
     NavHost(
         modifier = Modifier.padding( Ui.SPACE_5 ),
@@ -35,7 +36,7 @@ fun AppNavHost(
             LogScreen(modifier)
         }
         composable(NavigationItem.HOME.route) {
-            HomeScreen(modifier, navController, homeViewModel)
+            HomeScreen(modifier, navController)
         }
         composable(NavigationItem.SETTING.route) {
             SettingScreen(modifier, navController)

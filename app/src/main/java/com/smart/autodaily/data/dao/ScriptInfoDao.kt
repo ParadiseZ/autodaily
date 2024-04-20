@@ -11,6 +11,9 @@ interface ScriptInfoDao {
     @Query("SELECT * FROM Script_Info  ORDER BY uid LIMIT :pageSize OFFSET :starIndex")
     fun getScriptInfoByPage(pageSize : Int, starIndex : Int) : List<ScriptInfo>
 
+    @Query("SELECT * FROM Script_Info where script_name like  :scriptName || '%' ORDER BY uid LIMIT :pageSize OFFSET :starIndex")
+    fun getScriptInfoByPage(scriptName : String,pageSize : Int, starIndex : Int) : List<ScriptInfo>
+
     @Query("SELECT script_id FROM Script_Info  ORDER BY uid")
     fun getScriptIdAll() : List<Int>
 

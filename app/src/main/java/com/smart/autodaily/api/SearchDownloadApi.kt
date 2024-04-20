@@ -9,7 +9,15 @@ import retrofit2.http.Query
 
 interface SearchDownloadApi {
     @GET("/query/getScriptByPage")
-    suspend fun getAllScriptByPage(@Query("userName") userName : String, @Query("page") page : Int, @Query("pageSize") pageSize : Int) : ScriptNetSearchResponse<List<ScriptInfo>>
+    suspend fun getAllScriptByPage(@Query("userName") userName : String, @Query("page") page : Int, @Query("pageSize") pageSize : Int) : Response<List<ScriptInfo>>
+
+    @GET("/query/getScriptByPage")
+    suspend fun getAllScriptByPage(
+        @Query("userName") userName : String,
+        @Query("scriptName") scriptName : String,
+        @Query("page") page : Int,
+        @Query("pageSize") pageSize : Int
+    ) : Response<List<ScriptInfo>>
 
     @GET("/query/downloadScriptSetByScriptId")
     suspend fun downScriptSetByScriptId(@Query("scriptId") scriptId : Int) : Response<List<ScriptSetInfo>>
