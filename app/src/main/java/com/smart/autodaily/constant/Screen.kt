@@ -22,21 +22,21 @@ enum class Screen {
 }
 
 object ScreenText {
-    const val serachScreen ="搜索"
-    const val logScreen ="日志"
-    const val homeScreen ="列表"
-    const val settingScreen ="设置"
-    const val personalScreen ="我的"
+    const val SEARCH_SCREEN ="搜索"
+    const val LOG_SCREEN ="日志"
+    const val HOME_SCREEN ="列表"
+    const val SETTING_SCREEN ="设置"
+    const val PERSON_SCREEN ="我的"
 }
 
-sealed class NavigationItem(val route: String, val icon: ImageVector,val selectedIcon: ImageVector, val text: String, val selected: Boolean = false) {
-    object Search : NavigationItem(Screen.Search.name, Icons.Outlined.Search, Icons.Filled.Search, ScreenText.serachScreen)
-    object Log : NavigationItem(Screen.Log.name, Icons.AutoMirrored.Outlined.List, Icons.AutoMirrored.Filled.List, ScreenText.logScreen)
-    object HOME : NavigationItem(Screen.HOME.name, Icons.Outlined.Home, Icons.Filled.Home, ScreenText.homeScreen)
-    object SETTING : NavigationItem(Screen.SETTING.name, Icons.Outlined.Settings, Icons.Filled.Settings, ScreenText.settingScreen)
-    object PERSONAL : NavigationItem(Screen.PERSONAL.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.personalScreen)
+sealed class NavigationItem(val route: String, val icon: ImageVector,val selectedIcon: ImageVector, val text: String) {
+    data object SEARCH : NavigationItem(Screen.Search.name, Icons.Outlined.Search, Icons.Filled.Search, ScreenText.SEARCH_SCREEN)
+    data object LOG : NavigationItem(Screen.Log.name, Icons.AutoMirrored.Outlined.List, Icons.AutoMirrored.Filled.List, ScreenText.LOG_SCREEN)
+    data object HOME : NavigationItem(Screen.HOME.name, Icons.Outlined.Home, Icons.Filled.Home, ScreenText.HOME_SCREEN)
+    data object SETTING : NavigationItem(Screen.SETTING.name, Icons.Outlined.Settings, Icons.Filled.Settings, ScreenText.SETTING_SCREEN)
+    data object PERSON : NavigationItem(Screen.PERSONAL.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
 
     companion object {
-        val allItems = listOf(Search, Log, HOME, SETTING, PERSONAL)
+        val allItems = listOf(SEARCH, LOG, HOME, SETTING, PERSON)
     }
 }

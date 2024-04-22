@@ -2,28 +2,23 @@ package com.smart.autodaily.ui.screen
 
 import android.content.Context
 import android.widget.Toast
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 //noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.AlertDialog
 //noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.Button
-import androidx.compose.material.ExperimentalMaterialApi
 //noinspection UsingMaterialAndMaterial3Libraries
 import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
@@ -31,9 +26,6 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.PlayArrow
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FabPosition
@@ -50,24 +42,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.smart.autodaily.R
-import com.smart.autodaily.constant.NavigationItem
 import com.smart.autodaily.constant.ScreenText
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
+import com.smart.autodaily.ui.conponent.IconButtonCustom
+import com.smart.autodaily.ui.conponent.RowListCustom
 import com.smart.autodaily.ui.conponent.SearchTopAppBar
 import com.smart.autodaily.ui.conponent.SwipeRefreshList
 import com.smart.autodaily.viewmodel.HomeViewMode
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
@@ -80,8 +69,9 @@ fun HomeScreen(
     var searchText by remember { mutableStateOf("") }
     val localScriptList = homeViewModel.getLocalScriptList(searchText).collectAsLazyPagingItems()
     Scaffold (
+        modifier = modifier,
         topBar = {
-            SearchTopAppBar(searchButtonText = ScreenText.serachScreen, onSearchClick = {
+            SearchTopAppBar(searchButtonText = ScreenText.SEARCH_SCREEN, onSearchClick = {
                 searchText = it
             })
         },
@@ -100,179 +90,32 @@ fun HomeScreen(
         SwipeRefreshList(
             collectAsLazyPagingItems = localScriptList,
             modifier =modifier.padding(it),
-            listContent ={
-                RowList(
-                    scriptInfo = it,
-                    openDialog = openDialog,
-                    onclick = {
-                        homeViewModel.checkBoxClick( it.is_downloaded,it )
+            listContent ={ scriptInfo ->
+                var checkedFlag by remember { mutableStateOf(scriptInfo.checked_flag) }
+                RowListCustom(
+                    cardOnClick = {},
+                    scriptInfo = scriptInfo,
+                    checkBox = {
+                        Checkbox(checked = checkedFlag, onCheckedChange = {
+                            checkedFlag = !checkedFlag
+                        })
                     },
-                    isChecked = false,//homeViewModel.dataList[idx].checked_flag,
-                    onSmallRunClick = {
-                        //homeViewModel.smallRunButtonClick( idx )
+                    iconInfo ={
+                        IconButtonCustom(icon = Icons.Outlined.MoreVert)
+                        IconButtonCustom(icon = Icons.Outlined.Info)
+                        IconButtonCustom(icon = Icons.Outlined.PlayArrow)
                     }
                 )
             }
         )
     }
-    //列表下拉刷新状态记录
-    /*var refreshing  by remember {
-        mutableStateOf(false)
-    }*/
-    /*val state = rememberPullRefreshState(refreshing = homeViewModel.refreshing.value, onRefresh = {
-        //加载数据
-        homeViewModel.viewModelScope.launch {
-            homeViewModel.refreshing.value = true
-            homeViewModel.loadLocalScriptInfo()
-            delay(3000)
-            homeViewModel.refreshing.value = false
-        }
-    })
-    Box(modifier = modifier
-        .pullRefresh(state)
-    ){
-        LazyColumn(
-            modifier = Modifier
-                .pullRefresh(state),
-            contentPadding = PaddingValues(horizontal = Ui.SPACE_10, vertical = Ui.SPACE_5),
-            verticalArrangement = Arrangement.spacedBy( Ui.SPACE_5 )
-        ){
-            this.itemsIndexed( homeViewModel. ){ idx, it->
-                *//*val isChecked = remember {
-                    mutableStateOf( it.isChecked )
-                }*//*
-                RowList(
-                    scriptInfo = it,
-                    openDialog = openDialog,
-                    onclick = {
-                        homeViewModel.checkBoxClick( idx,it )
-                    },
-                    isChecked = homeViewModel.dataList[idx].checked_flag,
-                    onSmallRunClick = { homeViewModel.smallRunButtonClick( idx ) }
-                )
-            }
-        }
-        //下拉刷新更新数据
-        PullRefreshIndicator(homeViewModel.refreshing.value, state, Modifier.align(Alignment.TopCenter))
-    }*/
 }
 
 /*
 * 脚本列表单行内容
 * */
-@Composable
-fun RowList(
-    scriptInfo: ScriptInfo,
-    openDialog: MutableState<Boolean>,
-    onclick: ()->Unit = {},
-    isChecked: Boolean,
-    onSmallRunClick : ()->Unit = {}
-){
-    Card(
-        modifier = Modifier
-            .clickable {
-                //onItemClicked(item)
-                onclick()
-            },
-    ){
-        Row (
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = Ui.SPACE_5),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ){
-            Row (
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy( Ui.SPACE_5   ),
-                //modifier = Modifier.padding(vertical = Ui.SPACE_5)
-            ){
-                Spacer(modifier = Modifier.width( Ui.SPACE_5 ))
-                //多选框
-/*                var checkboxState by remember {
-                    mutableStateOf( scriptInfo.isChecked )
-                }*/
-                Checkbox(checked = isChecked, onCheckedChange = {
-                    onclick()
-                })
-                //图标信息
-                Image(
-                    painter = painterResource( id = R.drawable.bh3_offi),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .clip(shape = RoundedCornerShape(20))
-                        .size(Ui.IMG_SIZE_50)
-                )
-                //脚本名称信息等
-                Column(){
-                    Text(text = scriptInfo.script_name, fontSize = Ui.SIZE_16 )
-                    Text(text = scriptInfo.script_version, fontSize = Ui.SIZE_10 )
-                }
-            }
 
-            Row (
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy( Ui.SPACE_5),
-            ){
-                //IconButton(imageVector = Icons.Outlined.PlayArrow, contentDescription = "运行")
-                //更多
-                IconButton(
-                    modifier = Modifier
-                        .border(
-                            width = Ui.SPACE_1,
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = RoundedCornerShape(50)
-                        )
-                        .size(Ui.ICON_SIZE_40),
-                    content ={
-                        Icon(
-                            imageVector = Icons.Outlined.MoreVert,
-                            contentDescription = null
-                        )
-                    },
-                    onClick = {
-                    }
-                )
-                //信息
-                IconButton(
-                    modifier = Modifier
-                        .border(
-                            width = Ui.SPACE_1,
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = RoundedCornerShape(50)
-                        )
-                        .size(Ui.ICON_SIZE_40),
-                    content ={
-                        Icon(
-                            imageVector = Icons.Outlined.Info,
-                            contentDescription = null
-                        )
-                    },
-                    onClick = {
-                    }
-                )
-                //运行
-                IconButton(
-                    modifier = Modifier
-                        .border(
-                            width = Ui.SPACE_1,
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = RoundedCornerShape(50)
-                        )
-                        .size(Ui.ICON_SIZE_40),
-                    content ={
-                        Icon(
-                            imageVector = Icons.Outlined.PlayArrow,
-                            contentDescription = null
-                        )
-                    },
-                    onClick = onSmallRunClick
-                )
-                Spacer(modifier = Modifier.width( Ui.SPACE_5 ))
-            }
-        }
-    }
-    if (openDialog.value){
+    /*if (openDialog.value){
         AlertDialog(
             onDismissRequest = {
                 openDialog.value = false
@@ -326,4 +169,5 @@ fun RowList(
 }
 val  show = { context : Context,message: Any ->
     Toast.makeText(context, message.toString(), Toast.LENGTH_SHORT).show()
-}
+}*/
+

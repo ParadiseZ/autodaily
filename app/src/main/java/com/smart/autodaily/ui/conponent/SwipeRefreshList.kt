@@ -1,5 +1,8 @@
 package com.smart.autodaily.ui.conponent
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -30,13 +33,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalContext
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,33 +53,47 @@ import androidx.paging.compose.LazyPagingItems
 import com.smart.autodaily.R
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
-import com.smart.autodaily.ui.screen.RowListSearch
 import com.smart.autodaily.ui.theme.AutoDailyTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * 下拉加载封装
  *
  * */
+@SuppressLint("CoroutineCreationDuringComposition")
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun <T : Any> SwipeRefreshList(
     collectAsLazyPagingItems: LazyPagingItems<T>,
-    //listContent: LazyListScope.() -> Unit,
     listContent: @Composable (T) -> Unit,
     modifier: Modifier
 ) {
-    val refreshFlag = collectAsLazyPagingItems.loadState.refresh is LoadState.Loading || collectAsLazyPagingItems.loadState.append is LoadState.Loading
+    val scope = rememberCoroutineScope()
+    val isLoading = with(collectAsLazyPagingItems.loadState) {
+        refresh is LoadState.Loading || refresh is LoadState.Error
+    }//避免是Error并且不是Loading的时候，refreshFlag=false隐藏。需加载结束时，再次赋值隐藏刷新图标，避免加载异常的提示相关内容不会显示
+    var refreshFlag  by remember { mutableStateOf(false) }
     val  refreshState =  rememberPullRefreshState(refreshing = refreshFlag, onRefresh = {
         //下拉刷新
-      collectAsLazyPagingItems.refresh()
+        scope.launch{
+            collectAsLazyPagingItems.refresh()
+            refreshFlag = true
+            delay(Ui.DELAY_TIME)
+            refreshFlag = isLoading
+            println("refreshFlag=$isLoading")
+        }
     })
     Box(
         modifier = modifier.pullRefresh(refreshState),
-        ){
+    ){
         LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = Ui.SPACE_10, vertical = Ui.SPACE_5),
-            verticalArrangement = Arrangement.spacedBy( Ui.SPACE_5 )
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(),
+            contentPadding = PaddingValues(horizontal = Ui.SPACE_10, vertical = Ui.SPACE_10),
+            verticalArrangement = Arrangement.spacedBy( Ui.SPACE_10 )
         ) {
             items( collectAsLazyPagingItems.itemCount ){index ->
                 collectAsLazyPagingItems[index]?.let { item ->
@@ -81,16 +101,10 @@ fun <T : Any> SwipeRefreshList(
                 }
             }
             collectAsLazyPagingItems.apply {
-                when {
-                    loadState.append is LoadState.Error -> {
-                        //加载更多异常
-                        item {
-                            ErrorMoreRetryItem() {
-                                collectAsLazyPagingItems.retry()
-                            }
-                        }
-                    }
-                    loadState.refresh is LoadState.Error -> {
+                when(this.loadState.refresh) {
+                    is LoadState.Loading -> {}
+                    is LoadState.Error -> {
+                        refreshFlag = false //加载超过1.5秒，加载异常时再次赋予加载图标状态
                         if (collectAsLazyPagingItems.itemCount <= 0) {
                             //刷新的时候，如果itemCount小于0，第一次加载异常
                             item {
@@ -106,12 +120,40 @@ fun <T : Any> SwipeRefreshList(
                             }
                         }
                     }
+                    is LoadState.NotLoading -> {//加载超过1.5秒，停止加载时再次赋予加载图标状态，!isLoading避免加载失败时也隐藏
+                        if(!isLoading) {
+                            scope.launch {
+                                delay(Ui.DELAY_TIME)
+                                refreshFlag = false
+                            }
+                        }
+                    }
+                }
+                when(this.loadState.append) {
+                    is LoadState.Loading -> {
+                    }
+                    is LoadState.Error -> {
+                        //加载更多异常
+                        item {
+                            ErrorMoreRetryItem() {
+                                collectAsLazyPagingItems.retry()
+                            }
+                        }
+                    }
+
+                    is LoadState.NotLoading  -> {
+                        if(!isLoading) {
+                            scope.launch {
+                                delay(Ui.DELAY_TIME)
+                                refreshFlag = false
+                            }
+                        }
+                    }
                 }
             }
         }
         PullRefreshIndicator(refreshFlag, refreshState,modifier = Modifier.align(Alignment.TopCenter))
     }
-
 }
 
 /**

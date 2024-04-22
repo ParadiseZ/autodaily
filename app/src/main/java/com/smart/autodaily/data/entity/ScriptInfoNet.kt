@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "script_info")
 data class ScriptInfoNet(
-    @PrimaryKey(autoGenerate = true) val uid: Int,
+    @PrimaryKey
     @ColumnInfo(name = "script_id") val scriptId: Int,
     @ColumnInfo(name = "script_name") var scriptName: String,  // 脚本名称
     @ColumnInfo(name = "script_version") var scriptVersion: String, // 脚本版本号

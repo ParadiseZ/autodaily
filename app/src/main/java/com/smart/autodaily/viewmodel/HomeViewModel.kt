@@ -1,24 +1,17 @@
 package com.smart.autodaily.viewmodel
 
 import android.app.Application
-import android.content.Context
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.smart.autodaily.api.RemoteApi
 import com.smart.autodaily.base.BaseViewModel
-import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.dataresource.ScriptLocalDataSource
-import com.smart.autodaily.data.dataresource.ScriptNetDataSource
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.utils.PageUtil
-import com.smart.autodaily.utils.ScreenUtil
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
 
 class HomeViewMode(application: Application) : BaseViewModel(application = application) {
     var refreshing  =  mutableStateOf(false)

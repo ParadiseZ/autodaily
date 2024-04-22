@@ -1,5 +1,6 @@
 package com.smart.autodaily.viewmodel
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -8,6 +9,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
 import com.smart.autodaily.api.RemoteApi
+import com.smart.autodaily.base.BaseViewModel
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.dataresource.ScriptNetDataSource
 import com.smart.autodaily.data.entity.ScriptInfo
@@ -15,7 +17,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-class SearchViewModel : ViewModel()  {
+class SearchViewModel(application: Application)   : BaseViewModel(application = application)  {
 
     /*
     * 搜索脚本信息，并和数据库比对，更新flow流以更新is_downloaded标志
@@ -54,6 +56,8 @@ class SearchViewModel : ViewModel()  {
         this.viewModelScope.launch {
             appDb?.scriptInfoDao?.insert(scriptInfo)
             downScriptSetByScriptId(scriptInfo.script_id)
+            scriptInfo.is_downloaded = 1
+            appDb?.scriptInfoDao?.update(scriptInfo)
         }
     }
     private fun downScriptSetByScriptId(script_id: Int) {

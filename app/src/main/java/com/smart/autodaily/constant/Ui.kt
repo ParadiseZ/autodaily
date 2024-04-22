@@ -4,6 +4,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 object Ui {
+    const val DELAY_TIME = 1500L
+
     val SPACE_1 = 1.dp
 
     val SPACE_2 = 2.dp
@@ -28,6 +30,7 @@ object Ui {
 
     val SIZE_12 = 12.sp
 
+    val SIZE_14 = 14.sp
     val SIZE_15 = 15.sp
 
     val SIZE_16 = 16.sp

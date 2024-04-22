@@ -6,8 +6,7 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "script_info")
 data class ScriptInfo(
-    @PrimaryKey(autoGenerate = true) val uid: Int,
-    @ColumnInfo(name = "script_id") val script_id: Int,
+    @PrimaryKey @ColumnInfo(name = "script_id") val script_id: Int,
     @ColumnInfo(name = "script_name") var script_name: String,  // 脚本名称
     @ColumnInfo(name = "script_version") var script_version: String, // 脚本版本号
     @ColumnInfo(name = "last_version") val last_version: String,   // 最新版本号
@@ -17,6 +16,5 @@ data class ScriptInfo(
     @ColumnInfo(name = "runs_max_num") var runsMaxNum: Int = 1, // 最大运行次数
     @ColumnInfo(name = "next_run_date") var next_run_date: String,   // 下次运行日期
     @ColumnInfo(name = "download_time") var download_time: String, // 下载日期
-
     @ColumnInfo(name = "is_downloaded") var is_downloaded: Int = 0, // 是否已下载
 )

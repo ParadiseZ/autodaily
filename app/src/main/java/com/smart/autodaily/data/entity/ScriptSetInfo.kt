@@ -4,9 +4,8 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "script_set_info")
+@Entity(tableName = "script_set_info", primaryKeys = ["script_id", "set_id"])
 data class ScriptSetInfo(
-    @PrimaryKey(autoGenerate = true) val uid: Int,
     @ColumnInfo(name = "script_id") val script_id: Int,
     @ColumnInfo(name = "set_id") val set_id: Int,
     @ColumnInfo(name = "checked_flag") val checked_flag: String,
