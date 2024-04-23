@@ -66,7 +66,6 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.smart.autodaily.constant.ScreenText
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
-import com.smart.autodaily.ui.conponent.IconButtonCustom
 import com.smart.autodaily.ui.conponent.RowListCustom
 import com.smart.autodaily.ui.conponent.SearchTopAppBar
 import com.smart.autodaily.ui.conponent.SwipeRefreshList
