@@ -8,6 +8,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.smart.autodaily.base.BaseViewModel
+import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.dataresource.ScriptLocalDataSource
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.utils.PageUtil
@@ -38,19 +39,24 @@ class HomeViewMode(application: Application) : BaseViewModel(application = appli
     )*/
 
     //val dataList = mutableStateListOf<ScriptInfo>()
-    fun getLocalScriptList(searchedText: String? = null) :  Flow<PagingData<ScriptInfo>> {
+    fun getLocalScriptList() :  Flow<PagingData<ScriptInfo>> {
         return  Pager(PagingConfig(
             pageSize = PageUtil.PAGE_SIZE,
             initialLoadSize = PageUtil.INITIALOAD_SIZE,
             enablePlaceholders = true,
             prefetchDistance = PageUtil.PREFETCH_DISTANCE
         )) {
-            ScriptLocalDataSource(searchedText)
+            ScriptLocalDataSource()
         }.flow.cachedIn(viewModelScope)
     }
 
-    fun onScriptListRemove(sc : ScriptInfo){
-        //dataList.remove(sc)
+    fun deleteScript(sc : ScriptInfo){
+        try {
+            appDb!!.scriptInfoDao.delete(sc)
+            appDb!!.scriptSetInfoDao.deleteScriptSetInfoByScriptId(sc.script_id)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     fun onScriptListSet(){

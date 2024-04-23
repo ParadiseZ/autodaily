@@ -13,6 +13,7 @@ import com.smart.autodaily.base.BaseViewModel
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.dataresource.ScriptNetDataSource
 import com.smart.autodaily.data.entity.ScriptInfo
+import com.smart.autodaily.utils.PageUtil
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -24,7 +25,7 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
     * */
     fun searchScriptByPage(searchText: String?=null): Flow<PagingData<ScriptInfo>> {
         var updatedNetSearchResult : Flow<PagingData<ScriptInfo>>? = null
-        val netSearchResult = Pager(PagingConfig(pageSize = 10, initialLoadSize =20,enablePlaceholders = true, prefetchDistance = 3)) {
+        val netSearchResult = Pager(PagingConfig(pageSize = PageUtil.PAGE_SIZE, initialLoadSize =PageUtil.INITIALOAD_SIZE, prefetchDistance = PageUtil.PREFETCH_DISTANCE)) {
             ScriptNetDataSource(
                 RemoteApi.searchDownRetrofit,
                 searchText

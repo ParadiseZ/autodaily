@@ -1,6 +1,7 @@
 package com.smart.autodaily.data.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
@@ -26,4 +27,7 @@ interface ScriptInfoDao {
 
     @Update
     fun update( scriptInfo: ScriptInfo ) : Unit
+
+    @Delete
+    fun delete( scriptInfo: ScriptInfo ) : Unit
 }

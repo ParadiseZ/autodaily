@@ -12,4 +12,7 @@ interface ScriptSetInfoDao {
 
     @Query("select * from script_set_info where script_id = :script_id")
     fun queryScriptSetInfo(script_id: Int) : List<ScriptSetInfo>
+
+    @Query("delete from script_set_info where script_id = :script_id")
+    fun deleteScriptSetInfoByScriptId(script_id: Int) : Unit
 }

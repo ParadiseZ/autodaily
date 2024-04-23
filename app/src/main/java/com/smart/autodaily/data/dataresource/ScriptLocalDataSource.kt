@@ -9,7 +9,7 @@ import com.smart.autodaily.utils.PageUtil
 import retrofit2.HttpException
 import java.io.IOException
 
-class ScriptLocalDataSource(private val seachKey: String?) : PagingSource<Int, ScriptInfo>() {
+class ScriptLocalDataSource : PagingSource<Int, ScriptInfo>() {
      override fun getRefreshKey(state: PagingState<Int, ScriptInfo>): Int? {
          return null
      }
@@ -18,11 +18,7 @@ class ScriptLocalDataSource(private val seachKey: String?) : PagingSource<Int, S
              val page = params.key ?: PageUtil.FIRST_PAGE
              val pageSize = params.loadSize
              val startIndex = PageUtil.dataStartIndex(page, pageSize)
-             val response = if (seachKey?.isNotBlank() == true){
-                 appDb!!.scriptInfoDao.getScriptInfoByPage(seachKey,pageSize, startIndex)
-             }else{
-                 appDb!!.scriptInfoDao.getScriptInfoByPage(pageSize, startIndex)
-             }
+             val response = appDb!!.scriptInfoDao.getScriptInfoByPage(pageSize, startIndex)
              LoadResult.Page(
                  data = response,
                  prevKey =  PageUtil.prevKey(page),

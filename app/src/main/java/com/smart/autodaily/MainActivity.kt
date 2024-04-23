@@ -55,49 +55,42 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScreen()
+                    val navController = rememberNavController()
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentDestination = navBackStackEntry?.destination?.hierarchy
+                    Scaffold (
+                        bottomBar = {
+                            NavigationBar{
+                                NavigationItem.allItems.forEach{ screen ->
+                                    val isSelected =  currentDestination?.any { it.route == screen.route }
+                                    NavigationBarItem(
+                                        icon = {
+                                            if (isSelected == true){
+                                                Icon(imageVector = screen.selectedIcon, contentDescription = screen.text)
+                                            }else{
+                                                Icon(imageVector = screen.icon, contentDescription = null)
+                                            }
+                                        },
+                                        label = {
+                                            if (isSelected == true){
+                                                Text(text = screen.text, textAlign = TextAlign.Center)
+                                            }
+                                        },
+                                        selected = isSelected == true,
+                                        onClick = {
+                                            navController.navSingleTopTo(screen.route)
+                                        }
+                                    )
+                                }
+
+                            }
+                        },
+                        content = {
+                            AppNavHost( modifier = Modifier.padding(it), navController = navController)
+                        }
+                    )
                 }
             }
         }
     }
-}
-
-@Preview
-@Composable
-fun MainScreen() {
-    val navController = rememberNavController()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination?.hierarchy
-
-    Scaffold (
-        bottomBar = {
-            NavigationBar{
-                NavigationItem.allItems.forEach{ screen ->
-                    val isSelected =  currentDestination?.any { it.route == screen.route }
-                    NavigationBarItem(
-                        icon = {
-                            if (isSelected == true){
-                                Icon(imageVector = screen.selectedIcon, contentDescription = screen.text)
-                            }else{
-                                Icon(imageVector = screen.icon, contentDescription = null)
-                            }
-                        },
-                        label = {
-                            if (isSelected == true){
-                                Text(text = screen.text, textAlign = TextAlign.Center)
-                            }
-                        },
-                        selected = isSelected == true,
-                        onClick = {
-                            navController.navSingleTopTo(screen.route)
-                        }
-                    )
-                }
-
-            }
-        },
-        content = {
-            AppNavHost( modifier = Modifier.padding(it), navController = navController)
-        }
-    )
 }

@@ -4,7 +4,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 object Ui {
-    const val DELAY_TIME = 1500L
+    const val DELAY_TIME = 1000L
 
     val SPACE_1 = 1.dp
 

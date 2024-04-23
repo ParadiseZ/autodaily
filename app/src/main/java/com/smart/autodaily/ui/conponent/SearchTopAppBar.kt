@@ -14,7 +14,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -27,6 +29,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,68 +57,54 @@ fun SearchTopAppBar(
     }//文本内容记录
     val focusManager = LocalFocusManager.current    //焦点管理器
     val focusRequester = remember { FocusRequester() }  // 创造一个FocusRequester实例
-    var isShowTextField by remember {
-        mutableStateOf(false)    //是否显示搜索框
-    }
     TopAppBar(
         title = {
-            if (isShowTextField) {
-                OutlinedTextField(
-                    modifier = Modifier.fillMaxWidth()
-                        .focusRequester(focusRequester)// 放入FocusRequester实例以便获取焦点
-                        .focusable(true)
-                        .defaultMinSize(
-                            minWidth = OutlinedTextFieldDefaults.MinWidth,
-                            minHeight = OutlinedTextFieldDefaults.MinHeight / 10 * 9
-                        )
-                        .padding(top = 4.dp),//OutlinedTextFieldTopPadding/2
-                    shape = RoundedCornerShape(50),
-                    textStyle = LocalTextStyle.current.copy(color = LocalTextStyle.current.color, fontSize = Ui.SIZE_14),
-                    singleLine = true,
-                    value = textValue,
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Filled.Search, contentDescription = null)
+            OutlinedTextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester)// 放入FocusRequester实例以便获取焦点
+                    .defaultMinSize(
+                        minWidth = OutlinedTextFieldDefaults.MinWidth,
+                        minHeight = OutlinedTextFieldDefaults.MinHeight / 10 * 9
+                    )
+                    .padding(top = 4.dp),//OutlinedTextFieldTopPadding/2
+                shape = RoundedCornerShape(50),
+                textStyle = LocalTextStyle.current.copy(color = LocalTextStyle.current.color, fontSize = Ui.SIZE_14),
+                singleLine = true,
+                value = textValue,
+                leadingIcon = {
+                    Icon(imageVector = Icons.Filled.Search, contentDescription = null)
+                },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),//替换回车键为搜索图标,
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        defaultKeyboardAction(ImeAction.Done)   //隐藏键盘
+                        focusManager.clearFocus()   //清除焦点
+                        onSearchClick(textValue)    //执行搜索
                     },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),//替换回车键为搜索图标,
-                    keyboardActions = KeyboardActions(
-                        onSearch = {
-                            defaultKeyboardAction(ImeAction.Done)   //隐藏键盘
-                            focusManager.clearFocus()   //清除焦点
-                            onSearchClick(textValue)    //执行搜索
-                        },
-                    ),
-                    trailingIcon = {
-                        if (textValue.isNotEmpty()) {   //不为空时显示清除按钮
-                            IconButton(onClick = {
-                                textValue = ""
-                                focusRequester.requestFocus()   //OutlinedTextField获取焦点
-                                onSearchClick(textValue) //需要执行搜索，
-                            }) {
-                                Icon(imageVector = Icons.Filled.Clear, contentDescription = null)
-                            }
+                ),
+                trailingIcon = {
+                    if (textValue.isNotEmpty()) {   //不为空时显示清除按钮
+                        IconButton(onClick = {
+                            textValue = ""
+                            focusRequester.requestFocus()   //OutlinedTextField获取焦点
+                            onSearchClick(textValue) //需要执行搜索，
+                        }) {
+                            Icon(imageVector = Icons.Filled.Clear, contentDescription = null)
                         }
-                    },
-                    onValueChange = {
-                        textValue = it
                     }
-                )
-            }
+                },
+                onValueChange = {
+                    textValue = it
+                }
+            )
         },
         actions = {
-            if (isShowTextField){
-                TextButton(onClick = {
-                    onSearchClick(textValue)
-                }) {
-                    Text(text = searchButtonText)
-                }
-            }else{
-                IconButton(onClick = {
-                    isShowTextField = true
-                }) {
-                    Icon(imageVector = Icons.Filled.Search, contentDescription = null)
-                }
+            TextButton(onClick = {
+                onSearchClick(textValue)
+            }) {
+                Text(text = searchButtonText)
             }
-
         },
     )
 }

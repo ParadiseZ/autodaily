@@ -62,7 +62,6 @@ import kotlinx.coroutines.launch
  * 下拉加载封装
  *
  * */
-@SuppressLint("CoroutineCreationDuringComposition")
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun <T : Any> SwipeRefreshList(
@@ -71,10 +70,10 @@ fun <T : Any> SwipeRefreshList(
     modifier: Modifier
 ) {
     val scope = rememberCoroutineScope()
+    var refreshFlag by remember { mutableStateOf(false) }
     val isLoading = with(collectAsLazyPagingItems.loadState) {
         refresh is LoadState.Loading || refresh is LoadState.Error
     }//避免是Error并且不是Loading的时候，refreshFlag=false隐藏。需加载结束时，再次赋值隐藏刷新图标，避免加载异常的提示相关内容不会显示
-    var refreshFlag  by remember { mutableStateOf(false) }
     val  refreshState =  rememberPullRefreshState(refreshing = refreshFlag, onRefresh = {
         //下拉刷新
         scope.launch{
@@ -82,7 +81,6 @@ fun <T : Any> SwipeRefreshList(
             refreshFlag = true
             delay(Ui.DELAY_TIME)
             refreshFlag = isLoading
-            println("refreshFlag=$isLoading")
         }
     })
     Box(
@@ -102,7 +100,9 @@ fun <T : Any> SwipeRefreshList(
             }
             collectAsLazyPagingItems.apply {
                 when(this.loadState.refresh) {
-                    is LoadState.Loading -> {}
+                    is LoadState.Loading -> {
+                        refreshFlag = true
+                    }
                     is LoadState.Error -> {
                         refreshFlag = false //加载超过1.5秒，加载异常时再次赋予加载图标状态
                         if (collectAsLazyPagingItems.itemCount <= 0) {
@@ -131,6 +131,9 @@ fun <T : Any> SwipeRefreshList(
                 }
                 when(this.loadState.append) {
                     is LoadState.Loading -> {
+                        item {
+                            LoadingContent()
+                        }
                     }
                     is LoadState.Error -> {
                         //加载更多异常
@@ -204,5 +207,20 @@ fun ErrorContent(retry: () -> Unit) {
             colors =textButtonColors(),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(0.2f))
         ) { Text(text = "重试") }
+    }
+}
+
+/**
+ * 页面加载中处理
+ * */
+@Composable
+fun LoadingContent() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = "正在加载数据。。。", modifier = Modifier.padding(top = 8.dp, bottom = 6.dp))
     }
 }
