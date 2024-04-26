@@ -14,7 +14,7 @@ import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.utils.PageUtil
 import kotlinx.coroutines.flow.Flow
 
-class HomeViewMode(application: Application) : BaseViewModel(application = application) {
+class HomeViewModel(application: Application) : BaseViewModel(application = application) {
     var refreshing  =  mutableStateOf(false)
     /*
     https://developer.android.google.cn/codelabs/basic-android-kotlin-compose-viewmodel-and-state?hl=zh-cn#4

@@ -10,7 +10,11 @@ object Ui {
 
     val SPACE_2 = 2.dp
 
+    val SPACE_4 = 4.dp
+
     val SPACE_5 = 5.dp
+
+    val SPACE_8= 8.dp
 
     val SPACE_10 = 10.dp
 

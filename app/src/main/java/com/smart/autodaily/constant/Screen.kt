@@ -13,9 +13,10 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 
+
 enum class Screen {
-    Search,
-    Log,
+    SEARCH,
+    LOG,
     HOME,
     SETTING,
     PERSONAL
@@ -30,8 +31,8 @@ object ScreenText {
 }
 
 sealed class NavigationItem(val route: String, val icon: ImageVector,val selectedIcon: ImageVector, val text: String) {
-    data object SEARCH : NavigationItem(Screen.Search.name, Icons.Outlined.Search, Icons.Filled.Search, ScreenText.SEARCH_SCREEN)
-    data object LOG : NavigationItem(Screen.Log.name, Icons.AutoMirrored.Outlined.List, Icons.AutoMirrored.Filled.List, ScreenText.LOG_SCREEN)
+    data object SEARCH : NavigationItem(Screen.SEARCH.name, Icons.Outlined.Search, Icons.Filled.Search, ScreenText.SEARCH_SCREEN)
+    data object LOG : NavigationItem(Screen.LOG.name, Icons.AutoMirrored.Outlined.List, Icons.AutoMirrored.Filled.List, ScreenText.LOG_SCREEN)
     data object HOME : NavigationItem(Screen.HOME.name, Icons.Outlined.Home, Icons.Filled.Home, ScreenText.HOME_SCREEN)
     data object SETTING : NavigationItem(Screen.SETTING.name, Icons.Outlined.Settings, Icons.Filled.Settings, ScreenText.SETTING_SCREEN)
     data object PERSON : NavigationItem(Screen.PERSONAL.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)

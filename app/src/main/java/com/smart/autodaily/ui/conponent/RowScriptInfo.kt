@@ -18,7 +18,7 @@ import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
 
 @Composable
-fun RowListCustom(
+fun RowScriptInfo(
     modifier: Modifier = Modifier,
     cardOnClick: (scriptInfo: ScriptInfo) -> Unit,
     checkBox: @Composable  () -> Unit = {},

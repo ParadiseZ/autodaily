@@ -69,6 +69,15 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
                     appDb?.scriptSetInfoDao?.insert(it)
                 }
             }
+            val localScriptSetGlobal = appDb?.scriptSetInfoDao?.countScriptSetByScriptId(script_id)
+            if (localScriptSetGlobal == 0) {
+                val globalScriptSetResult = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(0)
+                globalScriptSetResult.data?.let { scriptSetInfoList ->
+                    scriptSetInfoList.forEach {
+                        appDb?.scriptSetInfoDao?.insert(it)
+                    }
+                }
+            }
         }
     }
 }

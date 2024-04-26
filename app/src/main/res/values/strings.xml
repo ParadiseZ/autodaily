@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">AutoDaily</string>
+    <string name="accessibilty_desc">
+        开启AutoDaily辅助功能权限，帮助您执行屏幕操作。请放心，该操作不会泄露您的隐私信息。
+    </string>
 </resources>

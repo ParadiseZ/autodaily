@@ -58,13 +58,8 @@ abstract class AppDb  :  RoomDatabase(){
             }
 
             override fun onOpen(db: SupportSQLiteDatabase) {
-                /*val insertBookGroupAllSql = """
-                    insert into book_groups(groupId, groupName, 'order', show) 
-                    select ${BookGroup.IdAll}, '全部', -10, 1
-                    where not exists (select * from book_groups where groupId = ${BookGroup.IdAll})
-                """.trimIndent()
-                db.execSQL(insertBookGroupAllSql)*/
             }
+
         }
     }
 }
