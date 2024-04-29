@@ -22,7 +22,7 @@ import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptSetInfo
 
 @Composable
-fun SliderSettingItem(
+fun SliderSecondSettingItem(
     setting: ScriptSetInfo,
     onSliderValueChange: (ScriptSetInfo) -> Unit,
     modifier: Modifier = Modifier
@@ -40,8 +40,12 @@ fun SliderSettingItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(modifier = Modifier.padding(start = Ui.SPACE_4),text = setting.set_name+"：")
-            Text(text = "${"%.0f".format(sliderValue * 100)}%")
-            Slider(value = sliderValue, onValueChange = {
+            Text(text = "${"%.1f".format(sliderValue * 100)}秒")
+            Slider(
+                valueRange = 0f..5f,
+                steps = 10,
+                value = sliderValue,
+                onValueChange = {
                 sliderValue = it
                 setting.set_value = it.toString()
                 onSliderValueChange(setting)

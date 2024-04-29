@@ -1,14 +1,10 @@
 package com.smart.autodaily.data
 
 import android.content.Context
-import androidx.room.AutoMigration
 import androidx.room.Database
-import androidx.room.DatabaseConfiguration
-import androidx.room.InvalidationTracker
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
-import androidx.sqlite.db.SupportSQLiteOpenHelper
 import com.smart.autodaily.data.dao.ScriptInfoDao
 import com.smart.autodaily.data.dao.ScriptSetInfoDao
 import com.smart.autodaily.data.entity.ScriptInfo
@@ -16,7 +12,7 @@ import com.smart.autodaily.data.entity.ScriptSetInfo
 import java.util.Locale
 
 
- var appDb: AppDb? = null
+var appDb: AppDb? = null
 
 @Database(version = 1,
     exportSchema = false,
@@ -48,7 +44,7 @@ abstract class AppDb  :  RoomDatabase(){
                 //.fallbackToDestructiveMigrationFrom(1, 2, 3, 4, 5, 6, 7, 8, 9)
                 .addMigrations(*DatabaseMigrations.migrations)
                 .allowMainThreadQueries()
-                .addCallback(AppDb.dbCallback)
+                .addCallback(dbCallback)
                 .build()
         }
 

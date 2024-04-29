@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.smart.autodaily.api.SearchDownloadApi
-import com.smart.autodaily.constant.ResponseCode
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.utils.PageUtil
 import retrofit2.HttpException

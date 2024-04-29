@@ -1,7 +1,6 @@
 package com.smart.autodaily.viewmodel
 
 import android.app.Application
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager

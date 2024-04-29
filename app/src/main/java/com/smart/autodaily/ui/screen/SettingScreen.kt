@@ -1,13 +1,8 @@
 package com.smart.autodaily.ui.screen
 
-import android.accessibilityservice.AccessibilityServiceInfo
-import android.annotation.SuppressLint
-import android.app.Notification
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ServiceInfo
 import android.provider.Settings
-import android.view.accessibility.AccessibilityManager
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -35,28 +31,28 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.core.app.NotificationCompat
-import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat.startActivity
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.smart.autodaily.constant.AppBarTitle
-import com.smart.autodaily.constant.ForegroundServiceId
 import com.smart.autodaily.constant.PermissionSettingText
 import com.smart.autodaily.constant.SettingTitle
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.SettingType
-import com.smart.autodaily.service.AccessibilityService
 import com.smart.autodaily.ui.conponent.CheckBoxSettingItem
 import com.smart.autodaily.ui.conponent.RadioButtonSettingItem
+import com.smart.autodaily.ui.conponent.SliderSecondSettingItem
 import com.smart.autodaily.ui.conponent.SliderSettingItem
 import com.smart.autodaily.ui.conponent.SwitchSettingItem
 import com.smart.autodaily.ui.conponent.TextFieldSettingItem
+import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.viewmodel.SettingViewModel
 import com.smart.autodaily.viewmodel.mediaProjectionServiceStartFlag
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
-@SuppressLint("ForegroundServiceType")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingScreen(
@@ -86,7 +82,11 @@ fun SettingScreen(
                         Text(text = "空空如也，请先去下载脚本！")
                     }
                 }else{
-                    LazyColumn {
+                    LazyColumn (
+                        modifier = Modifier
+                            .padding(vertical = Ui.SPACE_8),
+                        state =  rememberLazyListState()
+                    ){
                         items(scriptSetLocalList.itemCount) { index ->
                             scriptSetLocalList[index]?.let { setting ->
                                 when (setting.set_type) {
@@ -95,6 +95,7 @@ fun SettingScreen(
                                     SettingType.TEXT_FIELD -> TextFieldSettingItem(setting,onValueChange = {  settingViewModel.updateGlobalSetting(setting)  })
                                     SettingType.CHECK_BOX -> CheckBoxSettingItem(setting,onCheckedChange = {  settingViewModel.updateGlobalSetting(setting)  })
                                     SettingType.RADIO_BUTTON -> RadioButtonSettingItem(setting, onCheckedChange = {  settingViewModel.updateGlobalSetting(setting)  })
+                                    SettingType.SLIDER_SECOND -> SliderSecondSettingItem(setting,onSliderValueChange = {  settingViewModel.updateGlobalSetting(setting)  })
                                 }
                             }
                         }
@@ -104,9 +105,10 @@ fun SettingScreen(
             Spacer(modifier = Modifier.height(Ui.SPACE_8))
             //权限设置模块
             CardCustom(secondSettingOpenFlag, SettingTitle.SETTING_PERMISSION)
-            val accessibilityServiceOpenFlag = remember {
+            var accessibilityServiceOpenFlagOld = false
+            val accessibilityServiceOpenFlagNew = remember {
                 mutableStateOf(
-                    isAccessibilityServiceEnabled(settingViewModel.context)
+                    ServiceUtil.isAccessibilityServiceEnabled(settingViewModel.context)
                 )
             }
             val sharedPreferences = remember {
@@ -115,16 +117,26 @@ fun SettingScreen(
             val ignoreBatteryFlag = remember { mutableStateOf(sharedPreferences.getBoolean("ignore_battery", false)) }
             val floatWindowFlag = remember { mutableStateOf(sharedPreferences.getBoolean("float_window", false)) }
             if (secondSettingOpenFlag.value) {
-                RowPermissinon(
+                RowPermission(
                     labelText =PermissionSettingText.ACCESSBILITY_SERVICE_TEXT,
-                    isSwitchOpen = accessibilityServiceOpenFlag,
+                    isSwitchOpen = accessibilityServiceOpenFlagNew,
                     onSwitchChange = {
                         startActivity(
                             settingViewModel.context,
                             Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                             null
                         )
-                        accessibilityServiceOpenFlag.value = accessibilityServiceOpenFlag.value
+                        settingViewModel.viewModelScope.launch {
+                            for (i in 1..30){
+                                delay(1000)
+                                accessibilityServiceOpenFlagNew.value = ServiceUtil.isAccessibilityServiceEnabled(settingViewModel.context)
+                                if (accessibilityServiceOpenFlagOld != accessibilityServiceOpenFlagNew.value) {
+                                    accessibilityServiceOpenFlagOld = accessibilityServiceOpenFlagNew.value
+                                    break
+                                }
+                            }
+                        }
+
                     /*ServiceCompat.startForeground(
                         AccessibilityService(),
                         ForegroundServiceId.ACCESSIBILITY_SERVICE_ID,
@@ -135,7 +147,7 @@ fun SettingScreen(
                         ServiceInfo.    //API<29则service.startForeground(id, notification)
                     )*/
                 })
-                RowPermissinon(PermissionSettingText.SCREEN_RECORD_TEXT,
+                RowPermission(PermissionSettingText.SCREEN_RECORD_TEXT,
                     isSwitchOpen = mediaProjectionServiceStartFlag,
                     onSwitchChange={
                    /* ServiceCompat.startForeground(
@@ -148,7 +160,7 @@ fun SettingScreen(
                         ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION    //API<29则service.startForeground(id, notification)
                     )*/
                 })
-                RowPermissinon(PermissionSettingText.IGNORE_BATTERIES_TEXT,
+                RowPermission(PermissionSettingText.IGNORE_BATTERIES_TEXT,
                     isSwitchOpen = ignoreBatteryFlag,
                     onSwitchChange = {
                         if(it){
@@ -159,8 +171,9 @@ fun SettingScreen(
                             sharedPreferences.edit().putBoolean("ignore_battery", it).apply()
                         }
                         ignoreBatteryFlag.value = it
+                        println("==$it")
                     })
-                RowPermissinon(PermissionSettingText.FLOAT_WINDOW_TEXT,
+                RowPermission(PermissionSettingText.FLOAT_WINDOW_TEXT,
                     isSwitchOpen = floatWindowFlag,
                     onSwitchChange = {
                         if(it){
@@ -208,7 +221,7 @@ fun CardCustom(
 }
 
 @Composable
-fun RowPermissinon(
+fun RowPermission(
     labelText: String,
     isSwitchOpen: MutableState<Boolean>,
     onSwitchChange: (Boolean) -> Unit
@@ -228,20 +241,4 @@ fun RowPermissinon(
     Spacer(modifier = Modifier
         .fillMaxWidth()
         .border(1.dp, MaterialTheme.colorScheme.onBackground))
-}
-
-
-@SuppressLint("ServiceCast")
-fun isAccessibilityServiceEnabled(context: Context): Boolean {
-    val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
-    val accessibilityServices = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-    for (service in accessibilityServices){
-        println("serviceId: ${service.id}")
-        println("packageNames: ${service.packageNames}")
-        println("resolveInfoName: ${service.resolveInfo.serviceInfo.name}")
-        println("resolveInfoPackageName: ${service.resolveInfo.serviceInfo.packageName}")
-    }
-    return accessibilityServices.any {
-        it.id == AccessibilityService::class.java.name
-    }
 }

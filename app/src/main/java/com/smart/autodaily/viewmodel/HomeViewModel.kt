@@ -59,28 +59,11 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
         }
     }
 
-    fun onScriptListSet(){
-        /*val list = dataList.toList()
-        dataList.clear()
-        dataList.addAll( list)*/
-    }
-
     fun checkBoxClick( index:Int, sc: ScriptInfo){
         //dataList[index] =  sc.copy(checked_flag = !sc.checked_flag)
     }
 
-    fun smallRunButtonClick( index:Int ){
-        /*if ( dataList[index].checked_flag ){
-            ScreenUtil.showMsg(" 已选择："+ dataList[index].script_name, context)
-        }*/
-    }
 
     fun runButtonClick(){
-        /*ScreenUtil.showMsg(" 数据量："+ dataList.size, ct)
-        dataList.forEach {
-            if ( it.checked_flag ){
-                ScreenUtil.showMsg(" 已选择："+ it.script_name, ct)
-            }
-        }*/
     }
 }

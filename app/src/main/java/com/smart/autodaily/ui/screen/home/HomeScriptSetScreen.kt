@@ -6,7 +6,7 @@ import com.smart.autodaily.viewmodel.home.HomeScriptSetViewModel
 
 @Composable
 fun HomeScriptSetScreen(
-    script_uid : String,
+    scriptId : String,
     homeScriptSetViewModel: HomeScriptSetViewModel = viewModel()
 ){
     

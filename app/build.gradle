@@ -20,6 +20,12 @@ android {
         vectorDrawables {
             useSupportLibrary true
         }
+
+        externalNativeBuild {
+            ndk{
+                abiFilters 'x86_64', 'arm64-v8a'
+            }
+        }
     }
 
     buildTypes {
@@ -41,9 +47,9 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion '1.5.11'
     }
-    packaging {
+    packagingOptions {
         resources {
-            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+            excludes.add('/META-INF/{AL2.0,LGPL2.1}')
         }
     }
 }
@@ -69,14 +75,14 @@ dependencies {
     implementation libs.androidx.room.migration
     ksp libs.androidx.room.compiler
     //日志
-    implementation libs.logback.android
-    implementation libs.slf4j.api
+
     //分页
     implementation libs.androidx.paging.compose
     //网络和转换
+    implementation libs.okhttp
     implementation libs.retrofit
     implementation libs.converter.gson
-    //weishu反射
+    //反射
     implementation libs.freereflection
 
     testImplementation libs.junit

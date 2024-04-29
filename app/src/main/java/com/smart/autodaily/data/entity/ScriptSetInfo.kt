@@ -2,7 +2,6 @@ package com.smart.autodaily.data.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 
 @Entity(tableName = "script_set_info", primaryKeys = ["script_id", "set_id"])
 data class ScriptSetInfo(
@@ -23,5 +22,5 @@ data class ScriptSetInfo(
 
 
 enum class SettingType {
-    SWITCH, SLIDER, TEXT_FIELD, CHECK_BOX, RADIO_BUTTON
+    SWITCH, SLIDER, TEXT_FIELD, CHECK_BOX, RADIO_BUTTON, SLIDER_SECOND
 }

@@ -3,7 +3,6 @@ package com.smart.autodaily.api
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.data.entity.resp.Response
-import com.smart.autodaily.data.entity.resp.ScriptNetSearchResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 

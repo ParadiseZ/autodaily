@@ -1,7 +1,6 @@
 package com.smart.autodaily.viewmodel
 
 import android.app.Application
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -61,21 +60,19 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
             appDb?.scriptInfoDao?.update(scriptInfo)
         }
     }
-    private fun downScriptSetByScriptId(script_id: Int) {
-        this.viewModelScope.launch {
-            val result = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(script_id)
-            result.data?.let { scriptSetInfoList ->
+    private suspend fun downScriptSetByScriptId(scriptId: Int) {
+        val result = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptId)
+        result.data?.let { scriptSetInfoList ->
+            scriptSetInfoList.forEach {
+                appDb?.scriptSetInfoDao?.insert(it)
+            }
+        }
+        val localScriptSetGlobal = appDb?.scriptSetInfoDao?.countScriptSetByScriptId(0)
+        if (localScriptSetGlobal == 0) {
+            val globalScriptSetResult = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(0)
+            globalScriptSetResult.data?.let { scriptSetInfoList ->
                 scriptSetInfoList.forEach {
                     appDb?.scriptSetInfoDao?.insert(it)
-                }
-            }
-            val localScriptSetGlobal = appDb?.scriptSetInfoDao?.countScriptSetByScriptId(script_id)
-            if (localScriptSetGlobal == 0) {
-                val globalScriptSetResult = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(0)
-                globalScriptSetResult.data?.let { scriptSetInfoList ->
-                    scriptSetInfoList.forEach {
-                        appDb?.scriptSetInfoDao?.insert(it)
-                    }
                 }
             }
         }

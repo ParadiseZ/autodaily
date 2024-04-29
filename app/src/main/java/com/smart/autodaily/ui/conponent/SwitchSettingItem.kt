@@ -28,8 +28,9 @@ fun SwitchSettingItem(
         Text(text = setting.set_name, modifier = Modifier.weight(1f))
         Switch(checked = isChecked,
             onCheckedChange = {
-                isChecked = !it
-                onSwitchChange(setting.copy(set_value =(!it).toString()))
+                isChecked = it
+                setting.set_value = it.toString()
+                onSwitchChange(setting)
             })
     }
 }

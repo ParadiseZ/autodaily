@@ -56,7 +56,7 @@ fun RowScriptInfo(
                             Spacer(modifier = Modifier.width( Ui.SPACE_5 ))
                             Text(text = "最新："+scriptInfo.last_version, fontSize = Ui.SIZE_10 )
                         }else{
-                            Text(text = "当前："+scriptInfo.script_version, fontSize = Ui.SIZE_10 )
+                            Text(text = "最新："+scriptInfo.last_version, fontSize = Ui.SIZE_10 )
                         }
                     }
                 }

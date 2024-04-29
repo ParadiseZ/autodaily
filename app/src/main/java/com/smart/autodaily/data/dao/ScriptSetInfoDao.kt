@@ -9,17 +9,17 @@ import com.smart.autodaily.data.entity.ScriptSetInfo
 @Dao
 interface ScriptSetInfoDao {
     @Insert
-    fun insert(scriptSetInfo: ScriptSetInfo) : Unit
+    fun insert(scriptSetInfo: ScriptSetInfo)
 
-    @Query("select * from script_set_info where script_id = :script_id  LIMIT :pageSize OFFSET :starIndex")
-    fun queryScriptSetInfo(script_id: Int, pageSize: Int, starIndex: Int) : List<ScriptSetInfo>
+    @Query("select * from script_set_info where script_id = :scriptId  LIMIT :pageSize OFFSET :starIndex")
+    fun queryScriptSetInfo(scriptId: Int, pageSize: Int, starIndex: Int) : List<ScriptSetInfo>
 
-    @Query("select count(script_id) from script_set_info where script_id = :script_id")
-    fun countScriptSetByScriptId(script_id: Int) : Int
+    @Query("select count(script_id) from script_set_info where script_id = :scriptId")
+    fun countScriptSetByScriptId(scriptId: Int) : Int
 
-    @Query("delete from script_set_info where script_id = :script_id")
-    fun deleteScriptSetInfoByScriptId(script_id: Int) : Unit
+    @Query("delete from script_set_info where script_id = :scriptId")
+    fun deleteScriptSetInfoByScriptId(scriptId: Int)
 
     @Update
-    fun updateScriptSetInfo(scriptSetInfo: ScriptSetInfo) : Unit
+    fun updateScriptSetInfo(scriptSetInfo: ScriptSetInfo)
 }

@@ -6,7 +6,6 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import com.smart.autodaily.data.entity.ScriptInfo
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ScriptInfoDao {
@@ -23,11 +22,11 @@ interface ScriptInfoDao {
     fun getScriptInfoByScriptId(scriptId : Int) : ScriptInfo
 
     @Insert
-    fun insert( scriptInfo: ScriptInfo ) : Unit
+    fun insert( scriptInfo: ScriptInfo )
 
     @Update
-    fun update( scriptInfo: ScriptInfo ) : Unit
+    fun update( scriptInfo: ScriptInfo )
 
     @Delete
-    fun delete( scriptInfo: ScriptInfo ) : Unit
+    fun delete( scriptInfo: ScriptInfo )
 }

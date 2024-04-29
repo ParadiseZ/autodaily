@@ -4,13 +4,11 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Checkbox
@@ -20,7 +18,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -38,10 +38,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.smart.autodaily.constant.AppBarTitle
+import com.smart.autodaily.constant.NavigationItem
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.ui.conponent.RowScriptInfo
 import com.smart.autodaily.ui.conponent.SwipeRefreshList
+import com.smart.autodaily.ui.conponent.navSingleTopTo
 import com.smart.autodaily.viewmodel.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,7 +56,7 @@ fun HomeScreen(
     //弹窗
     val openDialog = remember { mutableStateOf(false) }
     val localScriptList = homeViewModel.getLocalScriptList().collectAsLazyPagingItems()
-    var diagSc : ScriptInfo? = null
+    var currentScriptInfo : ScriptInfo? = null
     Scaffold (
         modifier = modifier,
         topBar = {
@@ -82,7 +84,6 @@ fun HomeScreen(
             modifier =modifier.padding(it),
             listContent ={ scriptInfo ->
                 var checkedFlag by remember { mutableStateOf(scriptInfo.checked_flag) }
-                var expanded by remember { mutableStateOf(false) }
                 RowScriptInfo(
                     cardOnClick = {
                         checkedFlag = !checkedFlag
@@ -94,9 +95,10 @@ fun HomeScreen(
                         })
                     },
                     iconInfo ={
+                        var dropdownIsOpen by remember { mutableStateOf(false) }
                         IconButton(
                             onClick = {
-                                expanded = !expanded
+                                dropdownIsOpen = !dropdownIsOpen
                             },
                         ) {
                             Icon(
@@ -104,8 +106,8 @@ fun HomeScreen(
                                 contentDescription = null
                             )
                             DropdownMenu(
-                                expanded = expanded,
-                                onDismissRequest = { expanded = false },
+                                expanded = dropdownIsOpen,
+                                onDismissRequest = { dropdownIsOpen = false },
                                 // 使用offset控制DropdownMenu的显示位置，基于按钮的位置和大小动态计算
                             ) {
                                 // DropdownMenu的内容
@@ -126,8 +128,20 @@ fun HomeScreen(
                                         }
                                     },
                                     onClick = {
-                                        diagSc = scriptInfo
+                                        currentScriptInfo = scriptInfo
                                         openDialog.value = !openDialog.value
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = {
+                                        Row{
+                                            Icon(imageVector = Icons.Outlined.Settings, contentDescription = null)
+                                            Text(text = "设置")
+                                        }
+                                    },
+                                    onClick = {
+                                        currentScriptInfo = scriptInfo
+                                        nhc.navSingleTopTo(NavigationItem.PERSON.route)
                                     }
                                 )
                                 // 根据需要添加更多选项
@@ -174,7 +188,8 @@ fun HomeScreen(
                             modifier = Modifier.weight(1f),
                             onClick = {
                                 openDialog.value = false
-                                diagSc?.let { homeViewModel.deleteScript(it) }
+                                currentScriptInfo?.let { scriptInfo->
+                                    homeViewModel.deleteScript(scriptInfo) }
                                 Toast.makeText(homeViewModel.context, "删除成功！", Toast.LENGTH_SHORT).show()
                                 localScriptList.refresh()
                             }

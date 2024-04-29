@@ -40,9 +40,6 @@ class AccessibilityService : AccessibilityService() {
         println("AccessibilityService onInterrupt")
     }
 
-    override fun onCreate() {
-        super.onCreate()
-    }
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         //return super.onStartCommand(intent, flags, startId)
         return START_STICKY //内存资源足够时再恢复

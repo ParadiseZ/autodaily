@@ -1,15 +1,15 @@
 [versions]
 agp = "8.3.2"
 kotlin = "1.9.23"
-coreKtx = "1.12.0"
+coreKtx = "1.13.0"
 junit = "4.13.2"
 junitVersion = "1.1.5"
 espressoCore = "3.5.1"
 lifecycleRuntimeKtx = "2.7.0"
-activityCompose = "1.8.2"
-composeBom = "2024.04.00"
+activityCompose = "1.9.0"
+composeBom = "2024.04.01"
 navigationCompose = "2.7.7"
-materialAndroid = "1.6.5"
+materialAndroid = "1.6.6"
 roomCompiler = "2.6.1"
 roomKtx = "2.6.1"
 roomMigration = "2.6.1"
@@ -17,10 +17,9 @@ roomRuntime = "2.6.1"
 pagingCompose = "3.2.1"
 retrofit = "2.11.0"
 converterGson = "2.11.0"
-lifecycleViewmodelKtx = "2.8.0-alpha04"
-logbackAndroid = "3.0.0"
-slf4jApi = "2.1.0-alpha1"
+lifecycleViewmodelKtx = "2.8.0-beta01"
 freereflection = "3.2.0"
+okhttp = "5.0.0-alpha.14"
 
 
 [libraries]
@@ -48,9 +47,9 @@ androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", 
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "converterGson" }
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
-logback-android = { group = "com.github.tony19", name = "logback-android", version.ref = "logbackAndroid" }
-slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4jApi" }
+
 freereflection = { group = "com.github.tiann", name = "FreeReflection", version.ref = "freereflection" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 
 
 
