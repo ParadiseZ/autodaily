@@ -39,11 +39,12 @@ fun SliderSecondSettingItem(
             modifier = modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val setRange = setting.set_range.split(',')
             Text(modifier = Modifier.padding(start = Ui.SPACE_4),text = setting.set_name+"：")
-            Text(text = "${"%.1f".format(sliderValue * 100)}秒")
+            Text(text = "${"%.1f".format(sliderValue )}秒")
             Slider(
-                valueRange = 0f..5f,
-                steps = 10,
+                valueRange = setRange[0].toFloat()..setRange[1].toFloat(),
+                steps = setting.set_step,
                 value = sliderValue,
                 onValueChange = {
                 sliderValue = it

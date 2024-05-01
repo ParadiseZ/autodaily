@@ -43,6 +43,11 @@
                 android:name="android.accessibility-service"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+        <service
+            android:name=".service.MediaProjectionService"
+            android:enabled="true"
+            android:foregroundServiceType="mediaProjection"
+            android:label="@string/app_name"/>
     </application>
 
 </manifest>

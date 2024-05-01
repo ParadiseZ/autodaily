@@ -14,7 +14,7 @@ import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.utils.PageUtil
 import kotlinx.coroutines.flow.Flow
 
-val mediaProjectionServiceStartFlag = mutableStateOf(false)
+var mediaProjectionServiceStartFlag = mutableStateOf(false)
 class SettingViewModel (app: Application) : BaseViewModel(application = app) {
 
 

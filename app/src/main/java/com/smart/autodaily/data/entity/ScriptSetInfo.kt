@@ -15,6 +15,8 @@ data class ScriptSetInfo(
     @ColumnInfo(name = "set_level") val set_level: Int,
     @ColumnInfo(name = "set_default_value") val set_default_value: String,
     @ColumnInfo(name = "set_value") var set_value: String,
+    @ColumnInfo(name = "set_range") val set_range: String,
+    @ColumnInfo(name = "set_step") val set_step: Int,
     @ColumnInfo(name = "is_show") val is_show: Boolean,
     @ColumnInfo(name = "result_flag") val result_flag: Boolean,
     @ColumnInfo(name = "once_flag") val once_flag: Boolean

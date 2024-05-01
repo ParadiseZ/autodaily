@@ -3,6 +3,7 @@ package com.smart.autodaily.ui.screen
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -47,18 +48,20 @@ import com.smart.autodaily.ui.conponent.SliderSecondSettingItem
 import com.smart.autodaily.ui.conponent.SliderSettingItem
 import com.smart.autodaily.ui.conponent.SwitchSettingItem
 import com.smart.autodaily.ui.conponent.TextFieldSettingItem
+import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.viewmodel.SettingViewModel
 import com.smart.autodaily.viewmodel.mediaProjectionServiceStartFlag
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingScreen(
     modifier: Modifier,
     nhc: NavHostController,
-    settingViewModel: SettingViewModel = viewModel()
+    settingViewModel: SettingViewModel = viewModel(),
 ) {
     val scriptSetLocalList = settingViewModel.getGlobalSetting().collectAsLazyPagingItems()
     Scaffold (
@@ -136,20 +139,26 @@ fun SettingScreen(
                                 }
                             }
                         }
-
-                    /*ServiceCompat.startForeground(
-                        AccessibilityService(),
-                        ForegroundServiceId.ACCESSIBILITY_SERVICE_ID,
-                        NotificationCompat.Builder(
-                            settingViewModel.context,
-                            Notification()
-                        ).setContentTitle("Accessibility Service").build(),
-                        ServiceInfo.    //API<29则service.startForeground(id, notification)
-                    )*/
                 })
                 RowPermission(PermissionSettingText.SCREEN_RECORD_TEXT,
                     isSwitchOpen = mediaProjectionServiceStartFlag,
                     onSwitchChange={
+                        if(!mediaProjectionServiceStartFlag.value){
+                            (ScreenCaptureUtil.mediaProjectionDataMap["startActivityForResultLauncher"] as ActivityResultLauncher<Intent>).launch(
+                                ScreenCaptureUtil.mediaProjectionDataMap["mediaProjectionIntent"] as Intent
+                            )
+                        }
+                        settingViewModel.viewModelScope.launch {
+                            if (mediaProjectionServiceStartFlag.value) {
+                                for (i in 1..5) {
+                                    delay(3000)
+                                    ScreenCaptureUtil.screenCapture()
+                                }
+
+                            }
+                        }
+
+                        //requestPermissions(arrayOf(Manifest.permission.BIND_ACCESSIBILITY_SERVICE), 1)
                    /* ServiceCompat.startForeground(
                         AccessibilityService(),
                         ForegroundServiceId.MEDIA_PROJECTION,
@@ -171,7 +180,6 @@ fun SettingScreen(
                             sharedPreferences.edit().putBoolean("ignore_battery", it).apply()
                         }
                         ignoreBatteryFlag.value = it
-                        println("==$it")
                     })
                 RowPermission(PermissionSettingText.FLOAT_WINDOW_TEXT,
                     isSwitchOpen = floatWindowFlag,
