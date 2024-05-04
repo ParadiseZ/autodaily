@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import androidx.activity.result.ActivityResultLauncher
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,12 +15,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -31,7 +31,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -42,6 +41,7 @@ import com.smart.autodaily.constant.PermissionSettingText
 import com.smart.autodaily.constant.SettingTitle
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.SettingType
+import com.smart.autodaily.service.MediaProjectionService
 import com.smart.autodaily.ui.conponent.CheckBoxSettingItem
 import com.smart.autodaily.ui.conponent.RadioButtonSettingItem
 import com.smart.autodaily.ui.conponent.SliderSecondSettingItem
@@ -72,13 +72,22 @@ fun SettingScreen(
             )
         }
     ){  paddingValues ->
-        val firstSettingOpenFlag = remember { mutableStateOf(false) }
-        val secondSettingOpenFlag = remember { mutableStateOf(false) }
+        val sharedPreferences = remember {
+            settingViewModel.context.getSharedPreferences("permission_setting", Context.MODE_PRIVATE)
+        }
+        val firstSettingOpenFlag = remember { mutableStateOf(
+            sharedPreferences.getBoolean("first_setting_expand", false)
+        ) }
+        val secondSettingOpenFlag = remember { mutableStateOf(
+            sharedPreferences.getBoolean("second_setting_expand", false)
+        ) }
         Column(modifier = Modifier
             .padding(paddingValues)
             .fillMaxWidth()){
             //全局脚本设置模块
-            CardCustom(firstSettingOpenFlag,SettingTitle.SETTING_GLOBAL)
+            CardCustom(firstSettingOpenFlag,SettingTitle.SETTING_GLOBAL,onClick = {
+                sharedPreferences.edit().putBoolean("first_setting_expand", it).apply()
+            })
             if (firstSettingOpenFlag.value) {
                 if (scriptSetLocalList.itemCount == 0) {
                     Column(modifier = Modifier.padding(Ui.SPACE_8)) {
@@ -107,20 +116,19 @@ fun SettingScreen(
             }
             Spacer(modifier = Modifier.height(Ui.SPACE_8))
             //权限设置模块
-            CardCustom(secondSettingOpenFlag, SettingTitle.SETTING_PERMISSION)
+            CardCustom(secondSettingOpenFlag, SettingTitle.SETTING_PERMISSION,onClick = {
+                sharedPreferences.edit().putBoolean("second_setting_expand", it).apply()
+            })
             var accessibilityServiceOpenFlagOld = false
             val accessibilityServiceOpenFlagNew = remember {
                 mutableStateOf(
                     ServiceUtil.isAccessibilityServiceEnabled(settingViewModel.context)
                 )
             }
-            val sharedPreferences = remember {
-                settingViewModel.context.getSharedPreferences("permission_setting", Context.MODE_PRIVATE)
-            }
-            val ignoreBatteryFlag = remember { mutableStateOf(sharedPreferences.getBoolean("ignore_battery", false)) }
+
             val floatWindowFlag = remember { mutableStateOf(sharedPreferences.getBoolean("float_window", false)) }
             if (secondSettingOpenFlag.value) {
-                RowPermission(
+                RowSwitchPermission(
                     labelText =PermissionSettingText.ACCESSBILITY_SERVICE_TEXT,
                     isSwitchOpen = accessibilityServiceOpenFlagNew,
                     onSwitchChange = {
@@ -130,7 +138,7 @@ fun SettingScreen(
                             null
                         )
                         settingViewModel.viewModelScope.launch {
-                            for (i in 1..30){
+                            for (i in 1..30){//检测30秒内是否开启成功
                                 delay(1000)
                                 accessibilityServiceOpenFlagNew.value = ServiceUtil.isAccessibilityServiceEnabled(settingViewModel.context)
                                 if (accessibilityServiceOpenFlagOld != accessibilityServiceOpenFlagNew.value) {
@@ -140,58 +148,46 @@ fun SettingScreen(
                             }
                         }
                 })
-                RowPermission(PermissionSettingText.SCREEN_RECORD_TEXT,
+                RowSwitchPermission(PermissionSettingText.SCREEN_RECORD_TEXT,
                     isSwitchOpen = mediaProjectionServiceStartFlag,
                     onSwitchChange={
-                        if(!mediaProjectionServiceStartFlag.value){
+                        if(mediaProjectionServiceStartFlag.value){
+                            settingViewModel.context.also {
+                                it.stopService(Intent(it, MediaProjectionService::class.java))
+                            }
+                        } else {//未开启则引导开启
                             (ScreenCaptureUtil.mediaProjectionDataMap["startActivityForResultLauncher"] as ActivityResultLauncher<Intent>).launch(
                                 ScreenCaptureUtil.mediaProjectionDataMap["mediaProjectionIntent"] as Intent
                             )
+                            ScreenCaptureUtil.mediaProjectionDataMap["resolver"]=settingViewModel.context.contentResolver//用来测试图片保存
                         }
-                        settingViewModel.viewModelScope.launch {
-                            if (mediaProjectionServiceStartFlag.value) {
-                                for (i in 1..5) {
-                                    delay(3000)
-                                    ScreenCaptureUtil.screenCapture()
-                                }
-
-                            }
-                        }
-
-                        //requestPermissions(arrayOf(Manifest.permission.BIND_ACCESSIBILITY_SERVICE), 1)
-                   /* ServiceCompat.startForeground(
-                        AccessibilityService(),
-                        ForegroundServiceId.MEDIA_PROJECTION,
-                        NotificationCompat.Builder(
-                            settingViewModel.context,
-                            Notification()
-                        ).setContentTitle("Accessibility Service").build(),
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION    //API<29则service.startForeground(id, notification)
-                    )*/
                 })
-                RowPermission(PermissionSettingText.IGNORE_BATTERIES_TEXT,
-                    isSwitchOpen = ignoreBatteryFlag,
-                    onSwitchChange = {
-                        if(it){
-                            startActivity(
-                                settingViewModel.context,
-                                Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                                null)
-                            sharedPreferences.edit().putBoolean("ignore_battery", it).apply()
-                        }
-                        ignoreBatteryFlag.value = it
+                RowIconButtonPermission(PermissionSettingText.IGNORE_BATTERIES_TEXT,
+                    iconButtonOnClick  = {
+                        startActivity(
+                            settingViewModel.context,
+                            Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                            null)
                     })
-                RowPermission(PermissionSettingText.FLOAT_WINDOW_TEXT,
+                RowSwitchPermission(PermissionSettingText.FLOAT_WINDOW_TEXT,
                     isSwitchOpen = floatWindowFlag,
                     onSwitchChange = {
-                        if(it){
-                            startActivity(
-                                settingViewModel.context,
-                                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                                null)
-                            sharedPreferences.edit().putBoolean("float_window", it).apply()
+                        startActivity(
+                            settingViewModel.context,
+                            Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                            null)
+                        settingViewModel.viewModelScope.launch {
+                            var canDrawOverlays : Boolean
+                            for (i in 1..30) {//检测30秒内是否开启成功
+                                delay(1000)
+                                canDrawOverlays= Settings.canDrawOverlays(settingViewModel.context)
+                                if(canDrawOverlays != floatWindowFlag.value){
+                                    floatWindowFlag.value = it
+                                    sharedPreferences.edit().putBoolean("float_window", floatWindowFlag.value).apply()
+                                    break
+                                }
+                            }
                         }
-                        floatWindowFlag.value = it
                     }
                 )
             }
@@ -203,11 +199,13 @@ fun SettingScreen(
 @Composable
 fun CardCustom(
     isExpanded: MutableState<Boolean>,
-    labelText: String
+    labelText: String,
+    onClick: (Boolean) -> Unit = {}
 ) {
     Card(
         onClick = {
             isExpanded.value = !isExpanded.value
+            onClick(isExpanded.value)
         }
     ) {
         Row (
@@ -220,6 +218,7 @@ fun CardCustom(
             )
             IconButton(onClick = {
                 isExpanded.value = !isExpanded.value
+                onClick(isExpanded.value)
             }) {
                 Icon(imageVector = (if (isExpanded.value) Icons.Default.KeyboardArrowDown else Icons.AutoMirrored.Filled.KeyboardArrowLeft)
                     , contentDescription = null)
@@ -229,13 +228,16 @@ fun CardCustom(
 }
 
 @Composable
-fun RowPermission(
+fun RowSwitchPermission(
     labelText: String,
     isSwitchOpen: MutableState<Boolean>,
     onSwitchChange: (Boolean) -> Unit
 ) {
     Row(
-        modifier = Modifier.padding(horizontal = Ui.SPACE_8,vertical = Ui.SPACE_4),
+        modifier = Modifier.padding(horizontal = Ui.SPACE_8,vertical = Ui.SPACE_4)
+            .clickable {
+                onSwitchChange(!isSwitchOpen.value)
+            },
         verticalAlignment = Alignment.CenterVertically
     ){
         Text(
@@ -246,7 +248,24 @@ fun RowPermission(
             onSwitchChange(it)
         })
     }
-    Spacer(modifier = Modifier
-        .fillMaxWidth()
-        .border(1.dp, MaterialTheme.colorScheme.onBackground))
+}
+
+@Composable
+fun RowIconButtonPermission(
+    labelText: String,
+    iconButtonOnClick: () -> Unit,
+){
+    Row(
+        modifier = Modifier.padding(horizontal = Ui.SPACE_8,vertical = Ui.SPACE_4)
+            .clickable { iconButtonOnClick() },
+        verticalAlignment = Alignment.CenterVertically
+    ){
+        Text(
+            modifier = Modifier.weight(1f),
+            text = labelText
+        )
+        IconButton(onClick = { iconButtonOnClick() }) {
+            Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+        }
+    }
 }

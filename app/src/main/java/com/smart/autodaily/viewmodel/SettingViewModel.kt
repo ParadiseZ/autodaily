@@ -14,11 +14,8 @@ import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.utils.PageUtil
 import kotlinx.coroutines.flow.Flow
 
-var mediaProjectionServiceStartFlag = mutableStateOf(false)
+var mediaProjectionServiceStartFlag = mutableStateOf(false)// 全局变量，用于控制媒体投影服务是否启动
 class SettingViewModel (app: Application) : BaseViewModel(application = app) {
-
-
-
     fun getGlobalSetting(): Flow<PagingData<ScriptSetInfo>> {
         return Pager(
             PagingConfig(

@@ -42,8 +42,9 @@ class MainActivity : ComponentActivity() {
                 startService(intent)
             }
         }else {
-            println("拒绝了mediaprojection权限申请")
+            println("拒绝了mediaProjection权限申请")
         }
+        stopService(intent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -80,6 +80,7 @@ class MediaProjectionService : Service() {
     // 销毁时释放资源
     override fun onDestroy() {
         super.onDestroy()
-        mediaProjectionServiceStartFlag.value = false
         ScreenCaptureUtil.release()
+        mediaProjectionServiceStartFlag.value = false
+        println("停止MediaProjectionService")
     }}
