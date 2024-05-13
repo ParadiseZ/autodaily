@@ -7,8 +7,10 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.smart.autodaily.data.dao.ScriptInfoDao
 import com.smart.autodaily.data.dao.ScriptSetInfoDao
+import com.smart.autodaily.data.dao.UserInfoDao
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptSetInfo
+import com.smart.autodaily.data.entity.UserInfo
 import java.util.Locale
 
 
@@ -16,7 +18,7 @@ var appDb: AppDb? = null
 
 @Database(version = 1,
     exportSchema = false,
-    entities = [ScriptInfo::class, ScriptSetInfo::class],
+    entities = [ScriptInfo::class, ScriptSetInfo::class, UserInfo::class],
 /*    autoMigrations = [
         AutoMigration(from = 2, to = 3)
     ]*/
@@ -24,6 +26,7 @@ var appDb: AppDb? = null
 abstract class AppDb  :  RoomDatabase(){
     abstract val scriptInfoDao : ScriptInfoDao
     abstract val scriptSetInfoDao : ScriptSetInfoDao
+    abstract val userInfoDao : UserInfoDao
     companion object {
         // For Singleton instantiation
 

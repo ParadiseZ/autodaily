@@ -1,5 +1,6 @@
 package com.smart.autodaily.ui.screen
 
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -34,17 +35,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.ContextCompat.startActivity
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.smart.autodaily.constant.AppBarTitle
 import com.smart.autodaily.constant.NavigationItem
+import com.smart.autodaily.constant.RunButtonClickResult
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
+import com.smart.autodaily.ui.LoginActivity
 import com.smart.autodaily.ui.conponent.RowScriptInfo
 import com.smart.autodaily.ui.conponent.SwipeRefreshList
 import com.smart.autodaily.ui.conponent.navSingleTopTo
 import com.smart.autodaily.viewmodel.HomeViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,14 +77,26 @@ fun HomeScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    homeViewModel.runButtonClick()
+                    homeViewModel.viewModelScope.launch{
+                        val clickResult =homeViewModel.runButtonClick()
+                        when(clickResult){
+                            RunButtonClickResult.NOT_LOGIN->{
+                                startActivity(homeViewModel.context,
+                                    Intent(homeViewModel.context, LoginActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                                    null
+                                )
+                            }
+                            RunButtonClickResult.LOGIN_SUCCESS->{
+                                Toast.makeText(homeViewModel.context,"已经登录", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
                 }
             ) {
                 Icon(Icons.Filled.PlayArrow, contentDescription = "开始运行")
             }
         },
     ){
-
         SwipeRefreshList(
             collectAsLazyPagingItems = localScriptList,
             modifier =modifier.padding(it),

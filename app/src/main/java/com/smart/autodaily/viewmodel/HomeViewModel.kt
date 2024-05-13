@@ -1,6 +1,7 @@
 package com.smart.autodaily.viewmodel
 
 import android.app.Application
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -8,14 +9,19 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.smart.autodaily.base.BaseViewModel
+import com.smart.autodaily.constant.RunButtonClickResult
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.dataresource.ScriptLocalDataSource
 import com.smart.autodaily.data.entity.ScriptInfo
+import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.utils.PageUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 
 class HomeViewModel(application: Application) : BaseViewModel(application = application) {
     var refreshing  =  mutableStateOf(false)
+    var userInfo : MutableState<UserInfo?> ?=null
     /*
     https://developer.android.google.cn/codelabs/basic-android-kotlin-compose-viewmodel-and-state?hl=zh-cn#4
     private val _uiState = MutableStateFlow( list )//在 Android 中，StateFlow 适用于必须维护可观察的不可变状态的类
@@ -64,6 +70,23 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
     }
 
 
-    fun runButtonClick(){
+    suspend fun runButtonClick() : RunButtonClickResult{
+        return checkLogin()
+    }
+
+    private suspend fun checkLogin() : RunButtonClickResult{
+        withContext(Dispatchers.IO) {
+            userInfo?: {
+                userInfo = mutableStateOf(
+                    appDb!!.userInfoDao.queryUserInfo()
+                )
+            }
+
+        }
+        userInfo?.value?.let {
+            return RunButtonClickResult.LOGIN_SUCCESS
+        }?:let{
+            return RunButtonClickResult.NOT_LOGIN
+        }
     }
 }

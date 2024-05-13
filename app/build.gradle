@@ -83,7 +83,7 @@ dependencies {
     implementation libs.retrofit
     implementation libs.converter.gson
     //反射
-    implementation libs.freereflection
+    //implementation libs.freereflection
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit

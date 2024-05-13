@@ -24,11 +24,27 @@
             android:theme="@style/Theme.AutoDaily">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <activity
+            android:name=".ui.LoginActivity"
+            android:theme="@style/Theme.AutoDaily"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.LOGIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ui.RegisterActivity"
+            android:theme="@style/Theme.AutoDaily"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.REGISTER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <service
             android:name=".service.AccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"

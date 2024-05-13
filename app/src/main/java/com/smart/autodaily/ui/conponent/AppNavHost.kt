@@ -23,8 +23,8 @@ fun AppNavHost(
     NavHost(
         modifier = Modifier.padding( Ui.SPACE_5 ),
         navController = navController,
-        //startDestination = NavigationItem.HOME.route,
-        startDestination = NavigationItem.PERSON.route,
+        startDestination = NavigationItem.HOME.route,
+        //startDestination = NavigationItem.PERSON.route,
     ) {
 
         composable(NavigationItem.SEARCH.route) {
