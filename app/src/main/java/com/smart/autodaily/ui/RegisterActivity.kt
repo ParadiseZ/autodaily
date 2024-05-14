@@ -20,6 +20,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,6 +35,7 @@ import com.smart.autodaily.ui.conponent.LockScreenLoading
 import com.smart.autodaily.utils.ToastUtil
 import com.smart.autodaily.utils.ValidUtil
 import com.smart.autodaily.viewmodel.RegisterViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class RegisterActivity : ComponentActivity() {
@@ -51,8 +53,11 @@ fun RegisterScreen() {
     val registerViewModel : RegisterViewModel = viewModel()
     // You should use proper state-hoisting for real-world scenarios
     var username by remember { mutableStateOf("") }
+    var emailCheckCode by remember { mutableStateOf("") }
+    var emailCheckButtonEnabled by remember { mutableStateOf(true) }
+    var waitTime by remember { mutableIntStateOf(0) }
     var password by remember { mutableStateOf("") }
-    var invitationCode by remember { mutableStateOf("") }
+    var inviteCodeFather by remember { mutableStateOf("") }
     val isLocked = remember { mutableStateOf(false) }
     LockScreenLoading(
         isLocked =isLocked,
@@ -74,6 +79,46 @@ fun RegisterScreen() {
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row (
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ){
+                    OutlinedTextField(
+                        value = emailCheckCode,
+                        onValueChange = { emailCheckCode = it },
+                        label = { Text("验证码") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Button(
+                        enabled = emailCheckButtonEnabled,
+                        onClick = {
+                            if(registerCheck(username,registerViewModel.context)){
+                                emailCheckButtonEnabled = false
+                                registerViewModel.viewModelScope.launch {
+                                    registerViewModel.sendEmailCode(username)
+                                    for (i in 1..60){
+                                        waitTime = 60 - i
+                                        delay(1000)
+                                    }
+                                    emailCheckButtonEnabled = true
+                                }
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        if(waitTime == 0){
+                            Text(text = "发送验证码")
+                        }else{
+                            Text(text = "重新发送($waitTime)")
+                        }
+
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -89,8 +134,8 @@ fun RegisterScreen() {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = invitationCode,
-                    onValueChange = { invitationCode = it },
+                    value = inviteCodeFather,
+                    onValueChange = { inviteCodeFather = it },
                     label = { Text("优惠码(选填)") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
@@ -119,7 +164,7 @@ fun RegisterScreen() {
                             if(registerCheck(username, password, registerViewModel.context)){
                                 registerViewModel.viewModelScope.launch {
                                     isLocked.value = true
-                                    val registerResult = registerViewModel.registerByEmail(username, password, invitationCode)
+                                    val registerResult = registerViewModel.registerByEmail(username,emailCheckCode, password, inviteCodeFather)
                                     isLocked.value = false
                                     when(registerResult){
                                         RegisterResult.REGISTER_SUCCESS ->{
@@ -160,6 +205,22 @@ fun RegisterScreen() {
 private fun registerCheck(username: String, password: String,context: Context):Boolean{
     if( username.isEmpty() || password.isEmpty() ) {
         ToastUtil.show(context, "邮箱或密码不能为空")
+    }
+    if ( ValidUtil.isValidEmail(username) ){
+        return true
+    }else{
+        if( ValidUtil.isNumeric(username) ){
+            return true
+        }else{
+            ToastUtil.show(context, "邮箱不符合规范")
+        }
+    }
+    return false
+}
+
+private fun registerCheck(username: String,context: Context):Boolean{
+    if( username.isEmpty()) {
+        ToastUtil.show(context, "邮箱不能为空")
     }
     if ( ValidUtil.isValidEmail(username) ){
         return true

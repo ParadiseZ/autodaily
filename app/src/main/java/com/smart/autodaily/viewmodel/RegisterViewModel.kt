@@ -9,9 +9,9 @@ import java.io.IOException
 
 class RegisterViewModel(app: Application): BaseViewModel(app) {
 
-    suspend fun registerByEmail(username: String, password: String, invataionCode: String): RegisterResult {
+    suspend fun registerByEmail(username: String,emailCheckCode : String, password: String, inviteCodeFather: String): RegisterResult {
         try {
-            val registerResult = RemoteApi.registerLoginRetrofit.registerByEmail(RegisterByEmailRequest(username, password, invataionCode))
+            val registerResult = RemoteApi.registerLoginRetrofit.registerByEmail(RegisterByEmailRequest(username, emailCheckCode, password, inviteCodeFather))
             if (registerResult.code == 200) {
                 return RegisterResult.REGISTER_SUCCESS
             } else {
@@ -22,5 +22,9 @@ class RegisterViewModel(app: Application): BaseViewModel(app) {
         }catch (e: Exception){
             return RegisterResult.UNKNOWN_ERROR
         }
+    }
+
+    suspend fun sendEmailCode(email: String){
+        RemoteApi.registerLoginRetrofit.sendEmailCode(email)
     }
 }
