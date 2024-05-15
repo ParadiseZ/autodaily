@@ -17,6 +17,14 @@ class Response<T> {
             }
         }
 
+        fun <T> success(msg: String): Response<T> {
+            return Response<T>().apply {
+                this.code = ResponseCode.SUCCESS.code
+                this.message = msg
+                this.data = null
+            }
+        }
+
         fun <T> success(data: T): Response<T> {
             return Response<T>().apply {
                 this.code = ResponseCode.SUCCESS.code

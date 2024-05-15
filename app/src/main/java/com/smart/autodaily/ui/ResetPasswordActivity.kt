@@ -33,30 +33,29 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.smart.autodaily.ui.conponent.LockScreenLoading
 import com.smart.autodaily.utils.ToastUtil
 import com.smart.autodaily.utils.ValidUtil
-import com.smart.autodaily.viewmodel.RegisterViewModel
+import com.smart.autodaily.viewmodel.ResetPasswordViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class RegisterActivity : ComponentActivity() {
+class ResetPasswordActivity: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             // Theme wrappers and other composables may be needed based on your application setup
-            RegisterScreen()
+            ResetPasswordScreem()
         }
     }
 }
 
 @Composable
-fun RegisterScreen() {
-    val registerViewModel : RegisterViewModel = viewModel()
+fun ResetPasswordScreem() {
+    val resetPwdViewModel : ResetPasswordViewModel = viewModel()
     // You should use proper state-hoisting for real-world scenarios
     var username by remember { mutableStateOf("") }
     var emailCheckCode by remember { mutableStateOf("") }
     var emailCheckButtonEnabled by remember { mutableStateOf(true) }
     var waitTime by remember { mutableIntStateOf(0) }
     var password by remember { mutableStateOf("") }
-    var inviteCodeFather by remember { mutableStateOf("") }
     val isLocked = remember { mutableStateOf(false) }
     LockScreenLoading(
         isLocked =isLocked,
@@ -68,7 +67,7 @@ fun RegisterScreen() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(text = "注册AutoDaily", style = MaterialTheme.typography.bodyLarge)
+                Text(text = "重置密码", style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
@@ -97,17 +96,17 @@ fun RegisterScreen() {
                     Button(
                         enabled = emailCheckButtonEnabled,
                         onClick = {
-                            if(registerCheck(username,registerViewModel.context)){
+                            if(resetCheck(username,resetPwdViewModel.context)){
                                 emailCheckButtonEnabled = false
-                                registerViewModel.viewModelScope.launch {
-                                    val result = registerViewModel.sendEmailCode(username)
-                                    if (result.code == 200){
+                                resetPwdViewModel.viewModelScope.launch {
+                                    val result = resetPwdViewModel.sendEmailCode(username)
+                                    if (result.code== 200){
                                         for (i in 1..60){
                                             waitTime = 60 - i
                                             delay(1000)
                                         }
                                     }else{
-                                        ToastUtil.show(registerViewModel.context,result.message.toString())
+                                        ToastUtil.show(resetPwdViewModel.context,result.message.toString())
                                     }
                                     emailCheckButtonEnabled = true
                                 }
@@ -129,20 +128,10 @@ fun RegisterScreen() {
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("密码") },
+                    label = { Text("新密码") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = inviteCodeFather,
-                    onValueChange = { inviteCodeFather = it },
-                    label = { Text("邀请码(选填)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -153,7 +142,7 @@ fun RegisterScreen() {
                 ){
                     Button(
                         onClick = {
-                            registerViewModel.context.startActivity(
+                            resetPwdViewModel.context.startActivity(
                                 Intent("android.intent.action.LOGIN")
                                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             )
@@ -165,19 +154,14 @@ fun RegisterScreen() {
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            if(registerCheck(username, password, registerViewModel.context)){
-                                registerViewModel.viewModelScope.launch {
+                            if(resetCheck(username, password, resetPwdViewModel.context)){
+                                resetPwdViewModel.viewModelScope.launch {
                                     isLocked.value = true
-                                    val registerResult = registerViewModel.registerByEmail(username,emailCheckCode, password, inviteCodeFather)
+                                    val resetResult = resetPwdViewModel.resetPwdByEmail(username,emailCheckCode, password)
                                     isLocked.value = false
-                                    registerResult.message?.let {
-                                        ToastUtil.show(registerViewModel.context,
-                                            it
-                                        )
-                                    }
-                                    if (registerResult.code == 200){
-                                        ToastUtil.show(registerViewModel.context, "注册成功！")
-                                        registerViewModel.context.startActivity(
+                                    ToastUtil.show(resetPwdViewModel.context,resetResult.message.toString())
+                                    if (resetResult.code==200){
+                                        resetPwdViewModel.context.startActivity(
                                             Intent("android.intent.action.LOGIN")
                                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                         )
@@ -187,7 +171,7 @@ fun RegisterScreen() {
                         },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(text = "注册")
+                        Text(text = "重置密码")
                     }
                 }
 
@@ -197,7 +181,7 @@ fun RegisterScreen() {
 
 }
 
-private fun registerCheck(username: String, password: String,context: Context):Boolean{
+private fun resetCheck(username: String, password: String,context: Context):Boolean{
     if( username.isEmpty() || password.isEmpty() ) {
         ToastUtil.show(context, "邮箱或密码不能为空")
     }
@@ -213,7 +197,7 @@ private fun registerCheck(username: String, password: String,context: Context):B
     return false
 }
 
-private fun registerCheck(username: String,context: Context):Boolean{
+private fun resetCheck(username: String,context: Context):Boolean{
     if( username.isEmpty()) {
         ToastUtil.show(context, "邮箱不能为空")
     }

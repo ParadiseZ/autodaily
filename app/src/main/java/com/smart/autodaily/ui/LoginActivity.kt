@@ -18,6 +18,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,7 +30,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.smart.autodaily.constant.LoginResult
 import com.smart.autodaily.ui.conponent.LockScreenLoading
 import com.smart.autodaily.utils.ToastUtil
 import com.smart.autodaily.utils.ValidUtil
@@ -108,20 +108,15 @@ fun LoginScreen() {
                                     isLocked.value = true
                                     val loginResult = loginViewMode.loginByEmail(username, password)
                                     isLocked.value = false
-                                    when(loginResult){
-                                        LoginResult.LOGIN_SUCCESS->{
-                                            loginViewMode.context.startActivity(
-                                                Intent("android.intent.action.MAIN").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    if (loginResult.code==200){
+                                        loginViewMode.context.startActivity(
+                                            Intent("android.intent.action.MAIN").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        )
+                                    }else{
+                                        loginResult.message?.let {
+                                            ToastUtil.show(loginViewMode.context,
+                                                it
                                             )
-                                        }
-                                        LoginResult.LOGIN_FAILED->{
-                                            ToastUtil.show(loginViewMode.context, "登录失败，请检查邮箱或密码是否正确")
-                                        }
-                                        LoginResult.NETWORK_ERROR->{
-                                            ToastUtil.show(loginViewMode.context, "连接网络超时，请稍后重试")
-                                        }
-                                        LoginResult.UNKNOWN_ERROR -> {
-                                            ToastUtil.show(loginViewMode.context, "未知异常，请稍后重试")
                                         }
                                     }
                                 }
@@ -130,6 +125,18 @@ fun LoginScreen() {
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(text = "登录")
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = {
+                        loginViewMode.context.startActivity(
+                            Intent("android.intent.action.ResetPassword").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        )
+                    }) {
+                        Text(text = "忘记密码？")
                     }
                 }
             }
