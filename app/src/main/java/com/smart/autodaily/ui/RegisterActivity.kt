@@ -89,7 +89,8 @@ fun RegisterScreen() {
                         onValueChange = { emailCheckCode = it },
                         label = { Text("验证码") },
                         modifier = Modifier.fillMaxWidth()
-                            .weight(3f),
+                            .weight(3f)
+                            .alignByBaseline(),
                         singleLine = true
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -100,7 +101,7 @@ fun RegisterScreen() {
                             if(registerCheck(username,registerViewModel.context)){
                                 emailCheckButtonEnabled = false
                                 registerViewModel.viewModelScope.launch {
-                                    val result = registerViewModel.sendEmailCode(username)
+                                    val result = registerViewModel.sendEmailCode(username, 0)
                                     if (result.code == 200){
                                         for (i in 1..60){
                                             waitTime = 60 - i
@@ -113,12 +114,12 @@ fun RegisterScreen() {
                                 }
                             }
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1.5f).alignByBaseline()
                     ) {
                         if(waitTime == 0){
-                            Text(text = "发送验证码")
+                            Text(text = "验证码")
                         }else{
-                            Text(text = "($waitTime)秒后重新发送")
+                            Text(text = waitTime.toString())
                         }
 
                     }
@@ -200,6 +201,7 @@ fun RegisterScreen() {
 private fun registerCheck(username: String, password: String,context: Context):Boolean{
     if( username.isEmpty() || password.isEmpty() ) {
         ToastUtil.show(context, "邮箱或密码不能为空")
+        return false
     }
     if ( ValidUtil.isValidEmail(username) ){
         return true

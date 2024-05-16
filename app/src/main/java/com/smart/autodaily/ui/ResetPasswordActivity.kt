@@ -81,14 +81,15 @@ fun ResetPasswordScreem() {
 
                 Row (
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    horizontalArrangement = Arrangement.SpaceEvenly,
                 ){
                     OutlinedTextField(
                         value = emailCheckCode,
                         onValueChange = { emailCheckCode = it },
                         label = { Text("验证码") },
                         modifier = Modifier.fillMaxWidth()
-                            .weight(3f),
+                            .weight(3f)
+                            .alignByBaseline(),
                         singleLine = true
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -99,7 +100,7 @@ fun ResetPasswordScreem() {
                             if(resetCheck(username,resetPwdViewModel.context)){
                                 emailCheckButtonEnabled = false
                                 resetPwdViewModel.viewModelScope.launch {
-                                    val result = resetPwdViewModel.sendEmailCode(username)
+                                    val result = resetPwdViewModel.sendEmailCode(username,1)
                                     if (result.code== 200){
                                         for (i in 1..60){
                                             waitTime = 60 - i
@@ -112,12 +113,12 @@ fun ResetPasswordScreem() {
                                 }
                             }
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1.5f).alignByBaseline()
                     ) {
                         if(waitTime == 0){
-                            Text(text = "发送验证码")
+                            Text(text = "验证码")
                         }else{
-                            Text(text = "($waitTime)秒后重新发送")
+                            Text(text = waitTime.toString())
                         }
 
                     }
@@ -184,6 +185,7 @@ fun ResetPasswordScreem() {
 private fun resetCheck(username: String, password: String,context: Context):Boolean{
     if( username.isEmpty() || password.isEmpty() ) {
         ToastUtil.show(context, "邮箱或密码不能为空")
+        return false
     }
     if ( ValidUtil.isValidEmail(username) ){
         return true

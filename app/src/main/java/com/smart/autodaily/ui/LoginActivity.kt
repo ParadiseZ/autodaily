@@ -30,6 +30,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.smart.autodaily.MainActivity
 import com.smart.autodaily.ui.conponent.LockScreenLoading
 import com.smart.autodaily.utils.ToastUtil
 import com.smart.autodaily.utils.ValidUtil
@@ -110,7 +111,7 @@ fun LoginScreen() {
                                     isLocked.value = false
                                     if (loginResult.code==200){
                                         loginViewMode.context.startActivity(
-                                            Intent("android.intent.action.MAIN").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                            Intent(loginViewMode.context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                         )
                                     }else{
                                         loginResult.message?.let {

@@ -19,7 +19,7 @@ interface RegisterLoginApi {
     suspend fun registerByEmail(@Body request: RegisterByEmailRequest): Response<String>
 
     @GET("/sendEmailCode")
-    suspend fun sendEmailCode(@Query("email") email: String):Response<String>
+    suspend fun sendEmailCode(@Query("email") email: String,@Query("msgType") msgType: Short):Response<String>
 
     @POST("/resetPwdByEmail")
     suspend fun resetPwdByEmail(@Body request: RestPwdByEmailRequest):Response<String>

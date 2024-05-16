@@ -9,21 +9,21 @@ import java.io.IOException
 
 class ResetPasswordViewModel(app: Application): BaseViewModel(app) {
     suspend fun resetPwdByEmail(email: String, code: String, pwd: String) : Response<String>{
-        try {
-            return RemoteApi.registerLoginRetrofit.resetPwdByEmail( RestPwdByEmailRequest(email, code, pwd) )
+        return try {
+            RemoteApi.registerLoginRetrofit.resetPwdByEmail( RestPwdByEmailRequest(email, code, pwd) )
         }catch (e:IOException){
-            return Response.error(201,"发送失败，网络异常")
+            Response.error(201,"发送失败，网络异常")
         }catch (e : Exception){
-            return Response.error(201,"发送失败，未知异常，请稍后重试")
+            Response.error(201,"发送失败，未知异常，请稍后重试")
         }
     }
-    suspend fun sendEmailCode(email: String):Response<String> {
-        try {
-            return RemoteApi.registerLoginRetrofit.sendEmailCode(email)
+    suspend fun sendEmailCode(email: String, msgType: Short):Response<String> {
+        return try {
+            RemoteApi.registerLoginRetrofit.sendEmailCode(email, msgType)
         }catch (e:IOException){
-            return Response.error(201,"发送失败，网络异常")
+            Response.error(201,"发送失败，网络异常")
         }catch (e : Exception){
-            return Response.error(201,"发送失败，未知异常，请稍后重试")
+            Response.error(201,"发送失败，未知异常，请稍后重试")
         }
     }
 }

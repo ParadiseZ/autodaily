@@ -10,23 +10,22 @@ import java.io.IOException
 class RegisterViewModel(app: Application): BaseViewModel(app) {
 
     suspend fun registerByEmail(username: String,emailCheckCode : String, password: String, inviteCodeFather: String): Response<String> {
-        try {
-            val registerResult = RemoteApi.registerLoginRetrofit.registerByEmail(RegisterByEmailRequest(username, emailCheckCode, password, inviteCodeFather))
-            return registerResult
+        return try {
+            RemoteApi.registerLoginRetrofit.registerByEmail(RegisterByEmailRequest(username, emailCheckCode, password, inviteCodeFather))
         }catch (e: IOException) {
-            return Response.error("网络异常，注册失败")
+            Response.error("网络异常，注册失败")
         }catch (e: Exception){
-            return Response.error("未知异常，注册失败")
+            Response.error("未知异常，注册失败")
         }
     }
 
-    suspend fun sendEmailCode(email: String):Response<String> {
-        try {
-            return RemoteApi.registerLoginRetrofit.sendEmailCode(email)
+    suspend fun sendEmailCode(email: String,msgType : Short):Response<String> {
+        return try {
+            RemoteApi.registerLoginRetrofit.sendEmailCode(email, msgType)
         }catch (e:IOException){
-            return Response.error(201,"发送失败，网络异常")
+            Response.error(201,"发送失败，网络异常")
         }catch (e : Exception){
-            return Response.error(201,"发送失败，未知异常，请稍后重试")
+            Response.error(201,"发送失败，未知异常，请稍后重试")
         }
     }
 }

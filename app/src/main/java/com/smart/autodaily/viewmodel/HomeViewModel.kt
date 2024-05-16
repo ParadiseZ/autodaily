@@ -15,9 +15,7 @@ import com.smart.autodaily.data.dataresource.ScriptLocalDataSource
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.utils.PageUtil
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.withContext
 
 class HomeViewModel(application: Application) : BaseViewModel(application = application) {
     var refreshing  =  mutableStateOf(false)
@@ -70,18 +68,15 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
     }
 
 
-    suspend fun runButtonClick() : RunButtonClickResult{
+    fun runButtonClick() : RunButtonClickResult{
         return checkLogin()
     }
 
-    private suspend fun checkLogin() : RunButtonClickResult{
-        withContext(Dispatchers.IO) {
-            userInfo?: {
-                userInfo = mutableStateOf(
-                    appDb!!.userInfoDao.queryUserInfo()
-                )
-            }
-
+    private fun checkLogin() : RunButtonClickResult{
+        if (userInfo==null){
+            userInfo = mutableStateOf(
+                appDb!!.userInfoDao.queryUserInfo()
+            )
         }
         userInfo?.value?.let {
             return RunButtonClickResult.LOGIN_SUCCESS

@@ -3,6 +3,7 @@ package com.smart.autodaily.data.dao
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.smart.autodaily.data.entity.ScriptInfo
@@ -21,10 +22,10 @@ interface ScriptInfoDao {
     @Query("SELECT * FROM Script_Info WHERE script_id = :scriptId")
     fun getScriptInfoByScriptId(scriptId : Int) : ScriptInfo
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert( scriptInfo: ScriptInfo )
 
-    @Update
+    @Update(onConflict = OnConflictStrategy.REPLACE)
     fun update( scriptInfo: ScriptInfo )
 
     @Delete
