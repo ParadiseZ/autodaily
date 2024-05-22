@@ -11,7 +11,7 @@ import com.smart.autodaily.constant.NavigationItem
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.ui.screen.HomeScreen
 import com.smart.autodaily.ui.screen.LogScreen
-import com.smart.autodaily.ui.screen.PersonalScreen
+import com.smart.autodaily.ui.screen.PersonScreen
 import com.smart.autodaily.ui.screen.SearchScreen
 import com.smart.autodaily.ui.screen.SettingScreen
 
@@ -40,7 +40,7 @@ fun AppNavHost(
             SettingScreen(modifier, navController)
         }
         composable(NavigationItem.PERSON.route){
-            PersonalScreen(modifier, navController)
+            PersonScreen(modifier, navController)
         }
     }
 }
