@@ -2,10 +2,10 @@ package com.smart.autodaily.api
 
 import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.data.entity.resp.Response
-import retrofit2.http.Field
-import retrofit2.http.POST
+import retrofit2.http.GET
+import retrofit2.http.Query
 
 interface UserKeyApi {
-    @POST("/inputKey")
-    suspend fun inputKey(@Field("userId") userId :Int, @Field("keyValue") keyValue :String ): Response<UserInfo>
+    @GET("/inputKey")
+    suspend fun inputKey(@Query("userId") userId :Int, @Query("keyValue") keyValue :String ): Response<UserInfo>
 }

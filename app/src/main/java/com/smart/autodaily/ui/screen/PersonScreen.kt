@@ -70,8 +70,10 @@ fun PersonScreen(modifier: Modifier,
     val keyInfo = remember { mutableStateOf("") }
     //是否开启确认按钮
     var keyConfirmEnable by remember { mutableStateOf(true) }
-    LaunchedEffect(key1 = true) {
-        user =  personViewModel.getUserInfoLocal()!!
+    //登出后更新user
+    val logout = remember { mutableStateOf(false) }
+    LaunchedEffect(key1 = logout.value) {
+        user =  personViewModel.getUserInfoLocal()
     }
     Column{
         SingleBorderBox(
@@ -95,7 +97,20 @@ fun PersonScreen(modifier: Modifier,
                         TextCustomFirst("A币："+it.password)
                     }
                 }
-                TextButton(onClick = { }) {
+                TextButton(
+                    onClick = {
+                        if (user == null){
+                            personViewModel.context.startActivity(
+                                Intent("android.intent.action.LOGIN").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            )
+                        }else{
+                            personViewModel.viewModelScope.launch {
+                                personViewModel.logout(user!!)
+                                logout.value = true
+                            }
+                        }
+                    }
+                ) {
                     user?.let {
                         Text(text = "退出>")
                     } ?: let{
@@ -115,7 +130,7 @@ fun PersonScreen(modifier: Modifier,
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ){
-            PersonColumnFirst("类型","年度")
+            PersonColumnFirst("类型",user?.keyTypeName?:"--")
             SingleBorderBox(
                 modifier = Modifier
                     .width(1.dp)
@@ -135,7 +150,13 @@ fun PersonScreen(modifier: Modifier,
         }
 
         PersonRowFirst(textLabel = "兑换码", imageVector = Icons.Default.ShoppingCart){
-            openDialog.value = !openDialog.value
+            if (user == null){
+                personViewModel.context.startActivity(
+                    Intent("android.intent.action.LOGIN").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
+            }else{
+                openDialog.value = !openDialog.value
+            }
         }
 
         PersonRowFirst(textLabel = "输入好友邀请码", imageVector = Icons.Default.AccountCircle){
@@ -164,15 +185,13 @@ fun PersonScreen(modifier: Modifier,
                 OutlinedButton(
                     enabled = keyConfirmEnable,
                     onClick = {
-                    if (user == null){
-                        personViewModel.context.startActivity(
-                            Intent("android.intent.action.LOGIN").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        )
-                    }else{
                         keyConfirmEnable = false
                         personViewModel.viewModelScope.launch {
                             val result = personViewModel.inputKey(user!!.userId,keyInfo.value)
-                            openDialog.value = false
+                            if (result.code == 200){
+                                openDialog.value = false
+                                keyConfirmEnable = true
+                            }
                             result.data?.let {
                                 user = it
                             }
@@ -184,7 +203,7 @@ fun PersonScreen(modifier: Modifier,
                             keyConfirmEnable = true
                         }
                     }
-                }){
+                ){
                     Text(text = "确定")
                 }
             },

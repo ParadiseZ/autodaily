@@ -16,11 +16,11 @@ data class UserInfo (
     @ColumnInfo(name = "invite_code")    @SerializedName("invite_code")  val inviteCode: String,
     @ColumnInfo(name = "invite_code_father")   @SerializedName("invite_code_father")   val inviteCodeFather: String?,
     //类型名称
-    @ColumnInfo(name = "key_type_name")   @SerializedName("key_type_name")   var keyTypeName: String,
+    @ColumnInfo(name = "key_type_name")   @SerializedName("key_type_name")   var keyTypeName: String?,
     //可激活个数
-    @ColumnInfo(name = "can_activate_num")   @SerializedName("can_activate_num")   var canActivateNum: Byte,
+    @ColumnInfo(name = "can_activate_num")   @SerializedName("can_activate_num")   var canActivateNum: Byte?,
     //过期时间
-    @ColumnInfo(name = "expiration_time")   @SerializedName("expiration_time")   var expirationTime: String,
+    @ColumnInfo(name = "expiration_time")   @SerializedName("expiration_time")   var expirationTime: String?,
     //注册时间
     @ColumnInfo(name = "register_time")    @SerializedName("register_time")  val registerTime: String,
     //是否登录

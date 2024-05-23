@@ -21,9 +21,15 @@ class PersonViewModel(app : Application)  : BaseViewModel(application = app) {
     suspend fun inputKey(userId : Int, key : String):Response<UserInfo>{
         return ExceptionUtil.tryCatch(
             tryFun = {
-                RemoteApi.userKeyRetrofit.inputKey(userId, key)
+                RemoteApi.userKeyRetrofit.inputKey(userId,key)
             },
-            exceptionMsg ="激活码输入失败"
+            exceptionMsg ="兑换失败"
         )
+    }
+
+    suspend fun logout(userInfo : UserInfo){
+        withContext(Dispatchers.IO){
+            appDb!!.userInfoDao.delete(userInfo)
+        }
     }
 }

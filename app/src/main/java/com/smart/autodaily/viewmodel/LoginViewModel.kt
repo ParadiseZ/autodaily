@@ -20,6 +20,7 @@ class LoginViewModel(app: Application): BaseViewModel(app) {
                     appDb!!.userInfoDao.insert(it)
                 }
             }
+            println(loginResult.data.toString())
             return loginResult
         }catch (e: IOException){
             return Response.error("网络异常，登录失败")
