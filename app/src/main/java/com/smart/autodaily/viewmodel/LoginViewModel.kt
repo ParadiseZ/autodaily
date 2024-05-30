@@ -4,8 +4,8 @@ import android.app.Application
 import com.smart.autodaily.api.RemoteApi
 import com.smart.autodaily.base.BaseViewModel
 import com.smart.autodaily.data.appDb
-import com.smart.autodaily.data.entity.LoginByEmailRequest
 import com.smart.autodaily.data.entity.UserInfo
+import com.smart.autodaily.data.entity.request.LoginByEmailRequest
 import com.smart.autodaily.data.entity.resp.Response
 import java.io.IOException
 

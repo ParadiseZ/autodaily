@@ -32,8 +32,8 @@ fun CheckBoxSettingItem(
 ) {
     var isChecked by remember {
         mutableStateOf(
-            if (setting.set_value.isNotBlank()) setting.set_value.toBoolean()
-            else  setting.set_default_value.toBoolean()
+            if (setting.setValue.isNotBlank()) setting.setValue.toBoolean()
+            else  setting.setDefaultValue.toBoolean()
         )
     }
     Box(modifier = modifier
@@ -42,7 +42,7 @@ fun CheckBoxSettingItem(
         .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), shape = RoundedCornerShape(5.dp))
         .clickable {
             isChecked = !isChecked
-            setting.set_value = isChecked.toString()
+            setting.setValue = isChecked.toString()
             onCheckedChange(setting)
         }
     ){
@@ -52,10 +52,10 @@ fun CheckBoxSettingItem(
         ){
             Checkbox(checked = isChecked, onCheckedChange = {
                 isChecked = it
-                setting.set_value = it.toString()
+                setting.setValue = it.toString()
                 onCheckedChange(setting)
             })
-            Text(text = setting.set_name)
+            Text(text = setting.setName)
             Spacer(modifier = Modifier.width(Ui.SPACE_4))
         }
     }

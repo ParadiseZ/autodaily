@@ -3,7 +3,7 @@ package com.smart.autodaily.viewmodel
 import android.app.Application
 import com.smart.autodaily.api.RemoteApi
 import com.smart.autodaily.base.BaseViewModel
-import com.smart.autodaily.data.entity.RestPwdByEmailRequest
+import com.smart.autodaily.data.entity.request.RestPwdByEmailRequest
 import com.smart.autodaily.data.entity.resp.Response
 import java.io.IOException
 

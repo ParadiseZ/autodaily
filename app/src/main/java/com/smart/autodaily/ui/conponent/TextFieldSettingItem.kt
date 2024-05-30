@@ -27,7 +27,7 @@ fun TextFieldSettingItem(
 ){
     var textInput by remember {
         mutableStateOf(
-            if (setting.set_value.isBlank()) setting.set_default_value else setting.set_value
+            if (setting.setValue.isBlank()) setting.setDefaultValue else setting.setValue
         )
     }
     var isError by rememberSaveable { mutableStateOf(false) }
@@ -39,7 +39,7 @@ fun TextFieldSettingItem(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = setting.set_name)
+        Text(text = setting.setName)
         OutlinedTextField(
             modifier = Modifier
                 .semantics {
@@ -51,7 +51,7 @@ fun TextFieldSettingItem(
             maxLines = 1,
             onValueChange = {
                 isError = false
-                setting.set_value = it
+                setting.setValue = it
                 textInput = it
                 onValueChange(setting)
             },

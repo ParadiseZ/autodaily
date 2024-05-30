@@ -101,7 +101,7 @@ fun SettingScreen(
                     ){
                         items(scriptSetLocalList.itemCount) { index ->
                             scriptSetLocalList[index]?.let { setting ->
-                                when (setting.set_type) {
+                                when (setting.setType) {
                                     SettingType.SWITCH -> SwitchSettingItem(setting,onSwitchChange = {  settingViewModel.updateGlobalSetting(setting)  })
                                     SettingType.SLIDER -> SliderSettingItem(setting,onSliderValueChange = {  settingViewModel.updateGlobalSetting(setting)  })
                                     SettingType.TEXT_FIELD -> TextFieldSettingItem(setting,onValueChange = {  settingViewModel.updateGlobalSetting(setting)  })

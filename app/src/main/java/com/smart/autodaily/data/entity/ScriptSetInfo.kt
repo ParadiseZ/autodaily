@@ -2,24 +2,25 @@ package com.smart.autodaily.data.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import com.google.gson.annotations.SerializedName
 
 @Entity(tableName = "script_set_info", primaryKeys = ["script_id", "set_id"])
 data class ScriptSetInfo(
-    @ColumnInfo(name = "script_id") val script_id: Int,
-    @ColumnInfo(name = "set_id") val set_id: Int,
-    @ColumnInfo(name = "checked_flag") val checked_flag: Boolean,
-    @ColumnInfo(name = "set_type") val set_type: SettingType,
-    @ColumnInfo(name = "set_name") val set_name: String,
-    @ColumnInfo(name = "set_desc") val set_desc: String,
-    @ColumnInfo(name = "set_parent_id") val set_parent_id: Int,
-    @ColumnInfo(name = "set_level") val set_level: Int,
-    @ColumnInfo(name = "set_default_value") val set_default_value: String,
-    @ColumnInfo(name = "set_value") var set_value: String,
-    @ColumnInfo(name = "set_range") val set_range: String,
-    @ColumnInfo(name = "set_step") val set_step: Int,
-    @ColumnInfo(name = "is_show") val is_show: Boolean,
-    @ColumnInfo(name = "result_flag") val result_flag: Boolean,
-    @ColumnInfo(name = "once_flag") val once_flag: Boolean
+    @ColumnInfo(name = "script_id")@SerializedName("script_id") val scriptId: Int,
+    @ColumnInfo(name = "set_id") @SerializedName("set_id") val setId: Int,
+    @ColumnInfo(name = "checked_flag") @SerializedName("checked_flag") val checkedFlag: Boolean,
+    @ColumnInfo(name = "set_type")  @SerializedName("set_type") val setType: SettingType,
+    @ColumnInfo(name = "set_name") @SerializedName("set_name") val setName: String,
+    @ColumnInfo(name = "set_desc") @SerializedName("set_desc") val setDesc: String,
+    @ColumnInfo(name = "set_parent_id") @SerializedName("set_parent_id") val setParentId: Int,
+    @ColumnInfo(name = "set_level") @SerializedName("set_level") val setLevel: Int,
+    @ColumnInfo(name = "set_default_value") @SerializedName("set_default_value") val setDefaultValue: String,
+    @ColumnInfo(name = "set_value") @SerializedName("set_value") var setValue: String,
+    @ColumnInfo(name = "set_range") @SerializedName("set_range") val setRange: String,
+    @ColumnInfo(name = "set_step") @SerializedName("set_step") val setStep: Int,
+    @ColumnInfo(name = "is_show") @SerializedName("is_show") val isShow: Boolean,
+    @ColumnInfo(name = "result_flag") @SerializedName("result_flag") val resultFlag: Boolean,
+    @ColumnInfo(name = "once_flag") @SerializedName("once_flag") val onceFlag: Boolean
 )
 
 

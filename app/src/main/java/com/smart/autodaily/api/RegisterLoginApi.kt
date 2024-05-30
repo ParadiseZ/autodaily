@@ -1,9 +1,9 @@
 package com.smart.autodaily.api
 
-import com.smart.autodaily.data.entity.LoginByEmailRequest
-import com.smart.autodaily.data.entity.RegisterByEmailRequest
-import com.smart.autodaily.data.entity.RestPwdByEmailRequest
 import com.smart.autodaily.data.entity.UserInfo
+import com.smart.autodaily.data.entity.request.LoginByEmailRequest
+import com.smart.autodaily.data.entity.request.RegisterByEmailRequest
+import com.smart.autodaily.data.entity.request.RestPwdByEmailRequest
 import com.smart.autodaily.data.entity.resp.Response
 import retrofit2.http.Body
 import retrofit2.http.GET

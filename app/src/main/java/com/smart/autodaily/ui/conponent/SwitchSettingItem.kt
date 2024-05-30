@@ -21,15 +21,15 @@ fun SwitchSettingItem(
     modifier: Modifier = Modifier
 ) {
     var isChecked by remember { mutableStateOf(
-        if (setting.set_value.isBlank()) setting.set_default_value.toBoolean()
-        else setting.set_value.toBoolean()
+        if (setting.setValue.isBlank()) setting.setDefaultValue.toBoolean()
+        else setting.setValue.toBoolean()
     ) }
     Row(modifier = Modifier.padding(all = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(text = setting.set_name, modifier = Modifier.weight(1f))
+        Text(text = setting.setName, modifier = Modifier.weight(1f))
         Switch(checked = isChecked,
             onCheckedChange = {
                 isChecked = it
-                setting.set_value = it.toString()
+                setting.setValue = it.toString()
                 onSwitchChange(setting)
             })
     }

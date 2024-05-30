@@ -13,40 +13,66 @@ import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.dataresource.ScriptNetDataSource
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.utils.PageUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SearchViewModel(application: Application)   : BaseViewModel(application = application)  {
-
+    //远程数据
+    private val _remoteScriptList = MutableStateFlow<PagingData<ScriptInfo>>(PagingData.empty())
+    val remoteScriptList: StateFlow<PagingData<ScriptInfo>> = _remoteScriptList
+    //搜索文本
+    private val _searchText = MutableStateFlow("")
+    //加载远程数据标志
+    private val _loadDataFlagFlow = MutableStateFlow(false)
+    val loadDataFlagFlow: StateFlow<Boolean> get() = _loadDataFlagFlow
+    /*
+    *处理搜索文本
+    * */
+    fun changeSearchText(key : String){
+        this._searchText.value = key
+    }
     /*
     * 搜索脚本信息，并和数据库比对，更新flow流以更新is_downloaded标志
     * */
-    fun searchScriptByPage(searchText: String?=null): Flow<PagingData<ScriptInfo>> {
+    suspend fun getRemoteScriptList(localList : List<ScriptInfo>) {
+        withContext(Dispatchers.IO) {
+            try {
+                searchScriptByPage(localList).collectLatest {
+                    _remoteScriptList.value = it
+                }
+            }catch (e : Exception){
+                println(e.message)
+            }
+        }
+    }
+    private fun searchScriptByPage(localList : List<ScriptInfo>): Flow<PagingData<ScriptInfo>> {
         var updatedNetSearchResult : Flow<PagingData<ScriptInfo>>? = null
         val netSearchResult = Pager(PagingConfig(pageSize = PageUtil.PAGE_SIZE, initialLoadSize =PageUtil.INITIALOAD_SIZE, prefetchDistance = PageUtil.PREFETCH_DISTANCE)) {
             ScriptNetDataSource(
                 RemoteApi.searchDownRetrofit,
-                searchText
+                _searchText.value
             )
         }
-        val localSearchResult = appDb?.scriptInfoDao?.getScriptIdAll()
-        localSearchResult?.let {
-            updatedNetSearchResult =netSearchResult.flow.map { pagingData ->
-                pagingData.map{ scriptInfo ->
-                    if (scriptInfo.script_id in localSearchResult){
-                        scriptInfo.is_downloaded = 1
-                    }
-                    scriptInfo
+        updatedNetSearchResult =netSearchResult.flow.map { pagingData ->
+            pagingData.map{ scriptInfo ->
+                if (scriptInfo.scriptId in localList.map { it.scriptId }){
+                    scriptInfo.isDownloaded = 1
                 }
+                scriptInfo
             }
         }
-        return if (updatedNetSearchResult == null){
-            netSearchResult.flow.cachedIn(viewModelScope)
-        }else{
-            updatedNetSearchResult!!.cachedIn(viewModelScope)
-        }
+        return updatedNetSearchResult.cachedIn(viewModelScope)
     }
+
+    /*
+    * 获取本地脚本信息
+    * */
 
 
     /*
@@ -55,8 +81,8 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
     fun downScriptByScriptId(scriptInfo : ScriptInfo) {
         this.viewModelScope.launch {
             appDb?.scriptInfoDao?.insert(scriptInfo)
-            downScriptSetByScriptId(scriptInfo.script_id)
-            scriptInfo.is_downloaded = 1
+            downScriptSetByScriptId(scriptInfo.scriptId)
+            scriptInfo.isDownloaded = 1
             appDb?.scriptInfoDao?.update(scriptInfo)
         }
     }

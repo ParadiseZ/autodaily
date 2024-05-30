@@ -18,6 +18,9 @@ interface SearchDownloadApi {
         @Query("pageSize") pageSize : Int
     ) : Response<List<ScriptInfo>>
 
+    @GET("/query/checkUpdateByIdAndVer")
+    suspend fun checkUpdateByIdAndVer(@Query("scriptInfoList") scriptInfoList : Map<Int, String>) : Response<Map<Int, String>>
+
     @GET("/query/downloadScriptSetByScriptId")
     suspend fun downScriptSetByScriptId(@Query("scriptId") scriptId : Int) : Response<List<ScriptSetInfo>>
 

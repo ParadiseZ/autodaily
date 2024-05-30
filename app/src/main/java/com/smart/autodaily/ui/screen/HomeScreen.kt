@@ -5,6 +5,8 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Delete
@@ -26,6 +28,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,7 +43,6 @@ import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.paging.compose.collectAsLazyPagingItems
 import com.smart.autodaily.constant.AppBarTitle
 import com.smart.autodaily.constant.NavigationItem
 import com.smart.autodaily.constant.RunButtonClickResult
@@ -47,8 +50,9 @@ import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.ui.LoginActivity
 import com.smart.autodaily.ui.conponent.RowScriptInfo
-import com.smart.autodaily.ui.conponent.SwipeRefreshList
+import com.smart.autodaily.ui.conponent.appViewModel
 import com.smart.autodaily.ui.conponent.navSingleTopTo
+import com.smart.autodaily.viewmodel.ApplicationViewModel
 import com.smart.autodaily.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
 
@@ -57,11 +61,23 @@ import kotlinx.coroutines.launch
 fun HomeScreen(
     modifier: Modifier,
     nhc: NavHostController,
-    homeViewModel : HomeViewModel = viewModel()
+    homeViewModel : HomeViewModel = viewModel(),
+    appViewModel: ApplicationViewModel = appViewModel()
 ) {
     //弹窗
     val openDialog = remember { mutableStateOf(false) }
-    val localScriptList = homeViewModel.getLocalScriptList().collectAsLazyPagingItems()
+    //加载本地数据
+    val loadDataFlagFlow by appViewModel.loadDataFlagFlow.collectAsState()
+    val localScriptList = appViewModel.localScriptListAll.collectAsState()
+    LaunchedEffect(key1 = loadDataFlagFlow) {
+        appViewModel.loadScriptAll()
+    }
+    //检测更新
+    val checkUpdateFlagFlow by homeViewModel.checkUpdateFlagFlow.collectAsState()
+    LaunchedEffect(key1 = checkUpdateFlagFlow) {
+        homeViewModel.checkUpdateAll(loadDataFlagFlow)
+        appViewModel.loadScriptAll()
+    }
     var currentScriptInfo : ScriptInfo? = null
     Scaffold (
         modifier = modifier,
@@ -87,7 +103,7 @@ fun HomeScreen(
                                 )
                             }
                             RunButtonClickResult.LOGIN_SUCCESS->{
-                                Toast.makeText(homeViewModel.context,"已经登录", Toast.LENGTH_SHORT).show()
+                                val clickResult = homeViewModel.runScriptCheck()
                             }
                         }
                     }
@@ -97,11 +113,12 @@ fun HomeScreen(
             }
         },
     ){
-        SwipeRefreshList(
-            collectAsLazyPagingItems = localScriptList,
-            modifier =modifier.padding(it),
-            listContent ={ scriptInfo ->
-                var checkedFlag by remember { mutableStateOf(scriptInfo.checked_flag) }
+        LazyColumn(
+            modifier = modifier.padding(it)
+        ) {
+            items(localScriptList.value){
+                scriptInfo ->
+                var checkedFlag by remember { mutableStateOf(scriptInfo.checkedFlag) }
                 RowScriptInfo(
                     cardOnClick = {
                         checkedFlag = !checkedFlag
@@ -131,10 +148,10 @@ fun HomeScreen(
                                 // DropdownMenu的内容
                                 DropdownMenuItem(
                                     text = {
-                                           Row{
-                                               Icon(imageVector = Icons.Outlined.Share, contentDescription = null)
-                                               Text(text = "分享")
-                                           }
+                                        Row{
+                                            Icon(imageVector = Icons.Outlined.Share, contentDescription = null)
+                                            Text(text = "分享")
+                                        }
                                     },
                                     onClick = { /* 处理选项被点击的逻辑 */ }
                                 )
@@ -170,9 +187,16 @@ fun HomeScreen(
                         IconButtonCustom(icon = Icons.Outlined.PlayArrow)*/
                     }
                 )
+            }
+        }
+        /*SwipeRefreshList(
+            collectAsLazyPagingItems = localScriptList,
+            modifier =modifier.padding(it),
+            listContent ={ scriptInfo ->
+
 
             }
-        )
+        )*/
         if (openDialog.value){
             BasicAlertDialog(
                 properties = DialogProperties(),
@@ -209,7 +233,6 @@ fun HomeScreen(
                                 currentScriptInfo?.let { scriptInfo->
                                     homeViewModel.deleteScript(scriptInfo) }
                                 Toast.makeText(homeViewModel.context, "删除成功！", Toast.LENGTH_SHORT).show()
-                                localScriptList.refresh()
                             }
                         ) {
                             Text(text = "删除")

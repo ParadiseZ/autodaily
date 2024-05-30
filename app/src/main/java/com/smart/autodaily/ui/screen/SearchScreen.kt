@@ -9,9 +9,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -24,20 +25,26 @@ import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.ui.conponent.RowScriptInfo
 import com.smart.autodaily.ui.conponent.SearchTopAppBar
 import com.smart.autodaily.ui.conponent.SwipeRefreshList
+import com.smart.autodaily.ui.conponent.appViewModel
+import com.smart.autodaily.viewmodel.ApplicationViewModel
 import com.smart.autodaily.viewmodel.SearchViewModel
 
 
 @Composable
 fun SearchScreen(
     modifier: Modifier,
-    searchViewModel: SearchViewModel = viewModel()
+    searchViewModel: SearchViewModel = viewModel(),
+    appViewModel: ApplicationViewModel = appViewModel()
 ){
-    var searchText by remember { mutableStateOf("") }
-    val netSearScriptList = searchViewModel.searchScriptByPage(searchText).collectAsLazyPagingItems()
+    val loadDataFlagFlow by searchViewModel.loadDataFlagFlow.collectAsState()
+    val netSearScriptList = searchViewModel.remoteScriptList.collectAsLazyPagingItems()
+    LaunchedEffect(key1 = loadDataFlagFlow) {
+        searchViewModel.getRemoteScriptList(appViewModel.localScriptListAll.value)
+    }
     Scaffold (
         topBar = {
             SearchTopAppBar(searchButtonText = AppBarTitle.SEARCH_SCREEN, onSearchClick = {
-                searchText = it
+                searchViewModel.changeSearchText(it)
             })
         },
     ){
@@ -45,7 +52,7 @@ fun SearchScreen(
             collectAsLazyPagingItems = netSearScriptList,
             modifier =modifier.padding(it),
             listContent ={scriptInfo ->
-                var isDownloaded by remember { mutableIntStateOf(scriptInfo.is_downloaded) }
+                var isDownloaded by remember { mutableIntStateOf(scriptInfo.isDownloaded) }
                 RowScriptInfo(
                     cardOnClick = {},
                     scriptInfo = scriptInfo,
@@ -73,7 +80,7 @@ fun SearchScreen(
 
                             },
                             onClick = {
-                                if (scriptInfo.is_downloaded != 1){
+                                if (scriptInfo.isDownloaded != 1){
                                     searchViewModel.downScriptByScriptId( scriptInfo )
                                     isDownloaded = 1
                                 }

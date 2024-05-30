@@ -30,7 +30,7 @@ fun RadioButtonSettingItem(
     modifier: Modifier = Modifier
 ) {
     var setValue by remember {
-        mutableStateOf(setting.set_value)
+        mutableStateOf(setting.setValue)
     }
     Box(modifier = modifier
         .wrapContentSize()
@@ -44,23 +44,23 @@ fun RadioButtonSettingItem(
         Column(
             modifier = modifier.fillMaxWidth(),
         ) {
-            Text(modifier = Modifier.padding(start = Ui.SPACE_4),text = setting.set_name)
+            Text(modifier = Modifier.padding(start = Ui.SPACE_4),text = setting.setName)
             Row (
                 modifier = modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ){
-                setting.set_default_value.split(",").forEach {
+                setting.setDefaultValue.split(",").forEach {
                     RadioButton(
                         selected = it == setValue,
                         onClick = {
                             setValue = it
-                            setting.set_value = it
+                            setting.setValue = it
                             onCheckedChange(setting)
                         }
                     )
                     Text(modifier = Modifier.clickable{
                         setValue = it
-                        setting.set_value = it
+                        setting.setValue = it
                         onCheckedChange(setting)
                     },text = it)
                 }

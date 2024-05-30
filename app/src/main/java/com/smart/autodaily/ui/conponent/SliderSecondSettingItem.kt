@@ -28,7 +28,7 @@ fun SliderSecondSettingItem(
     modifier: Modifier = Modifier
 ) {
     var sliderValue by remember { mutableFloatStateOf(
-        if (setting.set_value.isNotBlank()) setting.set_value.toFloat() else setting.set_default_value.toFloat()
+        if (setting.setValue.isNotBlank()) setting.setValue.toFloat() else setting.setDefaultValue.toFloat()
     ) }
     Box(modifier = modifier
         .wrapContentSize()
@@ -39,16 +39,16 @@ fun SliderSecondSettingItem(
             modifier = modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val setRange = setting.set_range.split(',')
-            Text(modifier = Modifier.padding(start = Ui.SPACE_4),text = setting.set_name+"：")
+            val setRange = setting.setRange.split(',')
+            Text(modifier = Modifier.padding(start = Ui.SPACE_4),text = setting.setName+"：")
             Text(text = "${"%.1f".format(sliderValue )}秒")
             Slider(
                 valueRange = setRange[0].toFloat()..setRange[1].toFloat(),
-                steps = setting.set_step,
+                steps = setting.setStep,
                 value = sliderValue,
                 onValueChange = {
                 sliderValue = it
-                setting.set_value = it.toString()
+                setting.setValue = it.toString()
                 onSliderValueChange(setting)
             })
 

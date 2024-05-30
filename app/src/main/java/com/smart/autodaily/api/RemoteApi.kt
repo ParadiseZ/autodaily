@@ -7,4 +7,5 @@ object RemoteApi {
     val searchDownRetrofit : SearchDownloadApi = RetrofitCreate.create<SearchDownloadApi>()
     val registerLoginRetrofit : RegisterLoginApi = RetrofitCreate.create<RegisterLoginApi>()
     val userKeyRetrofit : UserKeyApi = RetrofitCreate.create<UserKeyApi>()
+    val runRetrofit : RunApi = RetrofitCreate.create<RunApi>()
 }

@@ -48,15 +48,15 @@ fun RowScriptInfo(
                 checkBox()
                 //脚本名称信息等
                 Column{
-                    Text(text = scriptInfo.script_name, fontSize = Ui.SIZE_16 )
+                    Text(text = scriptInfo.scriptName, fontSize = Ui.SIZE_16 )
                     Spacer(modifier = Modifier.height( Ui.SPACE_5 ))
                     Row{
-                        if(scriptInfo.is_downloaded == 1){
-                            Text(text = "版本："+scriptInfo.script_version, fontSize = Ui.SIZE_10 )
+                        if(scriptInfo.isDownloaded == 1){
+                            Text(text = "版本："+scriptInfo.scriptVersion, fontSize = Ui.SIZE_10 )
                             Spacer(modifier = Modifier.width( Ui.SPACE_5 ))
-                            Text(text = "最新："+scriptInfo.last_version, fontSize = Ui.SIZE_10 )
+                            Text(text = "最新："+scriptInfo.lastVersion, fontSize = Ui.SIZE_10 )
                         }else{
-                            Text(text = "最新："+scriptInfo.last_version, fontSize = Ui.SIZE_10 )
+                            Text(text = "最新："+scriptInfo.lastVersion, fontSize = Ui.SIZE_10 )
                         }
                     }
                 }

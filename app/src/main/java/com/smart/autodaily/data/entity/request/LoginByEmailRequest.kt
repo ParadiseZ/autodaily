@@ -1,4 +1,4 @@
-package com.smart.autodaily.data.entity
+package com.smart.autodaily.data.entity.request
 
 data class LoginByEmailRequest (
     val email: String,
