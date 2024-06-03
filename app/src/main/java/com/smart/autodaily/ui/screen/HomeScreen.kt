@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.BasicAlertDialog
@@ -28,7 +29,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,9 +50,8 @@ import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.ui.LoginActivity
 import com.smart.autodaily.ui.conponent.RowScriptInfo
-import com.smart.autodaily.ui.conponent.appViewModel
 import com.smart.autodaily.ui.conponent.navSingleTopTo
-import com.smart.autodaily.viewmodel.ApplicationViewModel
+import com.smart.autodaily.utils.ToastUtil
 import com.smart.autodaily.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
 
@@ -62,22 +61,11 @@ fun HomeScreen(
     modifier: Modifier,
     nhc: NavHostController,
     homeViewModel : HomeViewModel = viewModel(),
-    appViewModel: ApplicationViewModel = appViewModel()
 ) {
     //弹窗
     val openDialog = remember { mutableStateOf(false) }
     //加载本地数据
-    val loadDataFlagFlow by appViewModel.loadDataFlagFlow.collectAsState()
-    val localScriptList = appViewModel.localScriptListAll.collectAsState()
-    LaunchedEffect(key1 = loadDataFlagFlow) {
-        appViewModel.loadScriptAll()
-    }
-    //检测更新
-    val checkUpdateFlagFlow by homeViewModel.checkUpdateFlagFlow.collectAsState()
-    LaunchedEffect(key1 = checkUpdateFlagFlow) {
-        homeViewModel.checkUpdateAll(loadDataFlagFlow)
-        appViewModel.loadScriptAll()
-    }
+    val localScriptList by homeViewModel.appViewModel.localScriptListAll.collectAsState()
     var currentScriptInfo : ScriptInfo? = null
     Scaffold (
         modifier = modifier,
@@ -104,6 +92,9 @@ fun HomeScreen(
                             }
                             RunButtonClickResult.LOGIN_SUCCESS->{
                                 val clickResult = homeViewModel.runScriptCheck()
+                                if (clickResult.code!=200){
+                                    ToastUtil.show(homeViewModel.context, clickResult.message.toString())
+                                }
                             }
                         }
                     }
@@ -116,17 +107,21 @@ fun HomeScreen(
         LazyColumn(
             modifier = modifier.padding(it)
         ) {
-            items(localScriptList.value){
+            items(localScriptList){
                 scriptInfo ->
                 var checkedFlag by remember { mutableStateOf(scriptInfo.checkedFlag) }
                 RowScriptInfo(
                     cardOnClick = {
                         checkedFlag = !checkedFlag
+                        scriptInfo.checkedFlag = checkedFlag
+                        homeViewModel.appViewModel.updateScript(scriptInfo)
                     },
                     scriptInfo = scriptInfo,
                     checkBox = {
                         Checkbox(checked = checkedFlag, onCheckedChange = {
                             checkedFlag = !checkedFlag
+                            scriptInfo.checkedFlag = checkedFlag
+                            homeViewModel.appViewModel.updateScript(scriptInfo)
                         })
                     },
                     iconInfo ={
@@ -149,6 +144,27 @@ fun HomeScreen(
                                 DropdownMenuItem(
                                     text = {
                                         Row{
+                                            Icon(imageVector = Icons.Outlined.Settings, contentDescription = null)
+                                            Text(text = "设置")
+                                        }
+                                    },
+                                    onClick = {
+                                        currentScriptInfo = scriptInfo
+                                        nhc.navSingleTopTo(NavigationItem.PERSON.route)
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = {
+                                        Row{
+                                            Icon(imageVector = Icons.Outlined.Refresh, contentDescription = null)
+                                            Text(text = "更新")
+                                        }
+                                    },
+                                    onClick = { /* 处理选项被点击的逻辑 */ }
+                                )
+                                DropdownMenuItem(
+                                    text = {
+                                        Row{
                                             Icon(imageVector = Icons.Outlined.Share, contentDescription = null)
                                             Text(text = "分享")
                                         }
@@ -167,18 +183,7 @@ fun HomeScreen(
                                         openDialog.value = !openDialog.value
                                     }
                                 )
-                                DropdownMenuItem(
-                                    text = {
-                                        Row{
-                                            Icon(imageVector = Icons.Outlined.Settings, contentDescription = null)
-                                            Text(text = "设置")
-                                        }
-                                    },
-                                    onClick = {
-                                        currentScriptInfo = scriptInfo
-                                        nhc.navSingleTopTo(NavigationItem.PERSON.route)
-                                    }
-                                )
+
                                 // 根据需要添加更多选项
                             }
                         }

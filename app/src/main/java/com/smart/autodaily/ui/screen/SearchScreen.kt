@@ -25,8 +25,6 @@ import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.ui.conponent.RowScriptInfo
 import com.smart.autodaily.ui.conponent.SearchTopAppBar
 import com.smart.autodaily.ui.conponent.SwipeRefreshList
-import com.smart.autodaily.ui.conponent.appViewModel
-import com.smart.autodaily.viewmodel.ApplicationViewModel
 import com.smart.autodaily.viewmodel.SearchViewModel
 
 
@@ -34,12 +32,11 @@ import com.smart.autodaily.viewmodel.SearchViewModel
 fun SearchScreen(
     modifier: Modifier,
     searchViewModel: SearchViewModel = viewModel(),
-    appViewModel: ApplicationViewModel = appViewModel()
 ){
     val loadDataFlagFlow by searchViewModel.loadDataFlagFlow.collectAsState()
     val netSearScriptList = searchViewModel.remoteScriptList.collectAsLazyPagingItems()
     LaunchedEffect(key1 = loadDataFlagFlow) {
-        searchViewModel.getRemoteScriptList(appViewModel.localScriptListAll.value)
+        searchViewModel.getRemoteScriptList(searchViewModel.appViewModel.localScriptListAll.value)
     }
     Scaffold (
         topBar = {

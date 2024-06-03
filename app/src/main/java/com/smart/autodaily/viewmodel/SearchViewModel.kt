@@ -41,13 +41,15 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
     * 搜索脚本信息，并和数据库比对，更新flow流以更新is_downloaded标志
     * */
     suspend fun getRemoteScriptList(localList : List<ScriptInfo>) {
-        withContext(Dispatchers.IO) {
-            try {
-                searchScriptByPage(localList).collectLatest {
-                    _remoteScriptList.value = it
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    searchScriptByPage(localList).collectLatest {
+                        _remoteScriptList.value = it
+                    }
+                }catch (e : Exception){
+                    println(e.message)
                 }
-            }catch (e : Exception){
-                println(e.message)
             }
         }
     }
@@ -80,10 +82,13 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
     * */
     fun downScriptByScriptId(scriptInfo : ScriptInfo) {
         this.viewModelScope.launch {
-            appDb?.scriptInfoDao?.insert(scriptInfo)
-            downScriptSetByScriptId(scriptInfo.scriptId)
-            scriptInfo.isDownloaded = 1
-            appDb?.scriptInfoDao?.update(scriptInfo)
+            withContext(Dispatchers.IO){
+                appDb?.scriptInfoDao?.insert(scriptInfo)
+                downScriptSetByScriptId(scriptInfo.scriptId)
+                scriptInfo.isDownloaded = 1
+                scriptInfo.scriptVersion = scriptInfo.lastVersion
+                appDb?.scriptInfoDao?.update(scriptInfo)
+            }
         }
     }
     private suspend fun downScriptSetByScriptId(scriptId: Int) {

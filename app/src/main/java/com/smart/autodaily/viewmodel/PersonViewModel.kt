@@ -1,35 +1,33 @@
 package com.smart.autodaily.viewmodel
 
 import android.app.Application
+import androidx.lifecycle.viewModelScope
 import com.smart.autodaily.api.RemoteApi
 import com.smart.autodaily.base.BaseViewModel
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.utils.ExceptionUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 
 class PersonViewModel(app : Application)  : BaseViewModel(application = app) {
-    suspend fun getUserInfoLocal() : UserInfo?{
-        val user = withContext(Dispatchers.IO){
-            appDb!!.userInfoDao.queryUserInfo()
-        }
-        return user
-    }
-
     suspend fun inputKey(userId : Int, key : String):Response<UserInfo>{
-        return ExceptionUtil.tryCatch(
+        val res = ExceptionUtil.tryCatch(
             tryFun = {
                 RemoteApi.userKeyRetrofit.inputKey(userId,key)
             },
             exceptionMsg ="兑换失败"
         )
+        if (res.code==200){
+            res.data?.let { appViewModel.updateUser(it) }
+        }
+        return res
     }
 
-    suspend fun logout(userInfo : UserInfo){
-        withContext(Dispatchers.IO){
+    fun logout(userInfo : UserInfo){
+        viewModelScope.launch {
             appDb!!.userInfoDao.delete(userInfo)
+            appViewModel.updateUser(null)
         }
     }
 }

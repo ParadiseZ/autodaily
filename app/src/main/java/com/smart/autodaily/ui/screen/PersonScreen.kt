@@ -31,7 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,7 +48,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.smart.autodaily.constant.BorderDirection
-import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.ui.conponent.SingleBorderBox
 import com.smart.autodaily.utils.ToastUtil
 import com.smart.autodaily.viewmodel.PersonViewModel
@@ -57,13 +56,11 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PersonScreen(modifier: Modifier,
-                   nhc: NavHostController,
-                   personViewModel: PersonViewModel = viewModel()
+    nhc: NavHostController,
+    personViewModel: PersonViewModel = viewModel()
 ) {
     //Text(text = "Hello PersonalScreen！")
-    var user by  remember{
-        mutableStateOf<UserInfo?>(null)
-    }
+    val user by  personViewModel.appViewModel.user.collectAsState()
     //是否开启弹窗
     val openDialog = remember { mutableStateOf(false) }
     //激活码
@@ -71,10 +68,6 @@ fun PersonScreen(modifier: Modifier,
     //是否开启确认按钮
     var keyConfirmEnable by remember { mutableStateOf(true) }
     //登出后更新user
-    val logout = remember { mutableStateOf(false) }
-    LaunchedEffect(key1 = logout.value) {
-        user =  personViewModel.getUserInfoLocal()
-    }
     Column{
         SingleBorderBox(
             modifier = Modifier.padding(8.dp),
@@ -104,10 +97,7 @@ fun PersonScreen(modifier: Modifier,
                                 Intent("android.intent.action.LOGIN").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             )
                         }else{
-                            personViewModel.viewModelScope.launch {
-                                personViewModel.logout(user!!)
-                                logout.value = true
-                            }
+                            personViewModel.logout(user!!)
                         }
                     }
                 ) {
@@ -191,9 +181,6 @@ fun PersonScreen(modifier: Modifier,
                             if (result.code == 200){
                                 openDialog.value = false
                                 keyConfirmEnable = true
-                            }
-                            result.data?.let {
-                                user = it
                             }
                             result.message?.let {
                                 ToastUtil.show(personViewModel.context,

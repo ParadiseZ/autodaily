@@ -9,10 +9,10 @@ class Response<T> {
     //或用于内测版
     @SerializedName("data") var data: T ?= null
     //正式版不可试用（到期或未激活）
-    @SerializedName("official_data") var officialData: T ?= null
+    @SerializedName("official_data") var officialData: T ?=  null
     //正式版可试用
     @SerializedName("probation_data") var probationData: T ?= null
-    //正式版未到期
+    //正式版可运行（试用/激活未到期）
     @SerializedName("normal_data") var normalData: T? = null
 
 

@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
 
@@ -25,6 +26,7 @@ fun RowScriptInfo(
     iconInfo: @Composable  () -> Unit = {},
     scriptInfo : ScriptInfo
 ) {
+    Spacer(modifier = Modifier.height(8.dp))
     Card(
         modifier = modifier
             .clickable {
@@ -35,12 +37,12 @@ fun RowScriptInfo(
         Row (
             modifier = modifier
                 .fillMaxWidth()
-                .padding(vertical = Ui.SPACE_10),
+                .padding(vertical = Ui.SPACE_5),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ){
             Row (
-                modifier = modifier.weight(1f),
+                modifier = modifier.weight(3f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy( Ui.SPACE_5   ),
             ){
@@ -54,7 +56,9 @@ fun RowScriptInfo(
                         if(scriptInfo.isDownloaded == 1){
                             Text(text = "版本："+scriptInfo.scriptVersion, fontSize = Ui.SIZE_10 )
                             Spacer(modifier = Modifier.width( Ui.SPACE_5 ))
-                            Text(text = "最新："+scriptInfo.lastVersion, fontSize = Ui.SIZE_10 )
+                            if (scriptInfo.scriptVersion != scriptInfo.lastVersion){
+                                Text(text = "最新："+scriptInfo.lastVersion, fontSize = Ui.SIZE_10 )
+                            }
                         }else{
                             Text(text = "最新："+scriptInfo.lastVersion, fontSize = Ui.SIZE_10 )
                         }

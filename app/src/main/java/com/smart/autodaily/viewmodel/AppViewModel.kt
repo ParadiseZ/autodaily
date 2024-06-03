@@ -5,27 +5,61 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.ScriptInfo
+import com.smart.autodaily.data.entity.UserInfo
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class ApplicationViewModel (application: Application) : AndroidViewModel(application) {
+class AppViewModel (application: Application) : AndroidViewModel(application) {
     /*private val _localScriptList = MutableStateFlow<PagingData<ScriptInfo>>(PagingData.empty())
     val localScriptList: StateFlow<PagingData<ScriptInfo>> = _localScriptList*/
-
+    //本地脚本列表
     private val _localScriptAll = MutableStateFlow<List<ScriptInfo>>(emptyList())
     val localScriptListAll: StateFlow<List<ScriptInfo>> = _localScriptAll
     //加载本地数据的标志
     private val _loadDataFlagFlow = MutableStateFlow(false)
     val loadDataFlagFlow: StateFlow<Boolean> get() = _loadDataFlagFlow
+    //本地用户
+    private val _user  = MutableStateFlow<UserInfo?>(null)
+    val user : StateFlow<UserInfo?> get() = _user
 
+    //加载用户
+    init {
+        loadUserInfo()
+        loadScriptAll()
+    }
 
-    //加载本地所有数据
-    fun loadScriptAll(){
+    private fun loadUserInfo(){
         viewModelScope.launch {
-            appDb!!.scriptInfoDao.getLocalScriptAll().collectLatest {
-                _localScriptAll.value = it
+            withContext(Dispatchers.IO){
+                _user.value = appDb?.userInfoDao?.queryUserInfo()
+            }
+        }
+    }
+
+    fun updateUser(userInfo: UserInfo?){
+        _user.value = userInfo
+    }
+    //加载本地所有数据
+    private fun loadScriptAll(){
+        viewModelScope.launch {
+            withContext(Dispatchers.IO){
+                appDb!!.scriptInfoDao.getLocalScriptAll().collectLatest {
+                    _localScriptAll.value = it
+                }
+            }
+
+        }
+    }
+
+    //更新本地数据
+    fun updateScript(scriptInfo: ScriptInfo){
+        viewModelScope.launch {
+            withContext(Dispatchers.IO){
+                appDb!!.scriptInfoDao.update(scriptInfo)
             }
         }
     }

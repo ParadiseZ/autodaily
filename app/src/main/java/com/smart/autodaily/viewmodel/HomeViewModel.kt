@@ -1,7 +1,6 @@
 package com.smart.autodaily.viewmodel
 
 import android.app.Application
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -10,19 +9,15 @@ import com.smart.autodaily.base.BaseViewModel
 import com.smart.autodaily.constant.RunButtonClickResult
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.ScriptInfo
-import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.data.entity.request.Request
 import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.utils.ExceptionUtil
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class HomeViewModel(application: Application) : BaseViewModel(application = application) {
     var refreshing  =  mutableStateOf(false)
-    var userInfo : MutableState<UserInfo?> ?=null
     //本地数据
     private val _localScriptList = MutableStateFlow<PagingData<ScriptInfo>>(PagingData.empty())
     val localScriptList: StateFlow<PagingData<ScriptInfo>> = _localScriptList
@@ -30,6 +25,12 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
     //检测更新
     private val _checkUpdateFlagFlow = MutableStateFlow(false)
     val checkUpdateFlagFlow: StateFlow<Boolean> get() = _checkUpdateFlagFlow
+
+    init {
+        viewModelScope.launch {
+            //checkUpdateAll(true)
+        }
+    }
 
     /*
     https://developer.android.google.cn/codelabs/basic-android-kotlin-compose-viewmodel-and-state?hl=zh-cn#4
@@ -66,27 +67,7 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
             }
         }
     }
-    //检测更新
 
-    suspend fun checkUpdateAll(loadDataFlag : Boolean){
-        withContext(Dispatchers.IO){
-            try {
-                // 获取本地脚本列表，并转成ID和版本号的Map
-                val localScriptListMap = appDb!!.scriptInfoDao.getIdAndLastVer()
-                    .associate { it.scriptId to it.lastVersion }
-                // 调用远程接口检查更新
-                val remoteScriptList = RemoteApi.searchDownRetrofit.checkUpdateByIdAndVer(localScriptListMap)
-                // 更新本地数据库中的脚本版本信息
-                remoteScriptList.data?.forEach {
-                    appDb!!.scriptInfoDao.updateLastVerById(it.key, it.value)
-                }
-                // 重新加载本地数据
-            }catch (e:Exception){
-                e.message
-            }
-
-        }
-    }
     fun checkBoxClick( index:Int, sc: ScriptInfo){
         //dataList[index] =  sc.copy(checked_flag = !sc.checked_flag)
     }
@@ -96,22 +77,19 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
         return checkLogin()
     }
     private fun checkLogin() : RunButtonClickResult{
-        if (userInfo==null){
-            userInfo = mutableStateOf(
-                appDb!!.userInfoDao.queryUserInfo()
-            )
-        }
-        userInfo?.value?.let {
-            return RunButtonClickResult.LOGIN_SUCCESS
-        }?:let{
+        if (appViewModel.user.value == null){
             return RunButtonClickResult.NOT_LOGIN
+        }else{
+            return RunButtonClickResult.LOGIN_SUCCESS
         }
     }
 
     suspend fun runScriptCheck() : Response<List<Int>>{
-        val userInfo = userInfo?.value
         val checkedScriptIds = appDb!!.scriptInfoDao.getAllCheckedScript()
-        val request = Request(userInfo, checkedScriptIds)
+        if(checkedScriptIds.isEmpty()){
+            return Response.error("未选择脚本")
+        }
+        val request = Request(appViewModel.user.value, checkedScriptIds)
         val checkResultList = ExceptionUtil.tryCatchList(
             tryFun = RemoteApi.runRetrofit.runCheck(request),
             exceptionMsg = "运行失败！"

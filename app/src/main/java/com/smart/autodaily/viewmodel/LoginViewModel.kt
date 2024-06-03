@@ -18,9 +18,9 @@ class LoginViewModel(app: Application): BaseViewModel(app) {
                 loginResult.data?.let {
                     it.isLogin=true
                     appDb!!.userInfoDao.insert(it)
+                    appViewModel.updateUser(it)
                 }
             }
-            println(loginResult.data.toString())
             return loginResult
         }catch (e: IOException){
             return Response.error("网络异常，登录失败")
