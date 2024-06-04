@@ -2,7 +2,6 @@ package com.smart.autodaily.ui.screen
 
 import android.content.Intent
 import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,7 +13,7 @@ import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -34,11 +33,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -66,6 +62,12 @@ fun HomeScreen(
     val openDialog = remember { mutableStateOf(false) }
     //加载本地数据
     val localScriptList by homeViewModel.appViewModel.localScriptListAll.collectAsState()
+    val needActiveList by homeViewModel.invalidScriptList.collectAsState()
+    val user by homeViewModel.appViewModel.user.collectAsState()
+    //currentNeedActiveListIndex
+    val curNeedAcListIdx  by homeViewModel.curNeedAcListIdx.collectAsState()
+    //showActiveDialogFlag
+    val showActiveDialogFlag by homeViewModel.showActiveDialogFlag.collectAsState()
     var currentScriptInfo : ScriptInfo? = null
     Scaffold (
         modifier = modifier,
@@ -94,6 +96,7 @@ fun HomeScreen(
                                 val clickResult = homeViewModel.runScriptCheck()
                                 if (clickResult.code!=200){
                                     ToastUtil.show(homeViewModel.context, clickResult.message.toString())
+                                }else {
                                 }
                             }
                         }
@@ -194,69 +197,97 @@ fun HomeScreen(
                 )
             }
         }
-        /*SwipeRefreshList(
-            collectAsLazyPagingItems = localScriptList,
-            modifier =modifier.padding(it),
-            listContent ={ scriptInfo ->
-
-
-            }
-        )*/
         if (openDialog.value){
-            BasicAlertDialog(
-                properties = DialogProperties(),
+            AlertDialog(
                 onDismissRequest = {
                     openDialog.value = false
                 },
-                content = {
+                confirmButton = {
+                    OutlinedButton(
+                        enabled = openDialog.value,
+                        onClick = {
+                            currentScriptInfo?.let { scriptInfo->
+                                homeViewModel.deleteScript(scriptInfo)
+                            }
+                            openDialog.value = false
+                            Toast.makeText(homeViewModel.context, "删除成功！", Toast.LENGTH_SHORT).show()
+                        }
+                    ){
+                        Text(text = "确定")
+                    }
+                },
+                dismissButton = {
+                    OutlinedButton(
+                        enabled = openDialog.value,
+                        onClick = {
+                            openDialog.value = false
+                        }
+                    ){
+                        Text(text = "取消")
+                    }
+                },
+                title = {
                     Text(
                         text = "确认操作",
                         fontWeight = FontWeight.W700,
                         style = MaterialTheme.typography.bodyMedium
                     )
+                },
+                text = {
                     Text(
-                        text = "您确定要删除该脚本吗？",
+                        text = "您确定要删除它吗？",
                         fontSize = Ui.SIZE_16
                     )
-
-                    Row(
-                        modifier = Modifier
-                            .padding(start = 24.dp, end = 24.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedButton(
-                            modifier = Modifier.weight(1f),
-                            onClick = { openDialog.value = false }
-                        ) {
-                            Text(text = "取消")
-                        }
-                        OutlinedButton(
-                            modifier = Modifier.weight(1f),
-                            onClick = {
-                                openDialog.value = false
-                                currentScriptInfo?.let { scriptInfo->
-                                    homeViewModel.deleteScript(scriptInfo) }
-                                Toast.makeText(homeViewModel.context, "删除成功！", Toast.LENGTH_SHORT).show()
+                },
+            )
+        }
+        if (showActiveDialogFlag && curNeedAcListIdx < needActiveList.size){
+            AlertDialog(
+                onDismissRequest = {
+                    homeViewModel.cancelActiveScript(curNeedAcListIdx)
+                },
+                confirmButton = {
+                    OutlinedButton(
+                        onClick = {
+                            homeViewModel.viewModelScope.launch {
+                                val res = homeViewModel.activeScriptById(curNeedAcListIdx)
+                                if (res.code!=200){
+                                    res.message?.let { it1 ->
+                                        ToastUtil.show(homeViewModel.context,
+                                            it1
+                                        )
+                                    }
+                                }
                             }
-                        ) {
-                            Text(text = "删除")
                         }
+                    ){
+                        Text(text = "激活")
                     }
-                }
+                },
+                dismissButton = {
+                    OutlinedButton(
+                        onClick = {
+                            homeViewModel.cancelActiveScript(curNeedAcListIdx)
+                        }
+                    ){
+                        Text(text = "取消")
+                    }
+                },
+                title = {
+                    Text(
+                        text = "确认操作",
+                        fontWeight = FontWeight.W700,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                },
+                text = {
+                    Text(
+                        text = "${needActiveList[curNeedAcListIdx].scriptName}已到期，是否花费1次机会激活它？剩余次数：${user?.canActivateNum}",
+                        fontSize = Ui.SIZE_16
+                    )
+                },
             )
         }
     }
 }
-
-/*
-* 脚本列表单行内容
-* */
-
-
-
-/*
-val  show = { context : Context,message: Any ->
-    Toast.makeText(context, message.toString(), Toast.LENGTH_SHORT).show()
-}*/
 

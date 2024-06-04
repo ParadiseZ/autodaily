@@ -12,50 +12,32 @@ import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.request.Request
 import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.utils.ExceptionUtil
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class HomeViewModel(application: Application) : BaseViewModel(application = application) {
     var refreshing  =  mutableStateOf(false)
     //本地数据
     private val _localScriptList = MutableStateFlow<PagingData<ScriptInfo>>(PagingData.empty())
-    val localScriptList: StateFlow<PagingData<ScriptInfo>> = _localScriptList
-
-    //检测更新
-    private val _checkUpdateFlagFlow = MutableStateFlow(false)
-    val checkUpdateFlagFlow: StateFlow<Boolean> get() = _checkUpdateFlagFlow
+    val localScriptList: StateFlow<PagingData<ScriptInfo>> get()= _localScriptList
+    //到期的数据
+    private val _invalidScriptList = MutableStateFlow<List<ScriptInfo>>(emptyList())
+    val invalidScriptList : StateFlow<List<ScriptInfo>> get()= _invalidScriptList
+    //到期数据循环的当前idx
+    private  val _curNeedAcListIdx = MutableStateFlow(0)
+    val curNeedAcListIdx :StateFlow<Int> get() = _curNeedAcListIdx
+    //是否显示到期数据激活对话框
+    private val _showActiveDialogFlag = MutableStateFlow(false)
+    val showActiveDialogFlag :StateFlow<Boolean> get()= _showActiveDialogFlag
 
     init {
         viewModelScope.launch {
             //checkUpdateAll(true)
         }
     }
-
-    /*
-    https://developer.android.google.cn/codelabs/basic-android-kotlin-compose-viewmodel-and-state?hl=zh-cn#4
-    private val _uiState = MutableStateFlow( list )//在 Android 中，StateFlow 适用于必须维护可观察的不可变状态的类
-    val uiState : StateFlow<List<ScriptInfo>> = _uiState.asStateFlow()
-    */
-
-   /* val dataList = mutableStateListOf(
-        ScriptInfo(uid=1, script_id=1, script_name="崩坏3：官服", script_version="24.4.81", last_version="24.4.81", checked_flag=false, expiration_time="2024-12-12 08:04:00", package_name="com.mihoyo.bh3", runsMaxNum=2, next_run_date="2024-04-08 16:00:00", download_time="2024-04-08 08:24:00") ,
-        ScriptInfo(uid=2, script_id=2, script_name="天下布魔：工口服", script_version="24.4.81", last_version="24.4.81", checked_flag=false, expiration_time="2024-12-12 08:27:00", package_name="com.pinkcore.tkfm", runsMaxNum=2, next_run_date="2024-04-07 16:00:00", download_time="2024-04-08 08:24:00"),
-    ScriptInfo(uid=3, script_id=3, script_name="公主连结：台服", script_version="0.0.1", last_version="0.0.1", checked_flag=false, expiration_time="2024-12-24 08:27:00", package_name="com.pinkcore.tkfm", runsMaxNum=2, next_run_date="2024-04-07 16:00:00", download_time="2024-04-08 08:24:00"),
-    ScriptInfo(uid=4, script_id=4, script_name="天下布魔：工口服", script_version="0.0.1", last_version="0.0.1", checked_flag=false, expiration_time="2024-12-12 08:27:00", package_name="com.pinkcore.tkfm", runsMaxNum=2, next_run_date="2024-04-07 16:00:00", download_time="2024-04-08 08:24:00"),
-    ScriptInfo(uid=5, script_id=5, script_name="公主连结：台服", script_version="0.0.1", last_version="0.0.1", checked_flag=false, expiration_time="2024-12-24 08:27:00", package_name="com.pinkcore.tkfm", runsMaxNum=2, next_run_date="2024-04-07 16:00:00", download_time="2024-04-08 08:24:00"),
-    ScriptInfo(uid=6, script_id=6, script_name="天下布魔：工口服", script_version="0.0.1", last_version="0.0.1", checked_flag=false, expiration_time="2024-12-12 08:27:00", package_name="com.pinkcore.tkfm", runsMaxNum=2, next_run_date="2024-04-07 16:00:00", download_time="2024-04-08 08:24:00"),
-    ScriptInfo(uid=7, script_id=7, script_name="公主连结：台服", script_version="0.0.1", last_version="0.0.1", checked_flag=false, expiration_time="2024-12-24 08:27:00", package_name="com.pinkcore.tkfm", runsMaxNum=2, next_run_date="2024-04-07 16:00:00", download_time="2024-04-08 08:24:00"),
-    ScriptInfo(uid=8, script_id=8, script_name="天下布魔：工口服", script_version="0.0.1", last_version="0.0.1", checked_flag=false, expiration_time="2024-12-12 08:27:00", package_name="com.pinkcore.tkfm", runsMaxNum=2, next_run_date="2024-04-07 16:00:00", download_time="2024-04-08 08:24:00"),
-    ScriptInfo(uid=9, script_id=9, script_name="公主连结：台服", script_version="0.0.1", last_version="0.0.1", checked_flag=false, expiration_time="2024-12-24 08:27:00", package_name="com.pinkcore.tkfm", runsMaxNum=2, next_run_date="2024-04-07 16:00:00", download_time="2024-04-08 08:24:00"),
-    ScriptInfo(uid=10, script_id=10, script_name="游戏脚本10", script_version="0.0.1", last_version="0.0.1", checked_flag=false, expiration_time="2024-07-13 07:38:51", package_name="com.example.game10", runsMaxNum=8, next_run_date="2024-07-01 16:00:00", download_time="2024-06-06 21:26:54")
-*//*        ScriptInfo(uid = 1, gameId = 1, gameName = "崩坏3：官服", scriptVersion = "0.1", endTime = "2024-04-02"),
-        ScriptInfo(uid = 2, gameId = 2, gameName = "天下布魔：工口服", scriptVersion = "0.1", endTime = "2024-05-02"),
-        ScriptInfo(uid = 3, gameId = 3, gameName = "魔法纪录：日服", scriptVersion = "0.1", endTime = "2024-04-06")*//*
-    )*/
-
-    //val dataList = mutableStateListOf<ScriptInfo>()
-
     //删除数据
     fun deleteScript(sc : ScriptInfo){
         viewModelScope.launch {
@@ -73,6 +55,7 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
     }
 
 
+    //点击运行检测【是否登录】
     fun runButtonClick() : RunButtonClickResult{
         return checkLogin()
     }
@@ -83,17 +66,80 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
             return RunButtonClickResult.LOGIN_SUCCESS
         }
     }
+    //运行检测【检测需要激活的、可以运行的】
 
     suspend fun runScriptCheck() : Response<List<Int>>{
         val checkedScriptIds = appDb!!.scriptInfoDao.getAllCheckedScript()
         if(checkedScriptIds.isEmpty()){
             return Response.error("未选择脚本")
         }
-        val request = Request(appViewModel.user.value, checkedScriptIds)
+        val user = appViewModel.user.value
+        println("==$user")
+        val request = Request(user, checkedScriptIds)
         val checkResultList = ExceptionUtil.tryCatchList(
             tryFun = RemoteApi.runRetrofit.runCheck(request),
             exceptionMsg = "运行失败！"
         )
+        if(checkResultList.code==200){
+            //更新未到期的内容
+            checkResultList.normalData?.map {
+                appDb!!.scriptInfoDao.updateExpirationTimeByScriptId(it.key, it.value)
+            }
+            checkResultList.officialData?.let {
+                //赋值数据
+                appDb!!.scriptInfoDao.getLocalScriptByIds(it).collectLatest {
+                    _invalidScriptList.value = it
+                }
+                //从0开始
+                _curNeedAcListIdx.value = 0
+                _showActiveDialogFlag.value =true
+            }
+        }
         return checkResultList
+    }
+
+    //激活脚本
+    suspend fun  activeScriptById(index : Int) : Response<String>{
+        if(appViewModel.user.value?.canActivateNum!! <=0){
+            _showActiveDialogFlag.value = false
+            return Response.error("可激活次数不足！")
+        }
+        val request:Request<Int> = Request(appViewModel.user.value, _invalidScriptList.value[index].scriptId)
+        val res = ExceptionUtil.tryCatch(
+            tryFun = RemoteApi.runRetrofit.activeScript(request),
+            exceptionMsg = "激活失败！"
+        )
+        if (res.code==200){
+            appViewModel.user.value?.canActivateNum = appViewModel.user.value?.canActivateNum?.minus(1)
+            appViewModel.user.value?.let { appDb!!.userInfoDao.update(it) }
+            _invalidScriptList.value[index].expirationTime = res.data
+            appViewModel.updateScript(_invalidScriptList.value[index])
+            dialogController()
+        }else{
+            _showActiveDialogFlag.value = false
+        }
+        return res
+    }
+
+    //取消激活
+    fun cancelActiveScript(curIndex:Int){
+        viewModelScope.launch {
+            _invalidScriptList.value[curIndex].checkedFlag = false
+            appViewModel.updateScript(_invalidScriptList.value[curIndex])
+            if (curIndex<_invalidScriptList.value.size){
+                _curNeedAcListIdx.value += 1
+                dialogController()
+            }else{
+                _showActiveDialogFlag.value = false
+            }
+        }
+    }
+
+    private fun dialogController(){
+        viewModelScope.launch {
+            _showActiveDialogFlag.value = false
+            delay(1000)
+            _showActiveDialogFlag.value = true
+        }
     }
 }

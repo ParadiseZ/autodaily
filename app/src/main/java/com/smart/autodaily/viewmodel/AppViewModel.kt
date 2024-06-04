@@ -3,10 +3,14 @@ package com.smart.autodaily.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.smart.autodaily.api.RemoteApi
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.UserInfo
+import com.smart.autodaily.data.entity.request.Request
+import com.smart.autodaily.utils.ToastUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -28,18 +32,38 @@ class AppViewModel (application: Application) : AndroidViewModel(application) {
 
     //加载用户
     init {
-        loadUserInfo()
-        loadScriptAll()
+        viewModelScope.launch {
+            updateAndLoadUserInfo()
+            loadScriptAll()
+        }
     }
 
-    private fun loadUserInfo(){
+    private fun updateAndLoadUserInfo(){
         viewModelScope.launch {
             withContext(Dispatchers.IO){
-                _user.value = appDb?.userInfoDao?.queryUserInfo()
+                try {
+                    loadUserInfo()?.collectLatest {
+                        _user.value = it
+                    }
+                    if(_user.value!=null){
+                        val req : Request<Int> = Request(data = _user.value!!.userId)
+                        val res = RemoteApi.updateRetrofit.updateUserInfo(req)
+                        if (res.code == 200){
+                            res.data?.let { it1 -> appDb?.userInfoDao?.update(it1) }
+                        }else if (res.code== 999){
+                            ToastUtil.showLong(getApplication<Application>().applicationContext, res.message.toString())
+                        }
+                    }
+                }catch (e : Exception){
+                    e.message
+                }
             }
         }
     }
 
+    private fun loadUserInfo() : Flow<UserInfo?>?{
+        return appDb?.userInfoDao?.queryUserInfo()
+    }
     fun updateUser(userInfo: UserInfo?){
         _user.value = userInfo
     }

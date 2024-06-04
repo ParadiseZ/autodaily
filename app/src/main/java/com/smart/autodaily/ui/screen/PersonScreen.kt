@@ -136,7 +136,7 @@ fun PersonScreen(modifier: Modifier,
                 direction = BorderDirection.RIGHT,
                 content = {}
             )
-            PersonColumnFirst("到期", user?.registerTime?:"--")
+            PersonColumnFirst("到期", user?.expirationTime?:"--")
         }
 
         PersonRowFirst(textLabel = "兑换码", imageVector = Icons.Default.ShoppingCart){

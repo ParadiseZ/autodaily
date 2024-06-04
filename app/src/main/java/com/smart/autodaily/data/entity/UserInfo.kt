@@ -18,7 +18,7 @@ data class UserInfo (
     //类型名称
     @ColumnInfo(name = "key_type_name")   @SerializedName("key_type_name")   var keyTypeName: String?,
     //可激活个数
-    @ColumnInfo(name = "can_activate_num")   @SerializedName("can_activate_num")   var canActivateNum: Byte?,
+    @ColumnInfo(name = "can_activate_num")   @SerializedName("can_activate_num")   var canActivateNum: Int?,
     //过期时间
     @ColumnInfo(name = "expiration_time")   @SerializedName("expiration_time")   var expirationTime: String?,
     //注册时间

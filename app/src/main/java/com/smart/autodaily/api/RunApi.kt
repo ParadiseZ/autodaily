@@ -8,4 +8,7 @@ import retrofit2.http.POST
 interface RunApi {
     @POST("/runCheck")
     suspend fun runCheck(@Body request: Request<List<Int>>): Response<List<Int>>
+
+    @POST("/activeScript")
+    suspend fun activeScript(@Body request: Request<Int>): Response<String>
 }

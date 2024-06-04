@@ -8,4 +8,5 @@ object RemoteApi {
     val registerLoginRetrofit : RegisterLoginApi = RetrofitCreate.create<RegisterLoginApi>()
     val userKeyRetrofit : UserKeyApi = RetrofitCreate.create<UserKeyApi>()
     val runRetrofit : RunApi = RetrofitCreate.create<RunApi>()
+    val updateRetrofit : UpdateApi = RetrofitCreate.create<UpdateApi>()
 }

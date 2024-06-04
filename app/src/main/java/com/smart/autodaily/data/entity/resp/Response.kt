@@ -8,12 +8,10 @@ class Response<T> {
     @SerializedName("message") var message: String? = null
     //或用于内测版
     @SerializedName("data") var data: T ?= null
-    //正式版不可试用（到期或未激活）
+    //需要激活的
     @SerializedName("official_data") var officialData: T ?=  null
-    //正式版可试用
-    @SerializedName("probation_data") var probationData: T ?= null
-    //正式版可运行（试用/激活未到期）
-    @SerializedName("normal_data") var normalData: T? = null
+    //可以直接运行的
+    @SerializedName("normal_data") var normalData: Map<Int,String>? = null
 
 
 

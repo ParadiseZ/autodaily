@@ -35,6 +35,8 @@ interface ScriptInfoDao {
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
     fun update( scriptInfo: ScriptInfo )
+    @Query("update script_info set expiration_time=:expirationTime where script_id = :scriptId")
+    fun updateExpirationTimeByScriptId(scriptId : Int, expirationTime : String)
 
     @Delete
     fun delete( scriptInfo: ScriptInfo )
@@ -44,4 +46,7 @@ interface ScriptInfoDao {
 
     @Query("select * from Script_Info where current_status!=2")
     fun getLocalScriptAll() : Flow<List<ScriptInfo>>
+
+    @Query("select * from Script_Info where script_id in (:scriptIds)")
+    fun getLocalScriptByIds(scriptIds: List<Int>) : Flow<List<ScriptInfo>>
 }
