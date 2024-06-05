@@ -73,9 +73,7 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
         if(checkedScriptIds.isEmpty()){
             return Response.error("未选择脚本")
         }
-        val user = appViewModel.user.value
-        println("==$user")
-        val request = Request(user, checkedScriptIds)
+        val request = Request(appViewModel.user.value, checkedScriptIds)
         val checkResultList = ExceptionUtil.tryCatchList(
             tryFun = RemoteApi.runRetrofit.runCheck(request),
             exceptionMsg = "运行失败！"

@@ -10,7 +10,6 @@ import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.data.entity.request.Request
 import com.smart.autodaily.utils.ToastUtil
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -41,15 +40,14 @@ class AppViewModel (application: Application) : AndroidViewModel(application) {
     private fun updateAndLoadUserInfo(){
         viewModelScope.launch {
             withContext(Dispatchers.IO){
+                loadUserInfo()
                 try {
-                    loadUserInfo()?.collectLatest {
-                        _user.value = it
-                    }
                     if(_user.value!=null){
                         val req : Request<Int> = Request(data = _user.value!!.userId)
                         val res = RemoteApi.updateRetrofit.updateUserInfo(req)
                         if (res.code == 200){
                             res.data?.let { it1 -> appDb?.userInfoDao?.update(it1) }
+                            loadUserInfo()
                         }else if (res.code== 999){
                             ToastUtil.showLong(getApplication<Application>().applicationContext, res.message.toString())
                         }
@@ -61,8 +59,10 @@ class AppViewModel (application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun loadUserInfo() : Flow<UserInfo?>?{
-        return appDb?.userInfoDao?.queryUserInfo()
+    private suspend fun loadUserInfo() {
+        appDb?.userInfoDao?.queryUserInfo()?.collectLatest {
+            _user.value = it
+        }
     }
     fun updateUser(userInfo: UserInfo?){
         _user.value = userInfo

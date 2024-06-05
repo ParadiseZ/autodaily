@@ -1,6 +1,7 @@
 package com.smart.autodaily.ui.screen
 
 import android.content.Intent
+import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -36,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.core.content.ContextCompat.startActivity
+import androidx.core.content.ContextCompat.startForegroundService
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -44,6 +46,7 @@ import com.smart.autodaily.constant.NavigationItem
 import com.smart.autodaily.constant.RunButtonClickResult
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
+import com.smart.autodaily.service.AppService
 import com.smart.autodaily.ui.LoginActivity
 import com.smart.autodaily.ui.conponent.RowScriptInfo
 import com.smart.autodaily.ui.conponent.navSingleTopTo
@@ -97,6 +100,16 @@ fun HomeScreen(
                                 if (clickResult.code!=200){
                                     ToastUtil.show(homeViewModel.context, clickResult.message.toString())
                                 }else {
+                                    // 启动主要前台服务
+                                    val mainServiceIntent = Intent(homeViewModel.context, AppService::class.java)
+                                    homeViewModel.context.also {
+                                        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                                            println("开始启动服务")
+                                            startForegroundService(it, mainServiceIntent)
+                                        }else{
+                                            it.startService(mainServiceIntent)
+                                        }
+                                    }
                                 }
                             }
                         }
