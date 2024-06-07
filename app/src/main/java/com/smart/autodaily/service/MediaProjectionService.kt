@@ -45,7 +45,7 @@ class MediaProjectionService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == "STOP_FOREGROUND_SERVICE") {
-            stopService()
+            applicationContext.stopService(Intent(applicationContext, MediaProjectionService::class.java))
         }
         //return super.onStartCommand(intent, flags, startId)
         try {
@@ -86,12 +86,6 @@ class MediaProjectionService : Service() {
             )
             notificationManager.createNotificationChannel(channel)
         }
-    }
-
-    //停止服务
-    private fun stopService(){
-        onDestroy()
-        stopForeground(STOP_FOREGROUND_REMOVE)
     }
 
     // 销毁时释放资源

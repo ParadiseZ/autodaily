@@ -112,10 +112,8 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
             appViewModel.user.value?.let { appDb!!.userInfoDao.update(it) }
             _invalidScriptList.value[index].expirationTime = res.data
             appViewModel.updateScript(_invalidScriptList.value[index])
-            dialogController()
-        }else{
-            _showActiveDialogFlag.value = false
         }
+        dialogController()
         return res
     }
 
@@ -126,10 +124,8 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
             appViewModel.updateScript(_invalidScriptList.value[curIndex])
             if (curIndex<_invalidScriptList.value.size){
                 _curNeedAcListIdx.value += 1
-                dialogController()
-            }else{
-                _showActiveDialogFlag.value = false
             }
+            dialogController()
         }
     }
 

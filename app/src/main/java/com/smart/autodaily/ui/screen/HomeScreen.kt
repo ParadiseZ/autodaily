@@ -2,7 +2,9 @@ package com.smart.autodaily.ui.screen
 
 import android.content.Intent
 import android.os.Build
+import android.provider.Settings
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -37,7 +39,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.core.content.ContextCompat.startActivity
-import androidx.core.content.ContextCompat.startForegroundService
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -46,10 +47,11 @@ import com.smart.autodaily.constant.NavigationItem
 import com.smart.autodaily.constant.RunButtonClickResult
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
-import com.smart.autodaily.service.AppService
 import com.smart.autodaily.ui.LoginActivity
 import com.smart.autodaily.ui.conponent.RowScriptInfo
 import com.smart.autodaily.ui.conponent.navSingleTopTo
+import com.smart.autodaily.utils.ScreenCaptureUtil
+import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.ToastUtil
 import com.smart.autodaily.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
@@ -100,14 +102,26 @@ fun HomeScreen(
                                 if (clickResult.code!=200){
                                     ToastUtil.show(homeViewModel.context, clickResult.message.toString())
                                 }else {
-                                    // 启动主要前台服务
-                                    val mainServiceIntent = Intent(homeViewModel.context, AppService::class.java)
-                                    homeViewModel.context.also {
-                                        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-                                            println("开始启动服务")
-                                            startForegroundService(it, mainServiceIntent)
-                                        }else{
-                                            it.startService(mainServiceIntent)
+                                    if(ServiceUtil.isAccessibilityServiceEnabled(homeViewModel.context)){
+
+                                    }else{
+                                        ToastUtil.show(homeViewModel.context, "请先开启无障碍服务!")
+                                        startActivity(
+                                            homeViewModel.context,
+                                            Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                                            null
+                                        )
+                                    }
+                                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
+                                        homeViewModel.appViewModel.runScript()
+                                    }else{
+                                        if(ScreenCaptureUtil.mps !=null){
+                                            homeViewModel.appViewModel.runScript()
+                                        } else {//未开启则引导开启
+                                            (ScreenCaptureUtil.mediaProjectionDataMap["startActivityForResultLauncher"] as ActivityResultLauncher<Intent>).launch(
+                                                ScreenCaptureUtil.mediaProjectionDataMap["mediaProjectionIntent"] as Intent
+                                            )
+                                            //ScreenCaptureUtil.mediaProjectionDataMap["resolver"]=homeViewModel.context.contentResolver//用来测试图片保存
                                         }
                                     }
                                 }

@@ -10,11 +10,30 @@ import android.hardware.display.VirtualDisplay
 import android.media.Image
 import android.media.ImageReader
 import android.media.projection.MediaProjection
+import android.os.Build
+import android.os.Handler
+import android.os.HandlerThread
 import android.provider.MediaStore
 import android.util.DisplayMetrics
+import android.view.Display
+import androidx.annotation.RequiresApi
+import com.smart.autodaily.service.AccessibilityService
+import java.util.concurrent.Executors
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 object ScreenCaptureUtil {
-    private const val MAX_IMAGE_NUM = 3//缓存图片最大数量
+    var accessibilityService: AccessibilityService ?= null//AccessibilityService中初始化
+    // 创建一个独立线程和handler
+    val handlerThread = HandlerThread("ScreenshotThread")
+    val handler = Handler(handlerThread.looper)
+
+    // 创建Executor
+    val executor = Executors.newSingleThreadExecutor()
+
+
+    private const val MAX_IMAGE_NUM =  10//缓存图片最大数量
     private var currentImageNum = 1//当前缓存图片数量
     val mediaProjectionDataMap = mutableMapOf<String, Any>()//MainActivity中初始化
     var mps: MediaProjection? = null//MediaProjectionService服务开启命令时获取
@@ -26,7 +45,36 @@ object ScreenCaptureUtil {
         return context.resources.displayMetrics
     }
 
-    fun screenCapture(): Bitmap? {
+    suspend fun screenCapture(): Bitmap?  {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
+            return screenCaptureByAccessibilityService()
+        }else{
+            return screenCaptureByMediaProjection()
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    private suspend  fun screenCaptureByAccessibilityService(): Bitmap?  = suspendCoroutine { cont ->
+        accessibilityService?.apply {
+            takeScreenshot(
+                Display.DEFAULT_DISPLAY,executor, object :
+                    android.accessibilityservice.AccessibilityService.TakeScreenshotCallback {
+                    override fun onSuccess(screenshotResult: android.accessibilityservice.AccessibilityService.ScreenshotResult) {
+                        val bitmap: Bitmap? = screenshotResult.hardwareBuffer.let {
+                            Bitmap.wrapHardwareBuffer(it, screenshotResult.colorSpace)
+                        }
+                        cont.resume(bitmap)  // 返回截图结果
+                    }
+
+                    override fun onFailure(errorCode: Int) {
+                        handlerThread.quitSafely()
+                        cont.resumeWithException(RuntimeException("Screenshot failed with error code: $errorCode"))
+                    }
+                }
+            )
+        }
+    }
+    private fun screenCaptureByMediaProjection(): Bitmap? {
         try {
             displayMetrics?.let { dms ->
                 imgReader?:let {
@@ -43,6 +91,8 @@ object ScreenCaptureUtil {
             }
         }catch (e: Exception){
             println("screenCapture error: "+e.message)
+            releaseCapture()
+            currentImageNum = 1
         }
         val  image = imgReader?.acquireLatestImage()
         //return image

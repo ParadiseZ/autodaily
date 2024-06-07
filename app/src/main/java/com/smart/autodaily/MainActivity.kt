@@ -28,8 +28,11 @@ import com.smart.autodaily.ui.conponent.AppNavHost
 import com.smart.autodaily.ui.conponent.navSingleTopTo
 import com.smart.autodaily.ui.theme.AutoDailyTheme
 import com.smart.autodaily.utils.ScreenCaptureUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private val startActivityForResultLauncher  =registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             val intent = Intent(this, MediaProjectionService::class.java)
@@ -99,5 +102,10 @@ class MainActivity : ComponentActivity() {
         }
 
 
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        cancel()
     }
 }
