@@ -22,5 +22,8 @@ interface ScriptSetInfoDao {
     fun deleteScriptSetInfoByScriptId(scriptId: Int)
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
-    fun updateScriptSetInfo(scriptSetInfo: ScriptSetInfo)
+    fun update(scriptSetInfo: ScriptSetInfo)
+
+    @Query("select set_value from script_set_info where set_id = :setId and script_id=0")
+    fun getGlobalSetValueBySetId(setId : Int)
 }

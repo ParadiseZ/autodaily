@@ -102,9 +102,7 @@ fun HomeScreen(
                                 if (clickResult.code!=200){
                                     ToastUtil.show(homeViewModel.context, clickResult.message.toString())
                                 }else {
-                                    if(ServiceUtil.isAccessibilityServiceEnabled(homeViewModel.context)){
-
-                                    }else{
+                                    if(!ServiceUtil.isAccessibilityServiceEnabled(homeViewModel.context)){
                                         ToastUtil.show(homeViewModel.context, "请先开启无障碍服务!")
                                         startActivity(
                                             homeViewModel.context,
