@@ -24,6 +24,9 @@ interface ScriptInfoDao {
     @Query("SELECT script_id FROM Script_Info where  current_status!=2 and checked_flag = 1")
     fun getAllCheckedScript() : List<Int>
 
+    @Query("SELECT * FROM Script_Info where  current_status!=2 and checked_flag = 1")
+    fun getAllScriptByChecked() : ArrayList<ScriptInfo>
+
     @Query("SELECT script_id,last_version FROM Script_Info where  current_status!=2")
     fun getIdAndLastVer() : List<ScriptInfoCheckUpdate>
 

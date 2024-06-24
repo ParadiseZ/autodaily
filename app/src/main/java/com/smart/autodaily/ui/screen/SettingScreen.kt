@@ -159,7 +159,7 @@ fun SettingScreen(
                             (ScreenCaptureUtil.mediaProjectionDataMap["startActivityForResultLauncher"] as ActivityResultLauncher<Intent>).launch(
                                 ScreenCaptureUtil.mediaProjectionDataMap["mediaProjectionIntent"] as Intent
                             )
-                            //ScreenCaptureUtil.mediaProjectionDataMap["resolver"]=settingViewModel.context.contentResolver//用来测试图片保存
+                            ScreenCaptureUtil.mediaProjectionDataMap["resolver"]=settingViewModel.context.contentResolver//用来测试图片保存
                         }
                 })
                 RowIconButtonPermission(PermissionSettingText.IGNORE_BATTERIES_TEXT,

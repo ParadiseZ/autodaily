@@ -18,7 +18,7 @@ import com.smart.autodaily.ui.screen.SettingScreen
 @Composable
 fun AppNavHost(
     modifier: Modifier = Modifier,
-    navController: NavHostController,
+    navController: NavHostController
 ) {
     NavHost(
         modifier = Modifier.padding( Ui.SPACE_5 ),

@@ -30,7 +30,7 @@ class SettingViewModel (app: Application) : BaseViewModel(application = app) {
 
     fun updateGlobalSetting(scriptSetInfo: ScriptSetInfo) {
         try {
-            appDb!!.scriptSetInfoDao.updateScriptSetInfo(scriptSetInfo)
+            appDb!!.scriptSetInfoDao.update(scriptSetInfo)
         } catch (e: Exception) {
             e.printStackTrace()
         }

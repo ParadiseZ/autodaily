@@ -5,9 +5,13 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.smart.autodaily.data.dao.PicInfoDao
+import com.smart.autodaily.data.dao.ScriptActionInfoDao
 import com.smart.autodaily.data.dao.ScriptInfoDao
 import com.smart.autodaily.data.dao.ScriptSetInfoDao
 import com.smart.autodaily.data.dao.UserInfoDao
+import com.smart.autodaily.data.entity.PicInfo
+import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.data.entity.UserInfo
@@ -15,11 +19,10 @@ import org.intellij.lang.annotations.Language
 import java.util.Locale
 
 
-var appDb: AppDb? = null
-
+var appDb: AppDb ?=null
 @Database(version = 1,
     exportSchema = false,
-    entities = [ScriptInfo::class, ScriptSetInfo::class, UserInfo::class],
+    entities = [ScriptInfo::class, ScriptSetInfo::class, UserInfo::class, ScriptActionInfo::class, PicInfo::class],
 /*    autoMigrations = [
         AutoMigration(from = 2, to = 3)
     ]*/
@@ -28,16 +31,18 @@ abstract class AppDb  :  RoomDatabase(){
     abstract val scriptInfoDao : ScriptInfoDao
     abstract val scriptSetInfoDao : ScriptSetInfoDao
     abstract val userInfoDao : UserInfoDao
+    abstract val scriptActionInfoDao : ScriptActionInfoDao
+    abstract val picInfoDao : PicInfoDao
     companion object {
         // For Singleton instantiation
 
         private const val DATABASE_NAME = "auto_daily.db"
 
-        fun getInstance(context: Context? = null): AppDb {
+        fun getInstance(context: Context): AppDb {
             return appDb ?: synchronized(this) {
                 appDb
                     ?: buildDatabase(
-                        context!!
+                        context
                     ).also { appDb = it }
             }
         }
@@ -55,25 +60,29 @@ abstract class AppDb  :  RoomDatabase(){
         private val dbCallback = object : Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 db.setLocale(Locale.CHINESE)
+                initData(db)
             }
 
             override fun onOpen(db: SupportSQLiteDatabase) {
-                @Language("sql")
-                val insertBookGroupAllSql = """
-                    insert into script_set_info(script_id,set_id,checked_flag,set_type,set_name,set_desc,set_parent_id,set_level,set_default_value,set_value,set_range,set_step,is_show,result_flag,once_flag) values 
+            }
+
+        }
+
+        private fun initData(db: SupportSQLiteDatabase){
+            @Language("sql")
+            val insertScriptSetGlobalSql = """
+                INSERT INTO script_set_info (script_id, set_id, checked_flag, set_type, set_name, set_desc, set_parent_id, set_level, set_default_value, set_value, set_range, set_step, is_show, result_flag, once_flag) 
+                VALUES 
                     (0,1,'true','CHECK_BOX','启动时打开脚本设置','',-1,1,'true','true','',0,'true','false','false'),
                     (0,2,'true','CHECK_BOX','保持运行','',-1,1,'false','false','',0,'true','false','false'),
                     (0,3,'true','SLIDER_SECOND','截图延迟','',-1,1,'0.5','0.5','0,5',9,'true','false','false'),
                     (0,4,'true','SLIDER_SECOND','卡死等待重启','',-1,1,'10','10','5,20',14,'true','false','false'),
                     (0,5,'true','SLIDER','图像匹配相似度','',-1,1,'0.9','0.9','0,1',0,'true','false','false'),
                     (0,6,'true','RADIO_BUTTON','匹配算法','',-1,1,'算法一（更快）,算法二（更准）','算法二（更准）','',0,'true','false','false'),
-                    (0,7,'true','RADIO_BUTTON','脚本日志记录','',-1,1,'关闭,运行结果,INFO','运行结果','',0,'true','false','false')
+                    (0,7,'true','RADIO_BUTTON','脚本日志记录','',-1,1,'关闭,运行结果,INFO','运行结果','',0,'true','false','false'),
                     (0,8,'true','SLIDER_SECOND','随机点击范围','',-1,1,'5','5','1,10',9,'true','false','false')
-                """.trimIndent()
-                db.execSQL(insertBookGroupAllSql)
-
-            }
-
+            """.trimIndent()
+            db.execSQL(insertScriptSetGlobalSql)
         }
     }
 }

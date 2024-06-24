@@ -3,29 +3,29 @@ package com.smart.autodaily.handler
 import android.accessibilityservice.GestureDescription
 import android.graphics.Path
 import com.smart.autodaily.data.entity.Point
-import com.smart.autodaily.utils.ScreenCaptureUtil
+import com.smart.autodaily.service.AssService
 
 object ActionHandler {
     private val path  = Path()
     private val clickTime = 1L
     private val longClickTime = 500L
-    private var randomXRange = 5f
-    private var randomYRange = 5f
+    private var randomXRange = 0f
+    private var randomYRange = 0f
 
     fun updateRandomRange(xRange : Float, yRange: Float){
         this.randomXRange = xRange
         this.randomYRange = yRange
     }
 
-    fun click(point: Point){
-        clickGesture(point, 1)
+    fun click(point: Point, assService: AssService){
+        clickGesture(point, 1, assService)
     }
 
-    fun longClick(point: Point){
-        clickGesture(point, 2)
+    fun longClick(point: Point, assService: AssService){
+        clickGesture(point, 2, assService)
     }
 
-    private fun clickGesture(point: Point, type: Int){
+    private fun clickGesture(point: Point, type: Int, assService: AssService){
         path.moveTo(    point.x+ randomXRange , point.y + randomYRange  )
         var gestureDescription : GestureDescription?=null
         when(type){
@@ -36,7 +36,7 @@ object ActionHandler {
                 .addStroke(GestureDescription.StrokeDescription(path, 0, longClickTime))
                 .build()
         }
-        ScreenCaptureUtil.accessibilityService?.dispatchGesture(
+        assService.dispatchGesture(
             gestureDescription!!, null, null
         )
     }

@@ -28,34 +28,46 @@ import com.smart.autodaily.ui.conponent.AppNavHost
 import com.smart.autodaily.ui.conponent.navSingleTopTo
 import com.smart.autodaily.ui.theme.AutoDailyTheme
 import com.smart.autodaily.utils.ScreenCaptureUtil
+import com.smart.autodaily.utils.ShizukuUtil
+import com.smart.autodaily.utils.toastOnUi
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+
 
 class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
-    private val startActivityForResultLauncher  =registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val intent = Intent(this, MediaProjectionService::class.java)
-            intent.putExtra("code",result.resultCode)
-            intent.putExtra("data", result.data)
-            ScreenCaptureUtil.displayMetrics = ScreenCaptureUtil.getDisplayMetrics(this)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(intent)
-            }else{
-                startService(intent)
-            }
-        }else {
-            println("拒绝了mediaProjection权限申请")
-        }
-        stopService(intent)
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val mediaProjectionManager = baseContext.getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-        ScreenCaptureUtil.mediaProjectionDataMap["mediaProjectionManager"] = mediaProjectionManager
-        ScreenCaptureUtil.mediaProjectionDataMap["mediaProjectionIntent"] = mediaProjectionManager.createScreenCaptureIntent()
-        ScreenCaptureUtil.mediaProjectionDataMap["startActivityForResultLauncher"] = startActivityForResultLauncher
+        launch(Dispatchers.IO) {
+            if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.R){
+                val startActivityForResultLauncher  =registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                    if (result.resultCode == RESULT_OK) {
+                        val intent = Intent(this@MainActivity, MediaProjectionService::class.java)
+                        intent.putExtra("code",result.resultCode)
+                        intent.putExtra("data", result.data)
+                        ScreenCaptureUtil.displayMetrics = ScreenCaptureUtil.getDisplayMetrics(this@MainActivity)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            startForegroundService(intent)
+                        }else{
+                            startService(intent)
+                        }
+                    }else {
+                        this@MainActivity.toastOnUi("拒绝了录屏申请，将无法运行")
+                    }
+                    stopService(intent)
+                }
+                val mediaProjectionManager = baseContext.getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+                ScreenCaptureUtil.mediaProjectionDataMap["mediaProjectionManager"] = mediaProjectionManager
+                ScreenCaptureUtil.mediaProjectionDataMap["mediaProjectionIntent"] = mediaProjectionManager.createScreenCaptureIntent()
+                ScreenCaptureUtil.mediaProjectionDataMap["startActivityForResultLauncher"] = startActivityForResultLauncher
+            }
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R){
+                ShizukuUtil.initShizuku()
+            }
+        }
+
         setContent {
             AutoDailyTheme {
                 // A surface container using the 'background' color from the theme
@@ -100,12 +112,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 }
             }
         }
-
-
     }
+
 
     override fun onDestroy() {
         super.onDestroy()
         cancel()
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
+            ShizukuUtil.removeShizuku()
+        }
     }
 }

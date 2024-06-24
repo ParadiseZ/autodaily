@@ -1,29 +1,38 @@
 [versions]
 agp = "8.4.0"
+freereflection = "3.1.0"
 kotlin = "1.9.23"
-coreKtx = "1.13.0"
+coreKtx = "1.13.1"
 junit = "4.13.2"
 junitVersion = "1.1.5"
 espressoCore = "3.5.1"
-lifecycleRuntimeKtx = "2.7.0"
+lifecycleRuntimeKtx = "2.8.1"
 activityCompose = "1.9.0"
-composeBom = "2024.04.01"
+composeBom = "2024.05.00"
+liveeventbus = "1.8.14"
 navigationCompose = "2.7.7"
-materialAndroid = "1.6.6"
+materialAndroid = "1.6.7"
+opencv = "4.10.0"
 roomCompiler = "2.6.1"
 roomKtx = "2.6.1"
 roomMigration = "2.6.1"
 roomRuntime = "2.6.1"
-pagingCompose = "3.2.1"
+pagingCompose = "3.3.0"
 retrofit = "2.11.0"
 converterGson = "2.11.0"
-lifecycleViewmodelKtx = "2.8.0-beta01"
-freereflection = "3.2.0"
+lifecycleViewmodelKtx = "2.8.1"
 okhttp = "5.0.0-alpha.14"
+tesseract4androidOpenmp = "4.7.0"
+splitties = "3.0.0"
+shizukuApi  = "13.1.5"
+shizukuProvider = "13.1.5"
+appcompat = "1.7.0"
+material = "1.12.0"
 
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+freereflection = { module = "com.github.tiann:FreeReflection", version.ref = "freereflection" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -44,12 +53,25 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "roomRuntime" }
 androidx-room-migration = { group = "androidx.room", name = "room-migration", version.ref = "roomMigration" }
 androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "pagingCompose" }
+liveeventbus = { module = "com.github.michaellee123:LiveEventBus", version.ref = "liveeventbus" }
+opencv = { module = "org.opencv:opencv", version.ref = "opencv" }
+
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "converterGson" }
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
 
-freereflection = { group = "com.github.tiann", name = "FreeReflection", version.ref = "freereflection" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+tesseract4android-openmp = { module = "cz.adaptech.tesseract4android:tesseract4android-openmp", version.ref = "tesseract4androidOpenmp" }
+
+shizuku-api = { group = "dev.rikka.shizuku", name = "api", version.ref = "shizukuApi" }
+shizuku-provider = { module = "dev.rikka.shizuku:provider", version.ref = "shizukuProvider" }
+
+splitties-toast-android = { group = "com.louiscad.splitties", name = "splitties-toast-android", version.ref = "splitties" }
+splitties-systemservices-android = { group = "com.louiscad.splitties", name = "splitties-systemservices-android", version.ref = "splitties" }
+splitties-appctx-android = { group = "com.louiscad.splitties", name = "splitties-appctx-android", version.ref = "splitties" }
+splitties-alertdialog-appcompat-coroutines-android = { group = "com.louiscad.splitties", name = "splitties-alertdialog-appcompat-coroutines-android", version.ref = "splitties" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 
 

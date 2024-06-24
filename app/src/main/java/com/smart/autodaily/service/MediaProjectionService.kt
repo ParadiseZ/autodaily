@@ -51,10 +51,32 @@ class MediaProjectionService : Service() {
         try {
             if (ScreenCaptureUtil.mps == null && intent!= null) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {//安卓13以上
-                    ScreenCaptureUtil.mps = (intent.getParcelableExtra("data",Intent::class.java))?.let {
+                    /*val mps =  (intent.getParcelableExtra("data",Intent::class.java))?.let {
+                        (ScreenCaptureUtil.mediaProjectionDataMap["mediaProjectionManager"] as MediaProjectionManager)
+                            .getMediaProjection(intent.getIntExtra("resultCode", -1), it)
+                    }*/
+
+                    val mps  = (intent.getParcelableExtra("data",Intent::class.java))?.let {
                         (ScreenCaptureUtil.mediaProjectionDataMap["mediaProjectionManager"] as MediaProjectionManager)
                             .getMediaProjection(intent.getIntExtra("resultCode", -1), it)
                     }
+                    if (mps!=null){
+                        mps.registerCallback(MediaProjectionCallback(), null)
+                        ScreenCaptureUtil.mps = mps
+                    }
+
+                    //ScreenCaptureUtil.mediaResultCode = intent.getIntExtra("resultCode", -1)
+                    //ScreenCaptureUtil.mediaResultData = intent.getParcelableExtra("data",Intent::class.java)
+                    /*val mps =ScreenCaptureUtil.mediaResultData?.let {
+                        (ScreenCaptureUtil.mediaProjectionDataMap["mediaProjectionManager"] as MediaProjectionManager)
+                            .getMediaProjection(ScreenCaptureUtil.mediaResultCode,it)
+                    }*/
+                    //ScreenCaptureUtil.initMps()
+
+                    /*ScreenCaptureUtil.mps = (intent.getParcelableExtra("data",Intent::class.java))?.let {
+                        (ScreenCaptureUtil.mediaProjectionDataMap["mediaProjectionManager"] as MediaProjectionManager)
+                            .getMediaProjection(intent.getIntExtra("resultCode", -1), it)
+                    }*/
                 } else {
                     val p: Parcelable? = intent.getParcelableExtra("data")
                     p?.let {

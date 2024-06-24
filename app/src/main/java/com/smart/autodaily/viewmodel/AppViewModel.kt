@@ -9,6 +9,7 @@ import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.data.entity.request.Request
 import com.smart.autodaily.handler.RunScript
+import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ToastUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,16 +22,14 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     /*private val _localScriptList = MutableStateFlow<PagingData<ScriptInfo>>(PagingData.empty())
     val localScriptList: StateFlow<PagingData<ScriptInfo>> = _localScriptList*/
     //本地脚本列表
-    //private val _localScriptAll = MutableStateFlow<List<ScriptInfo>>(emptyList())
-    val localScriptListAll: StateFlow<List<ScriptInfo>> = RunScript.scriptList
+    private val _localScriptAll = MutableStateFlow<List<ScriptInfo>>(emptyList())
+    val localScriptListAll: StateFlow<List<ScriptInfo>> = _localScriptAll
     //加载本地数据的标志
     private val _loadDataFlagFlow = MutableStateFlow(false)
     val loadDataFlagFlow: StateFlow<Boolean> get() = _loadDataFlagFlow
     //本地用户
     private val _user  = MutableStateFlow<UserInfo?>(null)
     val user : StateFlow<UserInfo?> get() = _user
-
-
 
     //加载用户
     init {
@@ -75,7 +74,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
         viewModelScope.launch {
             withContext(Dispatchers.IO){
                 appDb!!.scriptInfoDao.getLocalScriptAll().collectLatest {
-                    RunScript.scriptList.value = it
+                    _localScriptAll.value = it
                 }
             }
 
@@ -85,10 +84,11 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     //更新本地数据
     fun updateScript(scriptInfo: ScriptInfo){
         viewModelScope.launch {
+            appDb!!.scriptInfoDao.update(scriptInfo)
             /*withContext(Dispatchers.IO){
                 appDb!!.scriptInfoDao.update(scriptInfo)
             }*/
-            RunScript.updateScript(scriptInfo)
+            //RunScript.updateScript(scriptInfo)
         }
     }
 

@@ -22,12 +22,11 @@ android {
         }
 
         externalNativeBuild {
-            ndk{
-                abiFilters 'x86_64', 'arm64-v8a'
+            ndk {
+                abiFilters 'x86_64'
             }
         }
     }
-
     buildTypes {
         release {
             minifyEnabled false
@@ -43,6 +42,13 @@ android {
     }
     buildFeatures {
         compose true
+        aidl true           // 启用aidl
+        buildConfig true
+    }
+    sourceSets {
+        main {
+            aidl.srcDirs = ['src/main/aidl']
+        }
     }
     composeOptions {
         kotlinCompilerExtensionVersion '1.5.11'
@@ -52,6 +58,7 @@ android {
             excludes.add('/META-INF/{AL2.0,LGPL2.1}')
         }
     }
+    ndkVersion '27.0.11718014 rc1'
 }
 
 dependencies {
@@ -83,7 +90,23 @@ dependencies {
     implementation libs.retrofit
     implementation libs.converter.gson
     //反射
-    //implementation libs.freereflection
+    implementation libs.freereflection
+
+    //opencv
+    implementation(libs.opencv)
+    //OCR
+    implementation libs.tesseract4android.openmp
+    //eventbus
+    implementation libs.liveeventbus
+
+    //splitties
+    implementation libs.splitties.systemservices.android
+    implementation libs.splitties.toast.android
+    implementation libs.splitties.appctx.android
+    implementation libs.splitties.alertdialog.appcompat.coroutines.android
+    //shizuku
+    implementation libs.shizuku.api
+    implementation libs.shizuku.provider
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit

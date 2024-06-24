@@ -2,12 +2,11 @@ package com.smart.autodaily.data.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 
-@Entity(tableName = "script_info")
+@Entity(tableName = "script_info", primaryKeys = ["script_id"])
 data class ScriptInfo(
-    @PrimaryKey @ColumnInfo(name = "script_id") @SerializedName("script_id") val scriptId: Int,
+    @ColumnInfo(name = "script_id") @SerializedName("script_id") val scriptId: Int,
     @ColumnInfo(name = "script_name") @SerializedName("script_name")var scriptName: String,  // 脚本名称
     @ColumnInfo(name = "script_version") @SerializedName("script_version")var scriptVersion: String, // 脚本版本号
     @ColumnInfo(name = "last_version") @SerializedName("last_version")  val lastVersion: String,   // 最新版本号
@@ -19,7 +18,8 @@ data class ScriptInfo(
     @ColumnInfo(name = "download_time") @SerializedName("download_time")var downloadTime: String, // 下载日期
     @ColumnInfo(name = "is_downloaded") var isDownloaded: Int = 0, // 是否已下载
 
-    @ColumnInfo(name = "current_status") @SerializedName("current_status")var currentStatus: Int = 0, // 脚本状态
-    @ColumnInfo(name = "add_time") @SerializedName("add_time")var addTime: String?, // 添加日期
-    @ColumnInfo(name = "update_time") @SerializedName("update_time")var updateTime: String?  //更新日期
+    @ColumnInfo(name = "current_status") @SerializedName("current_status") var currentStatus: Int = 0, // 脚本状态
+    @ColumnInfo(name = "add_time") @SerializedName("add_time") var addTime: String?, // 添加日期
+    @ColumnInfo(name = "update_time") @SerializedName("update_time") var updateTime: String?,  //更新日期
+    @ColumnInfo(name = "pic_path") @SerializedName("pic_path") var picPath: String? // 图片路径
 )

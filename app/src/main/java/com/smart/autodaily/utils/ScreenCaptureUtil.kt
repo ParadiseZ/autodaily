@@ -1,7 +1,5 @@
 package com.smart.autodaily.utils
 
-import android.content.ContentResolver
-import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
@@ -11,70 +9,39 @@ import android.media.Image
 import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.os.Build
-import android.os.Handler
-import android.os.HandlerThread
-import android.provider.MediaStore
+import android.os.Environment
 import android.util.DisplayMetrics
-import android.view.Display
-import androidx.annotation.RequiresApi
-import com.smart.autodaily.service.AccessibilityService
-import java.util.concurrent.Executors
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
+import splitties.init.appCtx
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 
-object ScreenCaptureUtil {
-    var accessibilityService: AccessibilityService ?= null//AccessibilityService中初始化
-    // 创建一个独立线程和handler
-    val handlerThread = HandlerThread("ScreenshotThread")
-    val handler = Handler(handlerThread.looper)
-
-    // 创建Executor
-    val executor = Executors.newSingleThreadExecutor()
-
-
-    private const val MAX_IMAGE_NUM =  10//缓存图片最大数量
+object ScreenCaptureUtil : CoroutineScope by MainScope(){
+    const val MAX_IMAGE_NUM =  3//缓存图片最大数量
     private var currentImageNum = 1//当前缓存图片数量
     val mediaProjectionDataMap = mutableMapOf<String, Any>()//MainActivity中初始化
     var mps: MediaProjection? = null//MediaProjectionService服务开启命令时获取
     var displayMetrics: DisplayMetrics? = null//MainActivity中允许权限时获取
-    private var imgReader: ImageReader? = null//截图时获取，超过MAX_IMAGE_NUM释放再获取
-    private var virtualDisplay: VirtualDisplay? = null//截图时获取，超过MAX_IMAGE_NUM释放再获取
+    var imgReader: ImageReader? = null//截图时获取，超过MAX_IMAGE_NUM释放再获取
+    var virtualDisplay: VirtualDisplay? = null//截图时获取，超过MAX_IMAGE_NUM释放再获取
 
     fun getDisplayMetrics(context: Context) : DisplayMetrics? {
         return context.resources.displayMetrics
     }
 
-    suspend fun screenCapture(): Bitmap?  {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
-            return screenCaptureByAccessibilityService()
-        }else{
-            return screenCaptureByMediaProjection()
-        }
+    fun setDisplayMetrics(context: Context){
+        displayMetrics = getDisplayMetrics(context)
     }
 
-    @RequiresApi(Build.VERSION_CODES.R)
-    private suspend  fun screenCaptureByAccessibilityService(): Bitmap?  = suspendCoroutine { cont ->
-        accessibilityService?.apply {
-            takeScreenshot(
-                Display.DEFAULT_DISPLAY,executor, object :
-                    android.accessibilityservice.AccessibilityService.TakeScreenshotCallback {
-                    override fun onSuccess(screenshotResult: android.accessibilityservice.AccessibilityService.ScreenshotResult) {
-                        val bitmap: Bitmap? = screenshotResult.hardwareBuffer.let {
-                            Bitmap.wrapHardwareBuffer(it, screenshotResult.colorSpace)
-                        }
-                        cont.resume(bitmap)  // 返回截图结果
-                    }
 
-                    override fun onFailure(errorCode: Int) {
-                        handlerThread.quitSafely()
-                        cont.resumeWithException(RuntimeException("Screenshot failed with error code: $errorCode"))
-                    }
-                }
-            )
+    fun screenCaptureTIRAMISU() {
+        if (Build.VERSION.SDK_INT >=Build.VERSION_CODES.TIRAMISU){
+
         }
     }
-    private fun screenCaptureByMediaProjection(): Bitmap? {
+    fun screenCapture(): Bitmap? {
         try {
             displayMetrics?.let { dms ->
                 imgReader?:let {
@@ -87,7 +54,6 @@ object ScreenCaptureUtil {
                         DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                         imgReader?.surface, null, null)
                 }
-
             }
         }catch (e: Exception){
             println("screenCapture error: "+e.message)
@@ -95,7 +61,6 @@ object ScreenCaptureUtil {
             currentImageNum = 1
         }
         val  image = imgReader?.acquireLatestImage()
-        //return image
         return image?.let {
             currentImageNum++
             if (currentImageNum == MAX_IMAGE_NUM) {
@@ -104,6 +69,7 @@ object ScreenCaptureUtil {
                 releaseCapture()
                 return null
             }else{
+                //releaseCapture()
                 imgToBitmap(it)
             }
         }
@@ -119,19 +85,21 @@ object ScreenCaptureUtil {
         val rowPadding = rowStride - pixelStride * width
         val bitmap = Bitmap.createBitmap(width + rowPadding / pixelStride, height, Bitmap.Config.ARGB_8888)
         bitmap.copyPixelsFromBuffer(buffer)
+        //saveScreenCapture(bitmap)
+        image.close()
         return bitmap
     }
 
     fun saveScreenCapture(bitmap: Bitmap) {
-        val contentValues = ContentValues()
+        /*val contentValues = ContentValues()
         contentValues.put(MediaStore.Images.Media.MIME_TYPE, "image/png")
         contentValues.put(MediaStore.Images.Media.TITLE, "screenshot")
-        contentValues.put(MediaStore.Images.Media.DISPLAY_NAME, "screenshot.png")
+        contentValues.put(MediaStore.Images.Media.DISPLAY_NAME, "screenshot${currentImageNum}.png")
         contentValues.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis() / 1000)
         contentValues.put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis())
         contentValues.put(MediaStore.Images.Media.DESCRIPTION, "screenshot")
         contentValues.put(MediaStore.Images.Media.IS_PENDING, 1)
-        contentValues.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Screenshots")
+        contentValues.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/screenshot")
         val resolver = mediaProjectionDataMap["resolver"] as ContentResolver
         val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
         val outputStream = resolver.openOutputStream(uri!!)
@@ -142,6 +110,30 @@ object ScreenCaptureUtil {
         contentValues.clear()
         contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
         resolver.update(uri, contentValues, null, null)
+        bitmap.recycle()*/
+
+        val filename = "screenshot_${System.currentTimeMillis()}.png"
+        val file = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), filename)
+
+        var out: FileOutputStream? = null
+        try {
+            out = FileOutputStream(file)
+            if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.R){
+                bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSLESS, 0, out)
+            }else{
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+
+            out.flush()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            try {
+                out?.close()
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
     }
 
     fun release() {
@@ -154,10 +146,17 @@ object ScreenCaptureUtil {
         displayMetrics=null
     }
 
-    private fun releaseCapture() {
+    fun releaseCapture() {
         imgReader?.close()
         imgReader = null
         virtualDisplay?.release()
         virtualDisplay = null
+        setDisplayMetrics(appCtx)
+    }
+
+    fun resetScreenSize(width: Int, height: Int){
+        releaseCapture()
+        displayMetrics?.widthPixels = width
+        displayMetrics?.heightPixels = height
     }
 }
