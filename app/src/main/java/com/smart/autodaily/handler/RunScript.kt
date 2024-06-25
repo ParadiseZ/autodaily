@@ -3,18 +3,22 @@ package com.smart.autodaily.handler
 import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.Build
+import com.smart.autodaily.constant.ActionString
 import com.smart.autodaily.data.appDb
+import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.utils.ShizukuUtil
-import com.smart.autodaily.utils.cv.CaptureHandler
-import com.smart.autodaily.utils.sc.AsClick
-import com.smart.autodaily.utils.sc.AsLongClick
+import com.smart.autodaily.utils.sc.adbClick
+import com.smart.autodaily.utils.sc.adbSwap
+import com.smart.autodaily.utils.sc.overScript
+import com.smart.autodaily.utils.sc.overSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.opencv.core.Mat
@@ -26,55 +30,104 @@ object  RunScript {
     private val assetManager: AssetManager = appCtx.assets
 
     private val _scriptCheckedList = MutableStateFlow<List<ScriptInfo>>(emptyList())
-    val scriptCheckedList : StateFlow<List<ScriptInfo>> = _scriptCheckedList
-    var scriptSetList : List<ScriptInfo> = emptyList()
-    val globalSetList =  MutableStateFlow<List<ScriptSetInfo>>(emptyList())
+    //val scriptCheckedList : StateFlow<List<ScriptInfo>> = _scriptCheckedList
+    //var scriptSetList : List<ScriptInfo> = emptyList()
+    //val globalSetList =  MutableStateFlow<List<ScriptSetInfo>>(emptyList())
     private var scriptRunCoroutineScope = CoroutineScope(Dispatchers.IO)
     private var mat = Mat()
-
     fun runScript() {
+        //已选脚本
+        scriptRunCoroutineScope.launch {
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
+                runScriptByAdb()
+            }
+        }
+
+    }
+
+    //shell运行
+    private suspend fun runScriptByAdb(){
         _scriptCheckedList.value.forEach{ si->
-            val scriptActionList = appDb!!.scriptActionInfoDao.getCheckedByScriptId( si.scriptId )
-            scriptActionList.forEach {
-                it.actionString.split(",").forEach { action->
-                    when(action){
-                        "click"-> it.command.add { it.AsClick() }
-                        "longClick"-> it.command.add { it.AsLongClick() }
+            if(si.currentRunNum < si.runsMaxNum){
+                //当前脚本已选操作
+                val scriptActionList = appDb!!.scriptActionInfoDao.getCheckedByScriptId( si.scriptId )
+                scriptActionList.forEach {
+                    initActionFun(it, si, scriptActionList)
+                }
+                while (si.currentRunNum < si.runsMaxNum) {
+                    val capTime = System.currentTimeMillis()
+                    val captureBitmap = ShizukuUtil.iUserService?.execCap("screencap -p")
+                    if (captureBitmap != null) {
+                        scriptActionList.forEach {
+                            if (!it.skipFlag) {
+                                //寻找
+                                if (it.actionString.startsWith(ActionString.UN_FIND)) {
+                                    it.command.forEach { command ->
+                                        command.invoke(it)
+                                    }
+                                }
+                            }
+                        }
+                        if (System.currentTimeMillis() - capTime < 1000) {
+                            delay(1000)
+                        }
+                    }else{
+                        println("截图失败！")
+                        return
                     }
                 }
             }
-            while (true){
-                val captureBitmap  = ShizukuUtil.iUserService?.execCap("screencap -p")
-                if (captureBitmap != null) {
-                    scriptActionList.forEach {
-                        it.command.forEach { command->
-                            command.invoke(it)
+        }
+    }
+
+    private fun execCompet(){
+
+    }
+
+    //操作映射为函数
+    private fun initActionFun(scriptActionInfo: ScriptActionInfo, scriptInfo: ScriptInfo, scriptActionList: List<ScriptActionInfo>){
+        scriptActionInfo.actionString.split(";").forEach {  action->
+            when(action){
+                ActionString.CLICK-> scriptActionInfo.command.add { scriptActionInfo.adbClick() }
+                ActionString.LONG_CLICK-> scriptActionInfo.command.add { scriptActionInfo.adbSwap() }
+                ActionString.FINISH ->{
+                    if(scriptInfo.currentRunNum < scriptInfo.runsMaxNum){
+                        scriptActionInfo.command.add { scriptActionInfo.overScript { scriptInfo.currentRunNum += 1
+                            println("currentRunNum = ${scriptInfo.currentRunNum}")
+                        } }
+                    }
+                }
+                action.startsWith(  ActionString.OVER_SET  ).toString() -> {
+                    if(action.endsWith(")")){
+                        val setId = action.substring(   ActionString.OVER_SET.length, action.length-1   ).toInt()
+                        for(element in scriptActionList){
+                            if (element.setId == setId){
+                                scriptActionInfo.command.add{element.overSet(element)}
+                                println("使setId为$setId 停止")
+                                break
+                            }
+                        }
+                    }else{
+                        scriptActionInfo.command.add { scriptActionInfo.overSet(scriptActionInfo) }
+                    }
+                }
+                action.startsWith(ActionString.STEP).toString() -> {
+                    val setId = action.substring(ActionString.STEP.length, action.length-1).toInt()
+                    for(element in scriptActionList) {
+                        if (element.setId == setId) {
+                            scriptActionInfo.command.add { element.overSet(element) }
+                            println("使setId为$setId 停止")
+                            break
                         }
                     }
                 }
             }
         }
-        println("进入runScript")
-        //val bitMapRun  = ShizukuUtil.iUserService?.execLine("screencap -p /storage/emulated/0/Pictures/${name}.png")
-        val bitMapRun  = ShizukuUtil.iUserService?.execCap("screencap -p")
-
-        //println(ScreenCaptureUtil.mps)
-        if (bitMapRun != null) {
-            //ScreenCaptureUtil.saveScreenCapture(bitMapRun)
-            CaptureHandler.saveCaptureMat(bitMapRun, mat)
-            println("大小：${mat.size()}")
-        }
-        println(bitMapRun)
     }
 
     fun initScriptData(scriptList : List<ScriptInfo>){
         this._scriptCheckedList.value = scriptList
     }
-
-    fun initActionData(){
-
-    }
-
     fun stopRunScript(){
         scriptRunCoroutineScope.cancel()
     }

@@ -19,5 +19,6 @@ data class ScriptActionInfo(
     var picName : String = "",
 
     var point: Point?= null,
-    val command : ArrayList<ScriptActionInfo.() -> ScriptActionInfo>
+    val command : ArrayList<ScriptActionInfo.() -> ScriptActionInfo> = arrayListOf(),
+    var skipFlag : Boolean = false
 )

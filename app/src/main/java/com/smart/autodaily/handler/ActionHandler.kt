@@ -9,8 +9,8 @@ object ActionHandler {
     private val path  = Path()
     private val clickTime = 1L
     private val longClickTime = 500L
-    private var randomXRange = 0f
-    private var randomYRange = 0f
+    var randomXRange = 0f
+    var randomYRange = 0f
 
     fun updateRandomRange(xRange : Float, yRange: Float){
         this.randomXRange = xRange
