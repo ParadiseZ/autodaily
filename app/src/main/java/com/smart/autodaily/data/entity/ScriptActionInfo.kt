@@ -11,12 +11,14 @@ data class ScriptActionInfo(
     @ColumnInfo(name = "script_id") @SerializedName("script_id") val scriptId: Int,
     @ColumnInfo(name = "set_id") @SerializedName("set_id") val setId: Int,
     @ColumnInfo(name = "set_value") @SerializedName("set_value") var setValue: String,
-    @ColumnInfo(name = "pic_id") @SerializedName("pic_id") val picId : Int,
+    @ColumnInfo(name = "pic_id") @SerializedName("pic_id") val picId : String,
     @ColumnInfo(name = "action_string") @SerializedName("action_string") var actionString : String,
     //script_info
     var picPath : String = "",
     //pic_info
-    var picName : String = "",
+    val picNameList : ArrayList<String> = arrayListOf(),
+    //action_string
+    val picNotFoundList : ArrayList<String> = arrayListOf(),
 
     var point: Point?= null,
     val command : ArrayList<ScriptActionInfo.() -> ScriptActionInfo> = arrayListOf(),

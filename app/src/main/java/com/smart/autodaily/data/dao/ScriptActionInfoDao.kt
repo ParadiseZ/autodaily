@@ -23,19 +23,37 @@ interface ScriptActionInfoDao {
     }
 
     @Query("select " +
-            "a.id, a.script_id, a.set_id, b.set_value, a.pic_id, a.action_string, d.pic_path, c.pic_path" +
+            "a.id, a.script_id, a.set_id, b.set_value, a.pic_id, a.action_string, d.pic_path as picPath" +
             " FROM script_action_info a " +
             "inner join script_set_info b on a.set_id = b.set_id and a.script_id = b.script_id " +
-            "inner join pic_info c on a.pic_id = c.id " +
+
             "inner join script_info d on b.script_id = b.script_id " +
             "where b.checked_flag = 1 and b.set_type like 'SLIDER%' and a.script_id =:scriptId " +
             "union all " +
             "select " +
-            "a.id, a.script_id, a.set_id, a.set_value, a.pic_id, a.action_string, d.pic_path, c.pic_path" +
+            "a.id, a.script_id, a.set_id, a.set_value, a.pic_id, a.action_string, d.pic_path  as picPath" +
             " FROM script_action_info a " +
             "inner join script_set_info b on a.set_id = b.set_id and a.script_id = b.script_id and a.set_value = b.set_value " +
-            "inner join pic_info c on a.pic_id = c.id " +
+
             "inner join script_info d on b.script_id = b.script_id " +
             "where b.checked_flag = 1 and b.set_type not like 'SLIDER%' and a.script_id =:scriptId ")
     fun getCheckedByScriptId(scriptId: Int) : ArrayList<ScriptActionInfo>
+
+
+    @Query("select " +
+            "a.id, a.script_id, a.set_id, b.set_value, a.pic_id, a.action_string" +
+            " FROM script_action_info a " +
+            "inner join script_set_info b on a.set_id = b.set_id and a.script_id = b.script_id " +
+            "where b.checked_flag = 1 and b.set_type like 'SLIDER%' and a.script_id =:scriptId and a.set_id in( :setId ) " +
+            "union all " +
+            "select " +
+            "a.id, a.script_id, a.set_id, a.set_value, a.pic_id, a.action_string" +
+            " FROM script_action_info a " +
+            "inner join script_set_info b on a.set_id = b.set_id and a.script_id = b.script_id and a.set_value = b.set_value " +
+            "where b.checked_flag = 1 and b.set_type not like 'SLIDER%' and a.script_id =:scriptId and a.set_id in( :setId )" +
+            "union all " +
+            "select a.id, a.script_id, a.set_id, a.set_value, a.pic_id, a.action_string " +
+            "from script_action_info a where a.script_id = :scriptId and a.set_id = 0 "
+    )
+    fun getCheckedBySetId(setId: List<Int>, scriptId: Int) : ArrayList<ScriptActionInfo>
 }

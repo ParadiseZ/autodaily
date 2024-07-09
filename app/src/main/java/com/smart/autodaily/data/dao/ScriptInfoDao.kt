@@ -24,7 +24,7 @@ interface ScriptInfoDao {
     @Query("SELECT script_id FROM Script_Info where  current_status!=2 and checked_flag = 1")
     fun getAllCheckedScript() : List<Int>
 
-    @Query("SELECT * FROM Script_Info where  current_status!=2 and checked_flag = 1")
+    @Query("SELECT * FROM Script_Info where  current_status!=2 and checked_flag = 1 and next_run_date <= Date()")
     fun getAllScriptByChecked() : ArrayList<ScriptInfo>
 
     @Query("SELECT script_id,last_version FROM Script_Info where  current_status!=2")
@@ -50,6 +50,6 @@ interface ScriptInfoDao {
     @Query("select * from Script_Info where current_status!=2")
     fun getLocalScriptAll() : Flow<List<ScriptInfo>>
 
-    @Query("select * from Script_Info where script_id in (:scriptIds)")
+    @Query("select * from Script_Info where script_id in (:scriptIds) and  current_status!=2")
     fun getLocalScriptByIds(scriptIds: List<Int>) : Flow<List<ScriptInfo>>
 }

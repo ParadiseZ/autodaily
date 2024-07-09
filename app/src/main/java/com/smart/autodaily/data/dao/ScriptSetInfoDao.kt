@@ -15,6 +15,12 @@ interface ScriptSetInfoDao {
     @Query("select * from script_set_info where script_id = :scriptId  LIMIT :pageSize OFFSET :starIndex")
     fun queryScriptSetInfo(scriptId: Int, pageSize: Int, starIndex: Int) : List<ScriptSetInfo>
 
+    @Query("select * from script_set_info where script_id = :scriptId and set_level=0 order by set_id")
+    fun getScriptSetByScriptIdLv0(scriptId: Int) : List<ScriptSetInfo>
+
+    @Query("select set_id from script_set_info where set_id = :setId or set_parent_id = :setId order by set_id")
+    fun getScriptSetParentAndChild(setId: Int) : List<Int>
+
     @Query("select count(script_id) from script_set_info where script_id = :scriptId")
     fun countScriptSetByScriptId(scriptId: Int) : Int
 
@@ -23,6 +29,14 @@ interface ScriptSetInfoDao {
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
     fun update(scriptSetInfo: ScriptSetInfo)
+
+    @Query("update script_set_info set result_flag = :resultFlag where set_id = :setId")
+    fun updateResultFlag(setId : Int, resultFlag : Boolean)
+    @Query("update script_set_info set result_flag = :resultFlag where set_id = :setId or set_parent_id = :setId")
+    fun updateParentAndChildResultFlag(setId : Int, resultFlag : Boolean)
+
+    @Query("select result_flag from script_set_info where set_id = :setId")
+    fun getResultFlag(setId : Int) : Boolean
 
     @Query("select set_value from script_set_info where set_id = :setId and script_id=0")
     fun getGlobalSetValueBySetId(setId : Int) : String

@@ -19,11 +19,11 @@ data class ScriptSetInfo(
     @ColumnInfo(name = "set_range") @SerializedName("set_range") val setRange: String,
     @ColumnInfo(name = "set_step") @SerializedName("set_step") val setStep: Int,
     @ColumnInfo(name = "is_show") @SerializedName("is_show") val isShow: Boolean,
-    @ColumnInfo(name = "result_flag") @SerializedName("result_flag") val resultFlag: Boolean,
+    @ColumnInfo(name = "result_flag") @SerializedName("result_flag") var resultFlag: Boolean,
     @ColumnInfo(name = "once_flag") @SerializedName("once_flag") val onceFlag: Boolean
 )
 
 
 enum class SettingType {
-    SWITCH, SLIDER, TEXT_FIELD, CHECK_BOX, RADIO_BUTTON, SLIDER_SECOND
+    SWITCH, SLIDER, TEXT_FIELD, CHECK_BOX, RADIO_BUTTON, SLIDER_SECOND, TITLE
 }
