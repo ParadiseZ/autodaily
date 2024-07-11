@@ -4,6 +4,12 @@ import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
+import com.smart.autodaily.command.AdbClick
+import com.smart.autodaily.command.AdbSumClick
+import com.smart.autodaily.command.Check
+import com.smart.autodaily.command.Return
+import com.smart.autodaily.command.Skip
+import com.smart.autodaily.command.Sleep
 import com.smart.autodaily.constant.ActionString
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.Point
@@ -13,12 +19,6 @@ import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.debug
-import com.smart.autodaily.utils.sc.adbClick
-import com.smart.autodaily.utils.sc.check
-import com.smart.autodaily.utils.sc.overScript
-import com.smart.autodaily.utils.sc.overSet
-import com.smart.autodaily.utils.sc.skip
-import com.smart.autodaily.utils.sc.sleep
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -53,33 +53,47 @@ object  RunScript {
 
     //shell运行
     private suspend fun runScriptByAdb(){
-        _scriptCheckedList.value.forEach{ si->
+        _scriptCheckedList.value.forEach scriptForEach@{ si->
             if(si.currentRunNum < si.runsMaxNum){
                 val scriptSetInfo = appDb!!.scriptSetInfoDao.getScriptSetByScriptIdLv0(si.scriptId)
-                scriptSetInfo.forEach{ set->
+                scriptSetInfo.forEach setForEach@ { set->
                     val setIds = appDb!!.scriptSetInfoDao.getScriptSetParentAndChild( set.setId )
                     println("setIds = $setIds")
                     val scriptActionList = appDb!!.scriptActionInfoDao.getCheckedBySetId( setIds, si.scriptId )
                     println("scriptActionList = $scriptActionList")
                     scriptActionList.forEach {
-                        it.picPath = si.picPath.toString()
                         initActionFun(it, si, set)
                     }
 
                     //当前脚本已选操作
 
                     //while (si.currentRunNum < si.runsMaxNum) {
-                    while ( !set.resultFlag ) {
+                    while ( checkIsFinish(set.setId) ) {
                         val capTime = System.currentTimeMillis()
                         val captureBitmap = ShizukuUtil.iUserService?.execCap("screencap -p")
                         if (captureBitmap != null) {
-                            scriptActionList.forEach {
+                            scriptActionList.forEach scriptAction@{
                                 if (!it.skipFlag) {
                                     //寻找
                                     if (it.actionString.startsWith(ActionString.UN_FIND)) {
-                                        for( command in it.command){
-                                            if (command.invoke(it).skipFlag) {
-                                                break
+                                        it.command.onEach { cmd->
+                                            if(cmd is Return){
+                                                when(cmd.type){
+                                                    ActionString.OVER_SET->{
+                                                        appDb!!.scriptSetInfoDao.updateResultFlag(it.setId , true)
+                                                    }
+                                                    ActionString.FINISH ->{
+                                                        if (si.currentRunNum < si.runsMaxNum) {
+                                                            si.currentRunNum += 1
+                                                            appDb!!.scriptInfoDao.update(si)
+                                                        }
+                                                        return@scriptForEach
+                                                    }
+                                                }
+                                            } else{
+                                                if (    !cmd.exec(it)   ){
+                                                    return@scriptAction
+                                                }
                                             }
                                         }
                                     }
@@ -89,7 +103,7 @@ object  RunScript {
                                 delay(1000)
                             }
                         }else{
-                            println("截图失败！")
+                            debug("截图失败！")
                             return
                         }
                     }
@@ -98,13 +112,10 @@ object  RunScript {
             }else{
                 si.currentRunNum = 0
                 si.nextRunDate = Date().toString()
-                appDb!!.scriptInfoDao.update(si)
+                println(si.nextRunDate)
+                //appDb!!.scriptInfoDao.update(si)
             }
         }
-    }
-
-    private fun execCompet(){
-
     }
 
     //操作映射为函数
@@ -118,66 +129,49 @@ object  RunScript {
         scriptActionInfo.actionString.split(";").forEach {  action->
             debug("action = ${action}")
             when(action){
-                ActionString.CLICK-> scriptActionInfo.command.add { scriptActionInfo.adbClick() }
+                ActionString.CLICK-> scriptActionInfo.command.add (AdbClick())
                 ActionString.CLICK_CENTER-> {
                     val point =Point((ScreenCaptureUtil.displayMetrics!!.widthPixels/2).toFloat(),(ScreenCaptureUtil.displayMetrics!!.heightPixels/2).toFloat())
-                    scriptActionInfo.command.add { scriptActionInfo.adbClick(point) }
+                    scriptActionInfo.command.add (AdbClick(point) )
                 }
-                (action.startsWith(  ActionString.CLICK  )  && action.length>8).toString() -> {
-                    val pointArrHand =  action.substring(   ActionString.CLICK.length, action.length-1  ).split(",")
-                    println("pointArrHand = ${pointArrHand}")
-                    val pointArr =  pointArrHand.toString().replace("+","").replace("-","")
-                    println("pointArr = ${pointArr}")
-                    scriptActionInfo.command.add{
-                        scriptActionInfo.point?.let { p->
-                            if(pointArrHand[0].startsWith("+")){
-                                p.x += pointArr[0].code.toFloat()
-                            }else if(pointArrHand[0].startsWith("-")){
-                                p.x -=pointArr[0].code.toFloat()
-                            }
-                            if (pointArrHand[1].startsWith("+")){
-                                p.y += pointArr[1].code.toFloat()
-                            }else if(pointArrHand[1].startsWith("-")){
-                                p.y -= pointArr[1].code.toFloat()
-                            }
-                        }
-                        scriptActionInfo.adbClick(scriptActionInfo.point)
-                    }
-                }
-
                 ActionString.FINISH ->{
-                    if(scriptInfo.currentRunNum < scriptInfo.runsMaxNum){
-                        scriptActionInfo.command.add { scriptActionInfo.overScript {
-                            scriptInfo.currentRunNum += 1
-                            appDb!!.scriptInfoDao.update(scriptInfo)
-                            println("currentRunNum = ${scriptInfo.currentRunNum}")
-                        } }
-                    }
+                    scriptActionInfo.command.add (Return(ActionString.FINISH))
                 }
                 ActionString.SKIP ->{
-                    scriptActionInfo.command.add { scriptActionInfo.skip ()}
+                    scriptActionInfo.command.add(Skip())
                 }
-                action.startsWith(  ActionString.CHECK   ).toString() ->{
-                    val setId = action.substring(   ActionString.CHECK.length, action.length-1   ).toInt()
-                    scriptActionInfo.command.add{ scriptActionInfo.check(setId) }
+                ActionString.SLEEP -> {
+                    scriptActionInfo.command.add(Sleep())
                 }
-                action.startsWith(  ActionString.UN_FIND   ).toString()->{
-                    println(action.substring(   ActionString.UN_FIND.length, action.length-1   )+"__SubString")
-                    action.substring(   ActionString.UN_FIND.length, action.length-1   ).split(",").forEach{
-                        scriptActionInfo.picNotFoundList.add(it)
+                ActionString.OVER_SET ->{
+                    scriptActionInfo.command.add(Return(ActionString.OVER_SET))
+                }
+                else ->{
+                    when{
+                        (action.startsWith(  ActionString.CLICK  ) && action.length > 8)  -> {
+                            val (x,y) =  action.substring(   ActionString.CLICK.length+1, action.length-1  ).split(",")
+                            val point = Point(x.toFloat(),y.toFloat())
+                            scriptActionInfo.command.add(AdbSumClick(point))
+                            /*scriptActionInfo.command.add{
+
+                                scriptActionInfo.adbClick(scriptActionInfo.point)
+                            }*/
+                        }
+                        action.startsWith(  ActionString.SLEEP  ) -> {
+                            val sleepTime = action.substring(   ActionString.SLEEP.length+1, action.length-1   ).toLong()
+                            scriptActionInfo.command.add(Sleep(sleepTime))
+                        }
+                        action.startsWith(  ActionString.CHECK   ) ->{
+                            val setId = action.substring(   ActionString.CHECK.length+1, action.length-1   ).toInt()
+                            scriptActionInfo.command.add( Check(setId) )
+                        }
+                        action.startsWith(  ActionString.UN_FIND   ) ->{
+                            println(action.substring(   ActionString.UN_FIND.length+1, action.length-1   )+"__SubString")
+                            action.substring(   ActionString.UN_FIND.length+1, action.length-1   ).split(",").forEach{
+                                scriptActionInfo.picNotFoundList.add(it)
+                            }
+                        }
                     }
-                }
-                action.startsWith(  ActionString.SLEEP  ).toString() -> {
-                    val sleepTime = action.substring(   ActionString.SLEEP.length, action.length-1   ).toLong()
-                    scriptActionInfo.command.add{ scriptActionInfo.sleep(sleepTime)}
-                }
-                action.startsWith(  ActionString.OVER_SET  ).toString() -> {
-                    //val setId = action.substring(   ActionString.OVER_SET.length, action.length-1   ).toInt()
-                    scriptActionInfo.command.add{ scriptActionInfo.overSet(scriptSetInfo) }
-                }
-                action.startsWith(  ActionString.OVER_SET_AND_PARENT  ).toString() -> {
-                    //val setId = action.substring(   ActionString.OVER_SET_AND_PARENT.length, action.length-1   ).toInt()
-                    scriptActionInfo.command.add{ scriptActionInfo.overSet(scriptSetInfo, alsoUpdateParent = true) }
                 }
                 /*action.startsWith(ActionString.STEP).toString() -> {
                     val setId = action.substring(ActionString.STEP.length, action.length-1).toInt()
@@ -190,6 +184,10 @@ object  RunScript {
                 }*/
             }
         }
+    }
+
+    private fun checkIsFinish(setId : Int) : Boolean{
+        return appDb!!.scriptSetInfoDao.getChildResultFlag(setId)
     }
 
     fun initScriptData(scriptList : List<ScriptInfo>){

@@ -108,6 +108,7 @@ fun SettingScreen(
                                     SettingType.CHECK_BOX -> CheckBoxSettingItem(setting,onCheckedChange = {  settingViewModel.updateGlobalSetting(setting)  })
                                     SettingType.RADIO_BUTTON -> RadioButtonSettingItem(setting, onCheckedChange = {  settingViewModel.updateGlobalSetting(setting)  })
                                     SettingType.SLIDER_SECOND -> SliderSecondSettingItem(setting,onSliderValueChange = {  settingViewModel.updateGlobalSetting(setting)  })
+                                    SettingType.TITLE ->{}
                                 }
                             }
                         }

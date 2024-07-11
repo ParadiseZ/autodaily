@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.smart.autodaily.data.dao.PicInfoDao
 import com.smart.autodaily.data.dao.ScriptActionInfoDao
@@ -15,6 +16,7 @@ import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.data.entity.UserInfo
+import com.smart.autodaily.data.entity.convert.CustomTypeConvert
 import org.intellij.lang.annotations.Language
 import java.util.Locale
 
@@ -27,6 +29,7 @@ var appDb: AppDb ?=null
         AutoMigration(from = 2, to = 3)
     ]*/
 )
+@TypeConverters(CustomTypeConvert::class)
 abstract class AppDb  :  RoomDatabase(){
     abstract val scriptInfoDao : ScriptInfoDao
     abstract val scriptSetInfoDao : ScriptSetInfoDao

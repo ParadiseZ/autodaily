@@ -38,6 +38,9 @@ interface ScriptSetInfoDao {
     @Query("select result_flag from script_set_info where set_id = :setId")
     fun getResultFlag(setId : Int) : Boolean
 
+    @Query("select result_flag from script_set_info where set_parent_id = :setParentId and result_flag = 0 and set_id!=0 limit 1")
+    fun getChildResultFlag(setParentId : Int) : Boolean
+
     @Query("select set_value from script_set_info where set_id = :setId and script_id=0")
     fun getGlobalSetValueBySetId(setId : Int) : String
 }
