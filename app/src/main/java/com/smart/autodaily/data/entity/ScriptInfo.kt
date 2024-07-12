@@ -21,6 +21,6 @@ data class ScriptInfo(
     @ColumnInfo(name = "current_status") @SerializedName("current_status") var currentStatus: Int = 0, // 脚本状态
     @ColumnInfo(name = "add_time") @SerializedName("add_time") var addTime: String?, // 添加日期
     @ColumnInfo(name = "update_time") @SerializedName("update_time") var updateTime: String?,  //更新日期
-    @ColumnInfo(name = "pic_path") @SerializedName("pic_path") var picPath: String?, // 图片路径
+    @ColumnInfo(name = "pic_path") @SerializedName("pic_path") var picPath: String, // 图片路径
     @ColumnInfo(name = "current_run_num") var currentRunNum: Int = 0, // 当前运行次数
 )

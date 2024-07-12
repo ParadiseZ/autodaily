@@ -1,8 +1,6 @@
 package com.smart.autodaily.handler
 
 import android.content.res.AssetManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.os.Build
 import com.smart.autodaily.command.AdbClick
 import com.smart.autodaily.command.AdbSumClick
@@ -26,9 +24,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.opencv.android.Utils
+import org.opencv.core.KeyPoint
 import org.opencv.core.Mat
+import org.opencv.core.MatOfByte
+import org.opencv.core.MatOfDMatch
+import org.opencv.core.MatOfKeyPoint
+import org.opencv.features2d.BFMatcher
+import org.opencv.features2d.ORB
+import org.opencv.imgcodecs.Imgcodecs
 import splitties.init.appCtx
-import java.io.IOException
+import java.io.InputStream
 import java.util.Date
 
 
@@ -40,8 +46,24 @@ object  RunScript {
     //var scriptSetList : List<ScriptInfo> = emptyList()
     //val globalSetList =  MutableStateFlow<List<ScriptSetInfo>>(emptyList())
     private var scriptRunCoroutineScope = CoroutineScope(Dispatchers.IO)
-    private var mat = Mat()
+    private var sourceMat = Mat()
+    private val orb: ORB = ORB.create()
+
+
+    private fun initOrb(){
+        orb.maxFeatures = 10//要检测的最大特征数量
+        //多尺度金字塔中的相邻层之间使用的缩放因子。较高的值意味着较少的尺度层级。为2时，每个级别的像素是前一个级别的1/4。
+        orb.scaleFactor = 1.5
+        orb.nLevels = 3 //特征检测的层级数
+        orb.edgeThreshold = 10 //边缘检测阈值,间隔多少像素开始检测
+        //orb.firstLevel=0//多尺度金字塔中的第一个（最粗的）图像的初始等级。默认情况下，这通常是0，表示原始图像。
+        orb.wtA_K =3 //BRIEF描述子的长度，可以是2或3。2，则描述符长度为31个字节；3，则描述符长度为32个字节。
+        orb.scoreType = ORB.FAST_SCORE //质量评分标准HARRIS_SCORE角点检测
+        orb.patchSize = 3 //描述符的邻域大小。这是以像素为单位的正方形区域的边长
+        //orb.fastThreshold = 1 //FAST角点检测器的阈值。FAST检测器会寻找对比度超过该阈值的角点。
+    }
     fun runScript() {
+        initOrb()
         //已选脚本
         scriptRunCoroutineScope.launch {
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
@@ -71,11 +93,18 @@ object  RunScript {
                     while ( checkIsFinish(set.setId) ) {
                         val capTime = System.currentTimeMillis()
                         val captureBitmap = ShizukuUtil.iUserService?.execCap("screencap -p")
+                        Utils.bitmapToMat(captureBitmap , sourceMat)//截图bitmap到mat
+                        // 源图特征点和描述符
+                        val keypointsSource = MatOfKeyPoint()
+                        val descriptorsSource = Mat()
+                        orb.detectAndCompute(sourceMat, Mat(), keypointsSource, descriptorsSource)
+                        val keypointsSourceList = keypointsSource.toList()
                         if (captureBitmap != null) {
                             scriptActionList.forEach scriptAction@{
                                 if (!it.skipFlag) {
-                                    //寻找
-                                    if (it.actionString.startsWith(ActionString.UN_FIND)) {
+                                    //寻找，目的为找到，所有的都找到则继续
+                                    if(findTarget(si.picPath, it.picNameList, it, keypointsSourceList, descriptorsSource,true)){
+                                        println("point：${it.point}")
                                         it.command.onEach { cmd->
                                             if(cmd is Return){
                                                 when(cmd.type){
@@ -89,6 +118,12 @@ object  RunScript {
                                                         }
                                                         return@scriptForEach
                                                     }
+                                                    ActionString.UN_FIND ->{
+                                                        //寻找，目的为未找到，所有的都未找到则继续
+                                                        if(!findTarget(si.picPath, it.picNotFoundList, it, keypointsSourceList, descriptorsSource,false)){
+                                                            return@scriptAction
+                                                        }
+                                                    }
                                                 }
                                             } else{
                                                 if (    !cmd.exec(it)   ){
@@ -97,6 +132,7 @@ object  RunScript {
                                             }
                                         }
                                     }
+
                                 }
                             }
                             if (System.currentTimeMillis() - capTime < 1000) {
@@ -146,16 +182,15 @@ object  RunScript {
                 ActionString.OVER_SET ->{
                     scriptActionInfo.command.add(Return(ActionString.OVER_SET))
                 }
+                ActionString.UN_FIND ->{
+                    scriptActionInfo.command.add(Return(ActionString.UN_FIND))
+                }
                 else ->{
                     when{
                         (action.startsWith(  ActionString.CLICK  ) && action.length > 8)  -> {
                             val (x,y) =  action.substring(   ActionString.CLICK.length+1, action.length-1  ).split(",")
                             val point = Point(x.toFloat(),y.toFloat())
                             scriptActionInfo.command.add(AdbSumClick(point))
-                            /*scriptActionInfo.command.add{
-
-                                scriptActionInfo.adbClick(scriptActionInfo.point)
-                            }*/
                         }
                         action.startsWith(  ActionString.SLEEP  ) -> {
                             val sleepTime = action.substring(   ActionString.SLEEP.length+1, action.length-1   ).toLong()
@@ -164,12 +199,6 @@ object  RunScript {
                         action.startsWith(  ActionString.CHECK   ) ->{
                             val setId = action.substring(   ActionString.CHECK.length+1, action.length-1   ).toInt()
                             scriptActionInfo.command.add( Check(setId) )
-                        }
-                        action.startsWith(  ActionString.UN_FIND   ) ->{
-                            println(action.substring(   ActionString.UN_FIND.length+1, action.length-1   )+"__SubString")
-                            action.substring(   ActionString.UN_FIND.length+1, action.length-1   ).split(",").forEach{
-                                scriptActionInfo.picNotFoundList.add(it)
-                            }
                         }
                     }
                 }
@@ -186,10 +215,54 @@ object  RunScript {
         }
     }
 
+    //匹配
+    private fun findTarget(picPath : String,picNameList : List<String>, sai : ScriptActionInfo, keypointsSourceList : List<KeyPoint>, descriptorsSource : Mat, matchSave : Boolean) : Boolean{
+        // 计算匹配点的平均位置
+        var avgX = 0.0
+        var avgY = 0.0
+        picNameList.forEach {
+            val targetMat = getPicture("$picPath/$it.png")
+            val keypointsTarget = MatOfKeyPoint()
+            val descriptorsTarget = Mat()
+            orb.detectAndCompute(targetMat, Mat(), keypointsTarget, descriptorsTarget)
+            val matcher = BFMatcher.create(BFMatcher.FLANNBASED)
+            val matchesMat = MatOfDMatch()
+            matcher.match(descriptorsSource, descriptorsTarget, matchesMat)
+            val matches = matchesMat.toList()
+            var sumX = 0.0
+            var sumY = 0.0
+            for (match in matches) {
+                val srcPoint = keypointsSourceList[match.queryIdx].pt
+                sumX += srcPoint.x
+                sumY += srcPoint.y
+            }
+            avgX = sumX / matches.size
+            avgY = sumY / matches.size
+            //未找到
+            if (avgX == 0.0 || avgY == 0.0){
+                if (matchSave){
+                    return false
+                }
+            }else{//找到
+                if (!matchSave){
+                    return false
+                }
+            }
+        }
+        //找到继续=true，未找到继续=false
+        if (matchSave){
+            sai.point = Point(avgX.toFloat(),avgY.toFloat())
+        }
+        //是否继续后面的命令
+        return true
+    }
+
+    //检测子设置是否完成
     private fun checkIsFinish(setId : Int) : Boolean{
         return appDb!!.scriptSetInfoDao.getChildResultFlag(setId)
     }
 
+    //初始化已选择脚本数据，HomeScreen调用
     fun initScriptData(scriptList : List<ScriptInfo>){
         this._scriptCheckedList.value = scriptList
     }
@@ -218,19 +291,10 @@ object  RunScript {
         }
     }
 
-    fun getPicture(path : String) : Bitmap?{
-        try {
-            // 获取AssetManager
-
-            // 从assets目录下打开图片
-            val inputStream = assetManager.open(path)
-            // 将InputStream转化为Bitmap
-            val bitmap = BitmapFactory.decodeStream(inputStream)
-            inputStream.close() // 记得关闭InputStream
-            return bitmap
-        } catch (e: IOException) {
-            e.printStackTrace()
-            return null
-        }
+    private fun getPicture(picName : String) : Mat{
+        val inputStream: InputStream = assetManager.open(picName)
+        val bytes = inputStream.readBytes()
+        inputStream.close()
+        return Imgcodecs.imdecode(MatOfByte(*bytes), Imgcodecs.IMREAD_GRAYSCALE)
     }
 }

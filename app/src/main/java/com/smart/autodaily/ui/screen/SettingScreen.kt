@@ -48,6 +48,7 @@ import com.smart.autodaily.ui.conponent.SliderSecondSettingItem
 import com.smart.autodaily.ui.conponent.SliderSettingItem
 import com.smart.autodaily.ui.conponent.SwitchSettingItem
 import com.smart.autodaily.ui.conponent.TextFieldSettingItem
+import com.smart.autodaily.ui.conponent.TitleSettingItem
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.viewmodel.SettingViewModel
@@ -108,7 +109,7 @@ fun SettingScreen(
                                     SettingType.CHECK_BOX -> CheckBoxSettingItem(setting,onCheckedChange = {  settingViewModel.updateGlobalSetting(setting)  })
                                     SettingType.RADIO_BUTTON -> RadioButtonSettingItem(setting, onCheckedChange = {  settingViewModel.updateGlobalSetting(setting)  })
                                     SettingType.SLIDER_SECOND -> SliderSecondSettingItem(setting,onSliderValueChange = {  settingViewModel.updateGlobalSetting(setting)  })
-                                    SettingType.TITLE ->{}
+                                    SettingType.TITLE ->TitleSettingItem(setting.setName)
                                 }
                             }
                         }

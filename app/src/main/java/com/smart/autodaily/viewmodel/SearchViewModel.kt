@@ -12,6 +12,8 @@ import com.smart.autodaily.base.BaseViewModel
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.dataresource.ScriptNetDataSource
 import com.smart.autodaily.data.entity.ScriptInfo
+import com.smart.autodaily.data.entity.ScriptSetInfo
+import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.utils.PageUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -54,14 +56,13 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
         }
     }
     private fun searchScriptByPage(localList : List<ScriptInfo>): Flow<PagingData<ScriptInfo>> {
-        var updatedNetSearchResult : Flow<PagingData<ScriptInfo>>? = null
         val netSearchResult = Pager(PagingConfig(pageSize = PageUtil.PAGE_SIZE, initialLoadSize =PageUtil.INITIALOAD_SIZE, prefetchDistance = PageUtil.PREFETCH_DISTANCE)) {
             ScriptNetDataSource(
                 RemoteApi.searchDownRetrofit,
                 _searchText.value
             )
         }
-        updatedNetSearchResult =netSearchResult.flow.map { pagingData ->
+        val updatedNetSearchResult : Flow<PagingData<ScriptInfo>> = netSearchResult.flow.map { pagingData ->
             pagingData.map{ scriptInfo ->
                 if (scriptInfo.scriptId in localList.map { it.scriptId }){
                     scriptInfo.isDownloaded = 1
@@ -83,28 +84,43 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
     fun downScriptByScriptId(scriptInfo : ScriptInfo) {
         this.viewModelScope.launch {
             withContext(Dispatchers.IO){
-                appDb?.scriptInfoDao?.insert(scriptInfo)
-                downScriptSetByScriptId(scriptInfo.scriptId)
-                scriptInfo.isDownloaded = 1
-                scriptInfo.scriptVersion = scriptInfo.lastVersion
-                appDb?.scriptInfoDao?.update(scriptInfo)
+                downByScriptId(scriptInfo,scriptInfo.scriptId)
             }
         }
     }
-    private suspend fun downScriptSetByScriptId(scriptId: Int) {
+
+    private suspend fun downByScriptId(scriptInfo: ScriptInfo,scriptId: Int) {
         val result = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptId)
-        result.data?.let { scriptSetInfoList ->
-            scriptSetInfoList.forEach {
-                appDb?.scriptSetInfoDao?.insert(it)
-            }
-        }
+        val picInfo = RemoteApi.searchDownRetrofit.downloadPicInfoByScriptId(scriptId)
+        val actionInfo = RemoteApi.searchDownRetrofit.downloadActionInfoByScriptId(scriptId)
+        var globalScriptSetResult = Response<List<ScriptSetInfo>>()
         val localScriptSetGlobal = appDb?.scriptSetInfoDao?.countScriptSetByScriptId(0)
         if (localScriptSetGlobal == 0) {
-            val globalScriptSetResult = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(0)
-            globalScriptSetResult.data?.let { scriptSetInfoList ->
-                scriptSetInfoList.forEach {
-                    appDb?.scriptSetInfoDao?.insert(it)
-                }
+            globalScriptSetResult = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(0)
+        }
+        appDb?.runInTransaction{
+            //scriptInfo
+            scriptInfo.isDownloaded = 1
+            scriptInfo.scriptVersion = scriptInfo.lastVersion
+            appDb?.scriptInfoDao?.insert(scriptInfo)
+            //ScriptSet 全局设置
+            globalScriptSetResult.data?.let {
+                appDb?.scriptSetInfoDao?.insert(it)
+            }
+            //ScriptSet 设置
+            result.data?.let {
+                /*it.map{ ssi->
+
+                }*/
+                appDb?.scriptSetInfoDao?.insert(it)
+            }
+            //picInfo 图片信息
+            picInfo.data?.let {
+                appDb?.picInfoDao?.insert(it)
+            }
+            //actionInfo 动作信息
+            actionInfo.data?.let {
+                appDb?.scriptActionInfoDao?.insert(it)
             }
         }
     }

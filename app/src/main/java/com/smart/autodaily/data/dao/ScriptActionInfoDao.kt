@@ -1,6 +1,8 @@
 package com.smart.autodaily.data.dao
 
 import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.RoomWarnings
 import androidx.room.Transaction
@@ -8,6 +10,8 @@ import com.smart.autodaily.data.entity.ScriptActionInfo
 
 @Dao
 interface ScriptActionInfoDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insert(saiList: List<ScriptActionInfo>)
 
     @Query("SELECT * FROM script_action_info where set_id = :setId and script_id = :scriptId and set_value = :setValue")
     fun getSingle(setId: Int, scriptId: Int, setValue: String): ScriptActionInfo
