@@ -156,12 +156,6 @@ object  RunScript {
 
     //操作映射为函数
     private fun initActionFun(scriptActionInfo: ScriptActionInfo, scriptInfo: ScriptInfo, scriptSetInfo: ScriptSetInfo){
-        scriptActionInfo.picId.split(",").forEach {
-            debug("setId = ${scriptActionInfo.setId},picId = $it")
-            scriptActionInfo.picNameList.add(
-                appDb!!.picInfoDao.getPicNameById(it.toInt())
-            )
-        }
         scriptActionInfo.actionString.split(";").forEach {  action->
             debug("action = ${action}")
             when(action){

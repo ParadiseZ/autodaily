@@ -91,7 +91,6 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
 
     private suspend fun downByScriptId(scriptInfo: ScriptInfo,scriptId: Int) {
         val result = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptId)
-        val picInfo = RemoteApi.searchDownRetrofit.downloadPicInfoByScriptId(scriptId)
         val actionInfo = RemoteApi.searchDownRetrofit.downloadActionInfoByScriptId(scriptId)
         var globalScriptSetResult = Response<List<ScriptSetInfo>>()
         val localScriptSetGlobal = appDb?.scriptSetInfoDao?.countScriptSetByScriptId(0)
@@ -115,9 +114,6 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
                 appDb?.scriptSetInfoDao?.insert(it)
             }
             //picInfo 图片信息
-            picInfo.data?.let {
-                appDb?.picInfoDao?.insert(it)
-            }
             //actionInfo 动作信息
             actionInfo.data?.let {
                 appDb?.scriptActionInfoDao?.insert(it)

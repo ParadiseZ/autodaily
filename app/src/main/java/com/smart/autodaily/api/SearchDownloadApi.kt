@@ -1,6 +1,5 @@
 package com.smart.autodaily.api
 
-import com.smart.autodaily.data.entity.PicInfo
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptSetInfo
@@ -27,9 +26,6 @@ interface SearchDownloadApi {
 
     @GET("/query/downloadScriptSetByScriptId")
     suspend fun downScriptSetByScriptId(@Query("scriptId") scriptId : Int) : Response<List<ScriptSetInfo>>
-
-    @GET("/query/downloadPicInfoByScriptId")
-    suspend fun downloadPicInfoByScriptId(@Query("scriptId") scriptId : Int) : Response<List<PicInfo>>
 
     @GET("/query/downloadActionInfoByScriptId")
     suspend fun downloadActionInfoByScriptId(@Query("scriptId") scriptId : Int) : Response<List<ScriptActionInfo>>

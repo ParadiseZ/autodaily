@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptSetInfo
+import com.smart.autodaily.data.entity.SettingType
 
 @Composable
 fun SliderSecondSettingItem(
@@ -41,7 +42,10 @@ fun SliderSecondSettingItem(
         ) {
             val setRange = setting.setRange.split(',')
             Text(modifier = Modifier.padding(start = Ui.SPACE_4),text = setting.setName+"：")
-            Text(text = "${"%.1f".format(sliderValue )}秒")
+            when(setting.setType){
+                SettingType.SLIDER_SECOND -> Text(text = "${"%.1f".format(sliderValue )}秒")
+                else -> Text(text = "${"%.0f".format(sliderValue * 100)}px")
+            }
             Slider(
                 valueRange = setRange[0].toFloat()..setRange[1].toFloat(),
                 steps = setting.setStep,

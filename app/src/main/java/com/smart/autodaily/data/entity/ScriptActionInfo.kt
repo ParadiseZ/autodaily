@@ -19,6 +19,8 @@ data class ScriptActionInfo(
     @ColumnInfo(name = "pic_name_list") @SerializedName("pic_name_list") val picNameList : ArrayList<String> = arrayListOf(),
     //action_string
     @ColumnInfo(name = "pic_not_found") @SerializedName("pic_not_found") val picNotFoundList : ArrayList<String> = arrayListOf(),
+    @ColumnInfo(name = "add_time") @SerializedName("add_time") val addTime : String,
+    @ColumnInfo(name = "update_time") @SerializedName("update_time") val updateTime : String,
 
     @ColumnInfo(name = "point") var point: Point?= null,
     //@ColumnInfo(name = "command") val command : ArrayList<Command> = arrayListOf(),

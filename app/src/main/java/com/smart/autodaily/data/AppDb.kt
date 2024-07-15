@@ -6,12 +6,10 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.smart.autodaily.data.dao.PicInfoDao
 import com.smart.autodaily.data.dao.ScriptActionInfoDao
 import com.smart.autodaily.data.dao.ScriptInfoDao
 import com.smart.autodaily.data.dao.ScriptSetInfoDao
 import com.smart.autodaily.data.dao.UserInfoDao
-import com.smart.autodaily.data.entity.PicInfo
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptSetInfo
@@ -24,7 +22,7 @@ import java.util.Locale
 var appDb: AppDb ?=null
 @Database(version = 1,
     exportSchema = false,
-    entities = [ScriptInfo::class, ScriptSetInfo::class, UserInfo::class, ScriptActionInfo::class, PicInfo::class],
+    entities = [ScriptInfo::class, ScriptSetInfo::class, UserInfo::class, ScriptActionInfo::class],
 /*    autoMigrations = [
         AutoMigration(from = 2, to = 3)
     ]*/
@@ -35,7 +33,6 @@ abstract class AppDb  :  RoomDatabase(){
     abstract val scriptSetInfoDao : ScriptSetInfoDao
     abstract val userInfoDao : UserInfoDao
     abstract val scriptActionInfoDao : ScriptActionInfoDao
-    abstract val picInfoDao : PicInfoDao
     companion object {
         // For Singleton instantiation
 
@@ -83,7 +80,8 @@ abstract class AppDb  :  RoomDatabase(){
                     (0,5,'true','SLIDER','图像匹配相似度','',-1,1,'0.9','0.9','0,1',0,'true','false','false'),
                     (0,6,'true','RADIO_BUTTON','匹配算法','',-1,1,'算法一（更快）,算法二（更准）','算法二（更准）','',0,'true','false','false'),
                     (0,7,'true','RADIO_BUTTON','脚本日志记录','',-1,1,'关闭,运行结果,INFO','运行结果','',0,'true','false','false'),
-                    (0,8,'true','SLIDER_SECOND','随机点击范围','',-1,1,'5','5','1,10',9,'true','false','false')
+                    (0,8,'true','RADIO_BUTTON','工作模式','',-1,1,'无障碍+录屏(安卓7-12),shizuku,root','shizuku','',0,'true','false','false'),
+                    (0,30,'true','SLIDER_THIRD,'随机点击范围','',-1,1,'5','5','1,10',9,'true','false','false')
             """.trimIndent()
             db.execSQL(insertScriptSetGlobalSql)
         }
