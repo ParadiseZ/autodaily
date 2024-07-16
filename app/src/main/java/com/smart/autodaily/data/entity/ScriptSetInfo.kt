@@ -21,11 +21,15 @@ data class ScriptSetInfo(
     @ColumnInfo(name = "is_show") @SerializedName("is_show") val isShow: Boolean,
     @ColumnInfo(name = "result_flag") @SerializedName("result_flag") var resultFlag: Boolean,
     @ColumnInfo(name = "once_flag") @SerializedName("once_flag") val onceFlag: Boolean,
-    @ColumnInfo(name = "add_time") @SerializedName("add_time") val addTime: String,
-    @ColumnInfo(name = "update_time") @SerializedName("update_time") var updateTime: String
+    @ColumnInfo(name = "add_time") @SerializedName("add_time") val addTime: String?,
+    @ColumnInfo(name = "update_time") @SerializedName("update_time") var updateTime: String?
 )
 
 
 enum class SettingType {
     SWITCH, SLIDER, TEXT_FIELD, CHECK_BOX, RADIO_BUTTON, SLIDER_SECOND, TITLE, SLIDER_THIRD
 }
+
+const val WORK_TYPE01 = "无障碍+录屏(安卓7-12)"
+const val WORK_TYPE02 = "shizuku"
+const val WORK_TYPE03 = "root"

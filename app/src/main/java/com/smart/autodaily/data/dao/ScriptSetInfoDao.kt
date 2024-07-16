@@ -12,7 +12,7 @@ interface ScriptSetInfoDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(setInfoListi: List<ScriptSetInfo>)
 
-    @Query("select * from script_set_info where script_id = :scriptId  LIMIT :pageSize OFFSET :starIndex")
+    @Query("select * from script_set_info where script_id = :scriptId order by set_id LIMIT :pageSize OFFSET :starIndex")
     fun queryScriptSetInfo(scriptId: Int, pageSize: Int, starIndex: Int) : List<ScriptSetInfo>
 
     @Query("select * from script_set_info where script_id = :scriptId and set_level=0 order by set_id")
@@ -43,4 +43,7 @@ interface ScriptSetInfoDao {
 
     @Query("select set_value from script_set_info where set_id = :setId and script_id=0")
     fun getGlobalSetValueBySetId(setId : Int) : String
+
+    @Query("select * from script_set_info where script_id=0 order by set_id")
+    fun getGlobalSet() : List<ScriptSetInfo>
 }

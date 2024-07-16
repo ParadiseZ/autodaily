@@ -1,7 +1,6 @@
 package com.smart.autodaily.ui.screen
 
 import android.content.Intent
-import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -47,9 +46,11 @@ import com.smart.autodaily.constant.NavigationItem
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.ScriptInfo
+import com.smart.autodaily.data.entity.WORK_TYPE01
+import com.smart.autodaily.data.entity.WORK_TYPE02
+import com.smart.autodaily.data.entity.WORK_TYPE03
 import com.smart.autodaily.handler.RunScript
 import com.smart.autodaily.ui.conponent.RowScriptInfo
-import com.smart.autodaily.ui.conponent.Toast
 import com.smart.autodaily.ui.conponent.navSingleTopTo
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ServiceUtil
@@ -57,8 +58,6 @@ import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.ToastUtil
 import com.smart.autodaily.viewmodel.HomeViewModel
 import com.smart.autodaily.viewmodel.mediaProjectionServiceStartFlag
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -96,7 +95,7 @@ fun HomeScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    if(Build.VERSION.SDK_INT <=  Build.VERSION_CODES.S_V2){
+                    /*if(Build.VERSION.SDK_INT <=  Build.VERSION_CODES.S_V2){
                         accessibilityAndMediaProjectionRequest()
                     }
                     if (Build.VERSION.SDK_INT >=  Build.VERSION_CODES.TIRAMISU){
@@ -105,14 +104,35 @@ fun HomeScreen(
                             homeViewModel.viewModelScope.launch {
                                 RunScript.initScriptData(appDb!!.scriptInfoDao.getAllScriptByChecked())
                                 RunScript.runScript()
-                                /*for (i in 1..3){
+                                *//*for (i in 1..3){
                                     //RunScript.runScript(i)
                                     RunScript.runScript(1)
                                     delay(2000)
-                                }*/
+                                }*//*
+                            }
+                        }
+                    }*/
+                    homeViewModel.viewModelScope.launch {
+                        RunScript.initGlobalSet()
+                        RunScript.globalSetMap.value[8]?.let {
+                            when(it.setValue){
+                                WORK_TYPE01 ->{}
+                                WORK_TYPE02 -> {
+                                    ServiceUtil.runUserService(homeViewModel.context)
+                                    delay(3000)
+                                    if(ShizukuUtil.grant && ShizukuUtil.iUserService !=null) {
+                                        RunScript.initScriptData(appDb!!.scriptInfoDao.getAllScriptByChecked())
+                                        RunScript.runScript(it)
+                                    }
+                                }
+                                WORK_TYPE03 -> {}
                             }
                         }
                     }
+
+
+
+
 
                     //}
 

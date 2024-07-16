@@ -9,7 +9,6 @@ import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.data.entity.request.Request
 import com.smart.autodaily.handler.RunScript
-import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ToastUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -93,7 +92,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     }
 
     fun runScript(){
-        RunScript.runScript()
+        //RunScript.runScript()
     }
 
     fun stopRunScript(){

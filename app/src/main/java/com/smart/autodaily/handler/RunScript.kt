@@ -1,7 +1,6 @@
 package com.smart.autodaily.handler
 
 import android.content.res.AssetManager
-import android.os.Build
 import com.smart.autodaily.command.AdbClick
 import com.smart.autodaily.command.AdbSumClick
 import com.smart.autodaily.command.Check
@@ -14,6 +13,9 @@ import com.smart.autodaily.data.entity.Point
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptSetInfo
+import com.smart.autodaily.data.entity.WORK_TYPE01
+import com.smart.autodaily.data.entity.WORK_TYPE02
+import com.smart.autodaily.data.entity.WORK_TYPE03
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.debug
@@ -22,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.opencv.android.Utils
@@ -42,12 +45,17 @@ object  RunScript {
     private val assetManager: AssetManager = appCtx.assets
 
     private val _scriptCheckedList = MutableStateFlow<List<ScriptInfo>>(emptyList())
+
+    private val _globalSetMap = MutableStateFlow<Map<Int, ScriptSetInfo>>(emptyMap())
+    val globalSetMap : StateFlow<Map<Int, ScriptSetInfo>> get() = _globalSetMap
+
     //val scriptCheckedList : StateFlow<List<ScriptInfo>> = _scriptCheckedList
     //var scriptSetList : List<ScriptInfo> = emptyList()
     //val globalSetList =  MutableStateFlow<List<ScriptSetInfo>>(emptyList())
     private var scriptRunCoroutineScope = CoroutineScope(Dispatchers.IO)
     private var sourceMat = Mat()
     private val orb: ORB = ORB.create()
+
 
 
     private fun initOrb(){
@@ -62,19 +70,34 @@ object  RunScript {
         orb.patchSize = 3 //描述符的邻域大小。这是以像素为单位的正方形区域的边长
         //orb.fastThreshold = 1 //FAST角点检测器的阈值。FAST检测器会寻找对比度超过该阈值的角点。
     }
-    fun runScript() {
+
+    fun initGlobalSet(){
+        appDb!!.scriptSetInfoDao.getGlobalSet().associateBy {
+            it.setId
+        }.let {
+            this._globalSetMap.value = it
+        }
+    }
+
+    fun runScript(scriptSetInfo: ScriptSetInfo) {
         initOrb()
         //已选脚本
         scriptRunCoroutineScope.launch {
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
-                runScriptByAdb()
+            when(scriptSetInfo.setValue){
+                WORK_TYPE01 ->{}
+                WORK_TYPE02 -> {runScriptByAdb()}
+                WORK_TYPE03 -> {}
             }
+            /*if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
+                runScriptByAdb()
+            }*/
         }
 
     }
 
     //shell运行
     private suspend fun runScriptByAdb(){
+        println("开始运行${_scriptCheckedList.value.size}")
         _scriptCheckedList.value.forEach scriptForEach@{ si->
             if(si.currentRunNum < si.runsMaxNum){
                 val scriptSetInfo = appDb!!.scriptSetInfoDao.getScriptSetByScriptIdLv0(si.scriptId)
@@ -87,10 +110,10 @@ object  RunScript {
                         initActionFun(it, si, set)
                     }
 
-                    //当前脚本已选操作
+                    while ( checkIsFinish(set.setId) ) {                    //当前脚本已选操作
 
-                    //while (si.currentRunNum < si.runsMaxNum) {
-                    while ( checkIsFinish(set.setId) ) {
+                        //while (si.currentRunNum < si.runsMaxNum) {
+
                         val capTime = System.currentTimeMillis()
                         val captureBitmap = ShizukuUtil.iUserService?.execCap("screencap -p")
                         Utils.bitmapToMat(captureBitmap , sourceMat)//截图bitmap到mat

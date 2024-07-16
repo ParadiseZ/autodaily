@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Date
 
 class SearchViewModel(application: Application)   : BaseViewModel(application = application)  {
     //远程数据
@@ -101,6 +102,7 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
             //scriptInfo
             scriptInfo.isDownloaded = 1
             scriptInfo.scriptVersion = scriptInfo.lastVersion
+            scriptInfo.downloadTime = Date().toString()
             appDb?.scriptInfoDao?.insert(scriptInfo)
             //ScriptSet 全局设置
             globalScriptSetResult.data?.let {
