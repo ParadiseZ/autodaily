@@ -16,6 +16,9 @@ interface ScriptActionInfoDao {
     @Query("SELECT * FROM script_action_info where set_id = :setId and script_id = :scriptId and set_value = :setValue")
     fun getSingle(setId: Int, scriptId: Int, setValue: String): ScriptActionInfo
 
+    @Query("DELETE FROM script_action_info where script_id = :scriptId")
+    fun deleteByScriptId(scriptId: Int)
+
     @Transaction
     fun getActionInfo(condition : List<Triple<Int, Int, String>>): ArrayList<ScriptActionInfo>{
         val result = arrayListOf<ScriptActionInfo>()

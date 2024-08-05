@@ -28,7 +28,7 @@ fun SliderSettingItem(
     modifier: Modifier = Modifier
 ) {
     var sliderValue by remember { mutableFloatStateOf(
-        if (setting.setValue.isNotBlank()) setting.setValue.toFloat() else setting.setDefaultValue.toFloat()
+        if (setting.setValue?.isNotBlank() == true) setting.setValue!!.toFloat() else setting.setDefaultValue?.toFloat()    ?:  0f
     ) }
     Box(modifier = modifier
         .wrapContentSize()

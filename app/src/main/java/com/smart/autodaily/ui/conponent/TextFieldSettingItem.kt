@@ -27,7 +27,7 @@ fun TextFieldSettingItem(
 ){
     var textInput by remember {
         mutableStateOf(
-            if (setting.setValue.isBlank()) setting.setDefaultValue else setting.setValue
+            if (setting.setValue!!.isBlank()) setting.setDefaultValue else setting.setValue
         )
     }
     var isError by rememberSaveable { mutableStateOf(false) }
@@ -47,7 +47,7 @@ fun TextFieldSettingItem(
                 }
                 .wrapContentSize()
                 .padding(4.dp),
-            value = textInput,
+            value = textInput!!,
             maxLines = 1,
             onValueChange = {
                 isError = false
@@ -56,7 +56,7 @@ fun TextFieldSettingItem(
                 onValueChange(setting)
             },
             keyboardActions = KeyboardActions(onDone ={
-                validate(textInput)
+                validate(textInput!!)
             })
             /*KeyboardActions {
                 validate(textInput)

@@ -119,7 +119,6 @@ fun HomeScreen(
                                 WORK_TYPE01 ->{}
                                 WORK_TYPE02 -> {
                                     ServiceUtil.runUserService(homeViewModel.context)
-                                    delay(3000)
                                     if(ShizukuUtil.grant && ShizukuUtil.iUserService !=null) {
                                         RunScript.initScriptData(appDb!!.scriptInfoDao.getAllScriptByChecked())
                                         RunScript.runScript(it)

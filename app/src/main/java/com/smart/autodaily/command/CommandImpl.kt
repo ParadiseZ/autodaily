@@ -7,19 +7,23 @@ import com.smart.autodaily.handler.ActionHandler
 import com.smart.autodaily.utils.ShizukuUtil
 
 const val TAP = "shell input tap "
+const val START = "shell am start -n "
 
 class AdbClick(private var point: Point? = null) : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
         var res = true
         this.point?.let {
+            println("click${it}")
             exeClick(it)
         } ?: {
             sai.point?.let {
+                println("click${it}")
                 exeClick(it)
             } ?: {
                 res = false
             }
         }
+
         return res
     }
 }

@@ -21,7 +21,7 @@ fun SwitchSettingItem(
     modifier: Modifier = Modifier
 ) {
     var isChecked by remember { mutableStateOf(
-        if (setting.setValue.isBlank()) setting.setDefaultValue.toBoolean()
+        if (setting.setValue!!.isBlank()) setting.setDefaultValue.toBoolean()
         else setting.setValue.toBoolean()
     ) }
     Row(modifier = Modifier.padding(all = 8.dp), verticalAlignment = Alignment.CenterVertically) {

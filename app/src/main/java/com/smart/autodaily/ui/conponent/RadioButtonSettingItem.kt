@@ -49,7 +49,7 @@ fun RadioButtonSettingItem(
                 modifier = modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ){
-                setting.setDefaultValue.split(",").forEach {
+                setting.setDefaultValue?.split(",")?.forEach {
                     RadioButton(
                         selected = it == setValue,
                         onClick = {

@@ -32,7 +32,7 @@ fun CheckBoxSettingItem(
 ) {
     var isChecked by remember {
         mutableStateOf(
-            if (setting.setValue.isNotBlank()) setting.setValue.toBoolean()
+            if (setting.setValue?.isNotBlank() == true) setting.setValue.toBoolean()
             else  setting.setDefaultValue.toBoolean()
         )
     }

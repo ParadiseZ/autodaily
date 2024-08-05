@@ -5,6 +5,7 @@ import com.smart.autodaily.command.AdbClick
 import com.smart.autodaily.command.AdbSumClick
 import com.smart.autodaily.command.Check
 import com.smart.autodaily.command.Return
+import com.smart.autodaily.command.START
 import com.smart.autodaily.command.Skip
 import com.smart.autodaily.command.Sleep
 import com.smart.autodaily.constant.ActionString
@@ -19,6 +20,7 @@ import com.smart.autodaily.data.entity.WORK_TYPE03
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.debug
+import com.smart.autodaily.utils.toastOnUi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -85,7 +87,9 @@ object  RunScript {
         scriptRunCoroutineScope.launch {
             when(scriptSetInfo.setValue){
                 WORK_TYPE01 ->{}
-                WORK_TYPE02 -> {runScriptByAdb()}
+                WORK_TYPE02 -> {
+                    runScriptByAdb()
+                }
                 WORK_TYPE03 -> {}
             }
             /*if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
@@ -97,20 +101,39 @@ object  RunScript {
 
     //shell运行
     private suspend fun runScriptByAdb(){
-        println("开始运行${_scriptCheckedList.value.size}")
+        //println("开始运行${_scriptCheckedList.value.size}")
         _scriptCheckedList.value.forEach scriptForEach@{ si->
             if(si.currentRunNum < si.runsMaxNum){
+                //启动app
+                try {
+                    ShizukuUtil.iUserService?.execLine(START+si.packageName)
+                }catch (e: Exception){
+                    appCtx.toastOnUi("app启动失败！")
+                    //return@scriptForEach
+                }
+                //获取屏幕宽高
+                ScreenCaptureUtil.setDisplayMetrics(appCtx)
+                //println("DisplayMetrics:${ScreenCaptureUtil.displayMetrics?.heightPixels}}")
                 val scriptSetInfo = appDb!!.scriptSetInfoDao.getScriptSetByScriptIdLv0(si.scriptId)
                 scriptSetInfo.forEach setForEach@ { set->
                     val setIds = appDb!!.scriptSetInfoDao.getScriptSetParentAndChild( set.setId )
                     println("setIds = $setIds")
                     val scriptActionList = appDb!!.scriptActionInfoDao.getCheckedBySetId( setIds, si.scriptId )
-                    println("scriptActionList = $scriptActionList")
                     scriptActionList.forEach {
                         initActionFun(it, si, set)
+                        it.picNeedFindList = it.picNameList.split(",")
+                        it.picNotFoundList?.let { pic->
+                            it.picNotNeedFindList = pic.split(",")
+                        }
+                        it.stepString?.let {step->
+                            it.stepList = step.split(",").map {setId->
+                                setId.toInt()
+                            }
+                        }
                     }
-
-                    while ( checkIsFinish(set.setId) ) {                    //当前脚本已选操作
+                    println("set:${set}")
+                    println("setId:${checkIsFinish(set.setId)}")
+                    while ( !checkIsFinish(set.setId) ) {                    //当前脚本已选操作
 
                         //while (si.currentRunNum < si.runsMaxNum) {
 
@@ -126,7 +149,8 @@ object  RunScript {
                             scriptActionList.forEach scriptAction@{
                                 if (!it.skipFlag) {
                                     //寻找，目的为找到，所有的都找到则继续
-                                    if(findTarget(si.picPath, it.picNameList, it, keypointsSourceList, descriptorsSource,true)){
+                                    println("picNeedFindList:${it.picNeedFindList}")
+                                    if(findTarget(si.picPath, it.picNeedFindList, it, keypointsSourceList, descriptorsSource,true)){
                                         println("point：${it.point}")
                                         it.command.onEach { cmd->
                                             if(cmd is Return){
@@ -143,7 +167,7 @@ object  RunScript {
                                                     }
                                                     ActionString.UN_FIND ->{
                                                         //寻找，目的为未找到，所有的都未找到则继续
-                                                        if(!findTarget(si.picPath, it.picNotFoundList, it, keypointsSourceList, descriptorsSource,false)){
+                                                        if(!findTarget(si.picPath, it.picNotNeedFindList, it, keypointsSourceList, descriptorsSource,false)){
                                                             return@scriptAction
                                                         }
                                                     }
@@ -180,7 +204,7 @@ object  RunScript {
     //操作映射为函数
     private fun initActionFun(scriptActionInfo: ScriptActionInfo, scriptInfo: ScriptInfo, scriptSetInfo: ScriptSetInfo){
         scriptActionInfo.actionString.split(";").forEach {  action->
-            debug("action = ${action}")
+            //debug("action = ${action}")
             when(action){
                 ActionString.CLICK-> scriptActionInfo.command.add (AdbClick())
                 ActionString.CLICK_CENTER-> {
@@ -233,17 +257,21 @@ object  RunScript {
     }
 
     //匹配
-    private fun findTarget(picPath : String,picNameList : List<String>, sai : ScriptActionInfo, keypointsSourceList : List<KeyPoint>, descriptorsSource : Mat, matchSave : Boolean) : Boolean{
+    private fun findTarget(picPath : String,picNameList : List<String>?, sai : ScriptActionInfo, keypointsSourceList : List<KeyPoint>, descriptorsSource : Mat, matchSave : Boolean) : Boolean{
         // 计算匹配点的平均位置
         var avgX = 0.0
         var avgY = 0.0
-        picNameList.forEach {
+        picNameList?.forEach {
+            println("picPath:$picPath/$it.png")
             val targetMat = getPicture("$picPath/$it.png")
             val keypointsTarget = MatOfKeyPoint()
             val descriptorsTarget = Mat()
             orb.detectAndCompute(targetMat, Mat(), keypointsTarget, descriptorsTarget)
-            val matcher = BFMatcher.create(BFMatcher.FLANNBASED)
+            val matcher = BFMatcher.create(BFMatcher.BRUTEFORCE_HAMMINGLUT)
             val matchesMat = MatOfDMatch()
+            println("descriptorsTarget:${descriptorsTarget.size()}")
+            println("descriptorsSource:${descriptorsSource.size()}")
+
             matcher.match(descriptorsSource, descriptorsTarget, matchesMat)
             val matches = matchesMat.toList()
             var sumX = 0.0

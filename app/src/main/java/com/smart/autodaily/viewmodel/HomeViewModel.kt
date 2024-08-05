@@ -42,8 +42,11 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
     fun deleteScript(sc : ScriptInfo){
         viewModelScope.launch {
             try {
-                appDb!!.scriptInfoDao.delete(sc)
-                appDb!!.scriptSetInfoDao.deleteScriptSetInfoByScriptId(sc.scriptId)
+                appDb?.runInTransaction{
+                    appDb!!.scriptInfoDao.delete(sc)
+                    appDb!!.scriptSetInfoDao.deleteScriptSetInfoByScriptId(sc.scriptId)
+                    appDb!!.scriptActionInfoDao.deleteByScriptId(sc.scriptId)
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }

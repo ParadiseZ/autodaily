@@ -85,19 +85,20 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
     fun downScriptByScriptId(scriptInfo : ScriptInfo) {
         this.viewModelScope.launch {
             withContext(Dispatchers.IO){
-                downByScriptId(scriptInfo,scriptInfo.scriptId)
+                downByScriptId(scriptInfo)
             }
         }
     }
 
-    private suspend fun downByScriptId(scriptInfo: ScriptInfo,scriptId: Int) {
-        val result = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptId)
-        val actionInfo = RemoteApi.searchDownRetrofit.downloadActionInfoByScriptId(scriptId)
+    private suspend fun downByScriptId(scriptInfo: ScriptInfo) {
+        val result = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptInfo.scriptId)
+        val actionInfo = RemoteApi.searchDownRetrofit.downloadActionInfoByScriptId(scriptInfo.scriptId)
         var globalScriptSetResult = Response<List<ScriptSetInfo>>()
         val localScriptSetGlobal = appDb?.scriptSetInfoDao?.countScriptSetByScriptId(0)
         if (localScriptSetGlobal == 0) {
             globalScriptSetResult = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(0)
         }
+        //val scriptSetDownload = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptId)
         appDb?.runInTransaction{
             //scriptInfo
             scriptInfo.isDownloaded = 1
@@ -108,6 +109,9 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
             globalScriptSetResult.data?.let {
                 appDb?.scriptSetInfoDao?.insert(it)
             }
+            //scriptSetDownload.data?.let {
+                //appDb?.scriptSetInfoDao?.insert(it)
+           // }
             //ScriptSet 设置
             result.data?.let {
                 /*it.map{ ssi->

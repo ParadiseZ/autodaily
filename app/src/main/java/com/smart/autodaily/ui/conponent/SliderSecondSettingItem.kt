@@ -29,7 +29,7 @@ fun SliderSecondSettingItem(
     modifier: Modifier = Modifier
 ) {
     var sliderValue by remember { mutableFloatStateOf(
-        if (setting.setValue.isNotBlank()) setting.setValue.toFloat() else setting.setDefaultValue.toFloat()
+        if (setting.setValue?.isNotBlank() == true) setting.setValue!!.toFloat() else setting.setDefaultValue?.toFloat() ?: 0f
     ) }
     Box(modifier = modifier
         .wrapContentSize()
@@ -40,7 +40,7 @@ fun SliderSecondSettingItem(
             modifier = modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val setRange = setting.setRange.split(',')
+            val setRange = setting.setRange?.split(',')!!
             Text(modifier = Modifier.padding(start = Ui.SPACE_4),text = setting.setName+"：")
             when(setting.setType){
                 SettingType.SLIDER_SECOND -> Text(text = "${"%.1f".format(sliderValue )}秒")
