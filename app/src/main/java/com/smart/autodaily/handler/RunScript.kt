@@ -1,6 +1,5 @@
 package com.smart.autodaily.handler
 
-import android.content.res.AssetManager
 import com.smart.autodaily.command.AdbClick
 import com.smart.autodaily.command.AdbSumClick
 import com.smart.autodaily.command.Check
@@ -32,19 +31,15 @@ import kotlinx.coroutines.launch
 import org.opencv.android.Utils
 import org.opencv.core.KeyPoint
 import org.opencv.core.Mat
-import org.opencv.core.MatOfByte
 import org.opencv.core.MatOfDMatch
 import org.opencv.core.MatOfKeyPoint
 import org.opencv.features2d.BFMatcher
 import org.opencv.features2d.ORB
-import org.opencv.imgcodecs.Imgcodecs
 import splitties.init.appCtx
-import java.io.InputStream
 import java.util.Date
 
 
 object  RunScript {
-    private val assetManager: AssetManager = appCtx.assets
 
     private val _scriptCheckedList = MutableStateFlow<List<ScriptInfo>>(emptyList())
 
@@ -82,7 +77,7 @@ object  RunScript {
     }
 
     fun runScript(scriptSetInfo: ScriptSetInfo) {
-        initOrb()
+        //initOrb()
         //已选脚本
         scriptRunCoroutineScope.launch {
             when(scriptSetInfo.setValue){
@@ -140,17 +135,12 @@ object  RunScript {
                         val capTime = System.currentTimeMillis()
                         val captureBitmap = ShizukuUtil.iUserService?.execCap("screencap -p")
                         Utils.bitmapToMat(captureBitmap , sourceMat)//截图bitmap到mat
-                        // 源图特征点和描述符
-                        val keypointsSource = MatOfKeyPoint()
-                        val descriptorsSource = Mat()
-                        orb.detectAndCompute(sourceMat, Mat(), keypointsSource, descriptorsSource)
-                        val keypointsSourceList = keypointsSource.toList()
                         if (captureBitmap != null) {
                             scriptActionList.forEach scriptAction@{
                                 if (!it.skipFlag) {
                                     //寻找，目的为找到，所有的都找到则继续
                                     println("picNeedFindList:${it.picNeedFindList}")
-                                    if(findTarget(si.picPath, it.picNeedFindList, it, keypointsSourceList, descriptorsSource,true)){
+                                    if(templateMatch(si.picPath, it.picNeedFindList, sourceMat, _globalSetMap.value[5]!!.setValue!!.toDouble(), true,it,true)){
                                         println("point：${it.point}")
                                         it.command.onEach { cmd->
                                             if(cmd is Return){
@@ -167,7 +157,7 @@ object  RunScript {
                                                     }
                                                     ActionString.UN_FIND ->{
                                                         //寻找，目的为未找到，所有的都未找到则继续
-                                                        if(!findTarget(si.picPath, it.picNotNeedFindList, it, keypointsSourceList, descriptorsSource,false)){
+                                                        if(!templateMatch(si.picPath, it.picNotNeedFindList, sourceMat, _globalSetMap.value[5]!!.setValue!!.toDouble(), true,it,false)){
                                                             return@scriptAction
                                                         }
                                                     }
@@ -315,7 +305,7 @@ object  RunScript {
         scriptRunCoroutineScope.cancel()
     }
 
-    fun updateScript(scriptInfo: ScriptInfo){
+/*    fun updateScript(scriptInfo: ScriptInfo){
         checkAndRestartScopeState()
         scriptRunCoroutineScope.launch {
             appDb!!.scriptInfoDao.update(scriptInfo)
@@ -326,7 +316,7 @@ object  RunScript {
         scriptRunCoroutineScope.launch {
             appDb!!.scriptSetInfoDao.update(scriptSetInfo)
         }
-    }
+    }*/
 
     private fun checkAndRestartScopeState(){
         if (
@@ -336,10 +326,4 @@ object  RunScript {
         }
     }
 
-    private fun getPicture(picName : String) : Mat{
-        val inputStream: InputStream = assetManager.open(picName)
-        val bytes = inputStream.readBytes()
-        inputStream.close()
-        return Imgcodecs.imdecode(MatOfByte(*bytes), Imgcodecs.IMREAD_GRAYSCALE)
-    }
 }
