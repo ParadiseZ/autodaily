@@ -27,6 +27,14 @@ class UserService: IUserService.Stub(){
         }
     }
 
+    override fun execVoidComand(command: String)  {
+        try {
+            Runtime.getRuntime().exec(command)
+        }catch (e : Exception){
+            println("execVoidComand error:${e.message}")
+        }
+    }
+
     override fun execArr(command: Array<out String>?): String? {
         return  execLine(command.toString())
     }

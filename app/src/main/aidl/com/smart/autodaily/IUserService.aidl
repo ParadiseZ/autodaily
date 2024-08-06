@@ -31,4 +31,6 @@ interface IUserService {
      String execArr(in String[] command) = 3;
 
      android.graphics.Bitmap execCap(String command) = 4;
+
+     void execVoidComand(String command) = 5;
 }

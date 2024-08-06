@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.MoreVert
@@ -56,10 +57,12 @@ import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.ToastUtil
+import com.smart.autodaily.utils.toastOnUi
 import com.smart.autodaily.viewmodel.HomeViewModel
 import com.smart.autodaily.viewmodel.mediaProjectionServiceStartFlag
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import splitties.init.appCtx
 
@@ -81,6 +84,8 @@ fun HomeScreen(
     //showActiveDialogFlag
     val showActiveDialogFlag by homeViewModel.showActiveDialogFlag.collectAsState()
     var currentScriptInfo : ScriptInfo? = null
+    //运行状态
+    var runStatus by remember { mutableStateOf( false) }
     Scaffold (
         modifier = modifier,
         topBar = {
@@ -112,22 +117,33 @@ fun HomeScreen(
                             }
                         }
                     }*/
+                    println("runStatus:$runStatus")
+                    println(RunScript.scriptRunCoroutineScope.isActive)
                     homeViewModel.viewModelScope.launch {
                         RunScript.initGlobalSet()
-                        RunScript.globalSetMap.value[8]?.let {
-                            when(it.setValue){
-                                WORK_TYPE01 ->{}
+                        val set =  RunScript.globalSetMap.value[8]?.let {
+                            when(it.setValue) {
+                                WORK_TYPE01 -> {}
                                 WORK_TYPE02 -> {
                                     ServiceUtil.runUserService(homeViewModel.context)
-                                    if(ShizukuUtil.grant && ShizukuUtil.iUserService !=null) {
+                                    if (ShizukuUtil.grant && ShizukuUtil.iUserService != null) {
                                         RunScript.initScriptData(appDb!!.scriptInfoDao.getAllScriptByChecked())
                                         RunScript.runScript(it)
                                     }
                                 }
                                 WORK_TYPE03 -> {}
                             }
+                        } ?: {
+                            homeViewModel.context.toastOnUi("请先设置工作模式！")
                         }
                     }
+                    /*if (runStatus){
+                        RunScript.stopRunScript()
+                    }else{
+
+                        runStatus = true
+                    }*/
+
 
 
 
@@ -175,7 +191,11 @@ fun HomeScreen(
 
                 }
             ) {
-                Icon(Icons.Filled.PlayArrow, contentDescription = "开始运行")
+                if (runStatus){
+                    Icon(Icons.Filled.Close, contentDescription = "停止运行")
+                }else{
+                    Icon(Icons.Filled.PlayArrow, contentDescription = "开始运行")
+                }
             }
         },
     ){

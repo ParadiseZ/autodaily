@@ -1,6 +1,7 @@
 package com.smart.autodaily.utils
 
 import android.content.ComponentName
+import android.content.Context
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.IBinder
@@ -10,7 +11,6 @@ import com.smart.autodaily.service.UserService
 import rikka.shizuku.Shizuku
 import rikka.shizuku.Shizuku.UserServiceArgs
 import splitties.init.appCtx
-import splitties.toast.toast
 
 
 object ShizukuUtil {
@@ -36,30 +36,21 @@ object ShizukuUtil {
     }
 
     //请求权限
-    fun requestShizukuPermission() {
+    fun requestShizukuPermission(context: Context) {
         grant = checkPermission()
-        println("检测权限结果：${grant}")
         if (grant) {
             return
         }
-
         if (Shizuku.isPreV11()) {
-            //toast("当前shizuku版本不支持动态申请")
-            //Toast.makeText(this, "当前shizuku版本不支持动态申请", Toast.LENGTH_SHORT).show()
+            context.toastOnUi("当前shizuku版本不支持动态申请")
             return
         }
-        println("进行权限申请：${grant}")
         // 动态申请权限
         Shizuku.requestPermission(10001)
     }
 
     //权限检测
     private fun checkPermission(): Boolean {
-        println("检测权限")
-        /*if (iUserService == null){
-            println("服务为空")
-            return false
-        }*/
         return  Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
     }
 
@@ -100,10 +91,9 @@ object ShizukuUtil {
     // 本地服务连接shizuku服务
     val serviceConnection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(componentName: ComponentName, iBinder: IBinder) {
-            appCtx.toast("服务连接成功！")
-            println("服务已连接")
             if (iBinder.pingBinder()) {
                 iUserService = IUserService.Stub.asInterface(iBinder)
+                appCtx.toastOnUi("shizuku连接成功！")
             }
         }
         override fun onServiceDisconnected(componentName: ComponentName) {

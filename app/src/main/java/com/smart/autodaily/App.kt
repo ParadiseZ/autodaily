@@ -10,6 +10,7 @@ import com.jeremyliao.liveeventbus.LiveEventBus
 import com.smart.autodaily.config.AppConfig.channelIdDownload
 import com.smart.autodaily.data.AppDb
 import com.smart.autodaily.handler.ExceptionHandler
+import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.UpdateUtil
 import com.smart.autodaily.utils.toastOnUi
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -18,6 +19,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import me.weishu.reflection.Reflection
 import org.opencv.android.OpenCVLoader
+import splitties.init.appCtx
 import splitties.systemservices.notificationManager
 
 
@@ -36,6 +38,7 @@ class App : Application(){
             AppDb.getInstance(applicationContext)
             loadOpenCVLibraries();
             UpdateUtil.checkScriptUpdate()
+            ServiceUtil.runUserService(appCtx)
         }
     }
 

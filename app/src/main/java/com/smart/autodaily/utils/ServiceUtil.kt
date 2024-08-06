@@ -18,19 +18,18 @@ object ServiceUtil {
 
     fun runUserService(context: Context){
         try {
-            ShizukuUtil.requestShizukuPermission()
-            if(ShizukuUtil.grant){
-                if(ShizukuUtil.iUserService == null){
-                    context.toastOnUi("shell服务启动中...")
-                    Shizuku.bindUserService(
-                        ShizukuUtil.userServiceArgs,
-                        ShizukuUtil.serviceConnection
-                    )
-                }else{
-                    context.toastOnUi("shell服务已启动！")
+            ShizukuUtil.requestShizukuPermission(context)
+            for (i in 1 .. 10){
+                if(ShizukuUtil.grant){
+                    if(ShizukuUtil.iUserService == null){
+                        Shizuku.bindUserService(
+                            ShizukuUtil.userServiceArgs,
+                            ShizukuUtil.serviceConnection
+                        )
+                        //context.toastOnUi("shell服务启动成功！")
+                        return
+                    }
                 }
-            }else{
-                context.toastOnUi("shizuku未授权！")
             }
         }catch (e : Exception){
             context.toastOnUi("shizuku服务异常！")

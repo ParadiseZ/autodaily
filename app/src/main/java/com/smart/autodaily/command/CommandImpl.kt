@@ -6,29 +6,30 @@ import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.handler.ActionHandler
 import com.smart.autodaily.utils.ShizukuUtil
 
-const val TAP = "shell input tap "
-const val START = "shell am start -n "
+const val TAP = "input tap "
+const val START = "am start -n "
+const val CAPTURE = "screencap -p"
 
 class AdbClick(private var point: Point? = null) : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
         var res = true
         this.point?.let {
-            println("click${it}")
             exeClick(it)
         } ?: {
             sai.point?.let {
-                println("click${it}")
                 exeClick(it)
             } ?: {
                 res = false
             }
         }
-
+        sai.point = null
         return res
     }
 }
-private fun exeClick(p: Point){
-    ShizukuUtil.iUserService?.execLine(TAP + "${p.x + ActionHandler.randomXRange} ${p.y + ActionHandler.randomYRange}")
+private fun exeClick(p: Point) {
+    val command = TAP + "${p.x + ActionHandler.randomXRange} ${p.y + ActionHandler.randomYRange}"
+    //println(command)
+    ShizukuUtil.iUserService?.execVoidComand(command)
 }
 class AdbSumClick(private val point: Point) : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {

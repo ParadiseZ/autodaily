@@ -2,6 +2,7 @@ package com.smart.autodaily.handler
 
 import com.smart.autodaily.command.AdbClick
 import com.smart.autodaily.command.AdbSumClick
+import com.smart.autodaily.command.CAPTURE
 import com.smart.autodaily.command.Check
 import com.smart.autodaily.command.Return
 import com.smart.autodaily.command.START
@@ -19,7 +20,6 @@ import com.smart.autodaily.data.entity.WORK_TYPE03
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.debug
-import com.smart.autodaily.utils.toastOnUi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -35,6 +35,7 @@ import org.opencv.core.MatOfDMatch
 import org.opencv.core.MatOfKeyPoint
 import org.opencv.features2d.BFMatcher
 import org.opencv.features2d.ORB
+import org.opencv.imgproc.Imgproc
 import splitties.init.appCtx
 import java.util.Date
 
@@ -49,7 +50,7 @@ object  RunScript {
     //val scriptCheckedList : StateFlow<List<ScriptInfo>> = _scriptCheckedList
     //var scriptSetList : List<ScriptInfo> = emptyList()
     //val globalSetList =  MutableStateFlow<List<ScriptSetInfo>>(emptyList())
-    private var scriptRunCoroutineScope = CoroutineScope(Dispatchers.IO)
+    var scriptRunCoroutineScope = CoroutineScope(Dispatchers.IO)
     private var sourceMat = Mat()
     private val orb: ORB = ORB.create()
 
@@ -103,7 +104,8 @@ object  RunScript {
                 try {
                     ShizukuUtil.iUserService?.execLine(START+si.packageName)
                 }catch (e: Exception){
-                    appCtx.toastOnUi("app启动失败！")
+                    println("app启动失败！")
+                    //appCtx.toastOnUi("app启动失败！")
                     //return@scriptForEach
                 }
                 //获取屏幕宽高
@@ -133,13 +135,20 @@ object  RunScript {
                         //while (si.currentRunNum < si.runsMaxNum) {
 
                         val capTime = System.currentTimeMillis()
-                        val captureBitmap = ShizukuUtil.iUserService?.execCap("screencap -p")
-                        Utils.bitmapToMat(captureBitmap , sourceMat)//截图bitmap到mat
+                        val captureBitmap = ShizukuUtil.iUserService?.execCap(CAPTURE)
                         if (captureBitmap != null) {
+                            Utils.bitmapToMat(captureBitmap , sourceMat)//截图bitmap到mat
+                            Imgproc.cvtColor(sourceMat, sourceMat, Imgproc.COLOR_BGR2GRAY) //灰度图转换
+                            Imgproc.Canny(sourceMat, sourceMat , 50.0, 200.0) //边缘检测
+                            /*val bitmap : Bitmap  = Bitmap.createBitmap(1280, 720, Bitmap.Config.ARGB_8888 )
+
+                            Utils.matToBitmap(sourceMat, bitmap)
+                            ScreenCaptureUtil.saveScreenCapture(bitmap)*/
+                            // Check and convert image depth if necessary
                             scriptActionList.forEach scriptAction@{
                                 if (!it.skipFlag) {
                                     //寻找，目的为找到，所有的都找到则继续
-                                    println("picNeedFindList:${it.picNeedFindList}")
+                                    //println("picNeedFindList:${it.picNeedFindList}")
                                     if(templateMatch(si.picPath, it.picNeedFindList, sourceMat, _globalSetMap.value[5]!!.setValue!!.toDouble(), true,it,true)){
                                         println("point：${it.point}")
                                         it.command.onEach { cmd->
@@ -172,8 +181,8 @@ object  RunScript {
 
                                 }
                             }
-                            if (System.currentTimeMillis() - capTime < 1000) {
-                                delay(1000)
+                            if (System.currentTimeMillis() - capTime < 3000) {
+                                delay(3000)
                             }
                         }else{
                             debug("截图失败！")

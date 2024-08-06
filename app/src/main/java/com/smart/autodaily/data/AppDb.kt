@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.smart.autodaily.data.dao.ScriptActionInfoDao
 import com.smart.autodaily.data.dao.ScriptInfoDao
@@ -14,7 +13,6 @@ import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.data.entity.UserInfo
-import com.smart.autodaily.data.entity.convert.CustomTypeConvert
 import org.intellij.lang.annotations.Language
 import java.util.Locale
 
@@ -27,7 +25,6 @@ var appDb: AppDb ?=null
         AutoMigration(from = 2, to = 3)
     ]*/
 )
-@TypeConverters(CustomTypeConvert::class)
 abstract class AppDb  :  RoomDatabase(){
     abstract val scriptInfoDao : ScriptInfoDao
     abstract val scriptSetInfoDao : ScriptSetInfoDao
@@ -78,7 +75,7 @@ abstract class AppDb  :  RoomDatabase(){
                     (0,2,'true','CHECK_BOX','保持运行','',-1,1,'false','false','',0,'true','false','false'),
                     (0,3,'true','SLIDER_SECOND','截图延迟','',-1,1,'0.5','0.5','0,5',9,'true','false','false'),
                     (0,4,'true','SLIDER_SECOND','卡死等待重启','',-1,1,'10','10','5,20',14,'true','false','false'),
-                    (0,5,'true','SLIDER','图像匹配相似度','',-1,1,'0.9','0.9','0,1',0,'true','false','false'),
+                    (0,5,'true','SLIDER','图像匹配相似度','',-1,1,'0.98','0.98','0,1',0,'true','false','false'),
                     (0,6,'true','RADIO_BUTTON','匹配算法','',-1,1,'算法一（更快）,算法二（更准）','算法二（更准）','',0,'true','false','false'),
                     (0,7,'true','RADIO_BUTTON','脚本日志记录','',-1,1,'关闭,运行结果,INFO','运行结果','',0,'true','false','false'),
                     (0,8,'true','RADIO_BUTTON','工作模式','',-1,1,'无障碍+录屏(安卓7-12),shizuku,root','shizuku','',0,'true','false','false'),
