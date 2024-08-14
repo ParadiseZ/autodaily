@@ -12,13 +12,11 @@ import com.smart.autodaily.data.AppDb
 import com.smart.autodaily.handler.ExceptionHandler
 import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.UpdateUtil
-import com.smart.autodaily.utils.toastOnUi
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import me.weishu.reflection.Reflection
-import org.opencv.android.OpenCVLoader
 import splitties.init.appCtx
 import splitties.systemservices.notificationManager
 
@@ -36,7 +34,6 @@ class App : Application(){
             //.setLogger(EventLogger())
         GlobalScope.launch(Dispatchers.IO){
             AppDb.getInstance(applicationContext)
-            loadOpenCVLibraries();
             UpdateUtil.checkScriptUpdate()
             ServiceUtil.runUserService(appCtx)
         }
@@ -68,13 +65,5 @@ class App : Application(){
                 downloadChannel,
             )
         )
-    }
-
-    private fun loadOpenCVLibraries() {
-        if (!OpenCVLoader.initLocal()) {
-            applicationContext.toastOnUi("init OpenCVLibraries Failed")
-            println("init OpenCVLibraries Failed")
-            //Log.e(TAG, "OpenCV initialization failed")
-        }
     }
 }

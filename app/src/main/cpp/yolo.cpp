@@ -18,7 +18,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include "cpu.h"
-
+#define LOGD(...) ((void)__android_log_print(ANDROID_LOG_DEBUG, "YOYO", __VA_ARGS__))
 static float fast_exp(float x)
 {
     union {
@@ -139,10 +139,11 @@ static void generate_grids_and_stride(const int target_w, const int target_h, st
 }
 static void generate_proposals(std::vector<GridAndStride> grid_strides, const ncnn::Mat& pred, float prob_threshold, std::vector<Object>& objects)
 {
-    const int num_points = grid_strides.size();
-    const int num_class = 80;
+    const int grid_size = grid_strides.size();
+    const int memo_size = 273;//mumu12超过该数会报错
+    const int num_points = std::min(grid_size, memo_size);
+    const int num_class = 3;
     const int reg_max_1 = 16;
-
     for (int i = 0; i < num_points; i++)
     {
         const float* scores = pred.row(i) + 4 * reg_max_1;
@@ -159,9 +160,12 @@ static void generate_proposals(std::vector<GridAndStride> grid_strides, const nc
                 score = confidence;
             }
         }
+        //LOGD("score %f", score);
         float box_prob = sigmoid(score);
+
         if (box_prob >= prob_threshold)
         {
+            //LOGD("box_prob >= prob_threshold %f",box_prob);
             ncnn::Mat bbox_pred(reg_max_1, 4, (void*)pred.row(i));
             {
                 ncnn::Layer* softmax = ncnn::create_layer("Softmax");
@@ -216,6 +220,7 @@ static void generate_proposals(std::vector<GridAndStride> grid_strides, const nc
             objects.push_back(obj);
         }
     }
+    LOGD("objectsSize %zu",objects.size());
 }
 
 Yolo::Yolo()
@@ -246,9 +251,10 @@ int Yolo::load(AAssetManager* mgr, const char* modeltype, int _target_size, cons
 
     char parampath[256];
     char modelpath[256];
-    sprintf(parampath, "yolov8%s.param", modeltype);
-    sprintf(modelpath, "yolov8%s.bin", modeltype);
-
+    sprintf(parampath, "%s.param", modeltype);
+    sprintf(modelpath, "%s.bin", modeltype);
+    LOGD("parampath %s", parampath);
+    LOGD("modelpath %s", modelpath);
     yolo.load_param(mgr, parampath);
     yolo.load_model(mgr, modelpath);
 
@@ -296,29 +302,36 @@ int Yolo::detect(const cv::Mat& rgb, std::vector<Object>& objects, float prob_th
     in_pad.substract_mean_normalize(0, norm_vals);
 
     ncnn::Extractor ex = yolo.create_extractor();
+    LOGD("inpad w %d, h %d", in_pad.w, in_pad.h);
 
-    ex.input("images", in_pad);
-
+    //ex.input("images", in_pad);
+    ex.input("in0", in_pad);
+    LOGD("ex.input over");
     std::vector<Object> proposals;
     
     ncnn::Mat out;
-    ex.extract("output", out);
-
+    //ex.extract("output", out);
+    ex.extract("out0", out);
+    LOGD("ex.extract over");
     std::vector<int> strides = {8, 16, 32}; // might have stride=64
     std::vector<GridAndStride> grid_strides;
+    LOGD("generate_grids_and_stride");
     generate_grids_and_stride(in_pad.w, in_pad.h, strides, grid_strides);
+    LOGD("generate_proposals");
     generate_proposals(grid_strides, out, prob_threshold, proposals);
-
+    LOGD("qsort_descent_inplace");
     // sort all proposals by score from highest to lowest
     qsort_descent_inplace(proposals);
 
     // apply nms with nms_threshold
     std::vector<int> picked;
+    LOGD("nms_sorted_bboxes");
     nms_sorted_bboxes(proposals, picked, nms_threshold);
 
     int count = picked.size();
 
     objects.resize(count);
+    LOGD("count：%d", count);
     for (int i = 0; i < count; i++)
     {
         objects[i] = proposals[picked[i]];
@@ -350,7 +363,6 @@ int Yolo::detect(const cv::Mat& rgb, std::vector<Object>& objects, float prob_th
         }
     } objects_area_greater;
     std::sort(objects.begin(), objects.end(), objects_area_greater);
-
     return 0;
 }
 
