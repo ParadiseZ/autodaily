@@ -4,6 +4,7 @@ import android.content.Intent
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,6 +26,8 @@ import androidx.navigation.compose.rememberNavController
 import com.smart.autodaily.constant.NavigationItem
 import com.smart.autodaily.service.MediaProjectionService
 import com.smart.autodaily.ui.conponent.AppNavHost
+import com.smart.autodaily.ui.conponent.floatingView
+import com.smart.autodaily.ui.conponent.initAlertWindow
 import com.smart.autodaily.ui.conponent.navSingleTopTo
 import com.smart.autodaily.ui.theme.AutoDailyTheme
 import com.smart.autodaily.utils.ScreenCaptureUtil
@@ -120,6 +123,25 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         cancel()
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
             ShizukuUtil.removeShizuku()
+        }
+        windowManager.removeView(floatingView)
+    }
+
+    fun requestOverlayPermission() {
+        if (!Settings.canDrawOverlays(this)) {
+            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
+            activityResultRegistry.register(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                ActivityResultContracts.StartActivityForResult()
+            ) { result ->
+                if (result.resultCode != RESULT_OK) {
+                    initAlertWindow(50,10)
+                }
+            }.run {
+                launch(intent)
+            }
+        } else {
+            initAlertWindow(50,10)
         }
     }
 }

@@ -1,5 +1,7 @@
 package com.smart.autodaily.handler
 
+import android.graphics.Bitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import com.smart.autodaily.command.AdbClick
 import com.smart.autodaily.command.AdbSumClick
 import com.smart.autodaily.command.CAPTURE
@@ -17,6 +19,8 @@ import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.data.entity.WORK_TYPE01
 import com.smart.autodaily.data.entity.WORK_TYPE02
 import com.smart.autodaily.data.entity.WORK_TYPE03
+import com.smart.autodaily.ui.conponent.detectRectFList
+import com.smart.autodaily.ui.conponent.imgLayout
 import com.smart.autodaily.utils.ModelUtil
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ShizukuUtil
@@ -43,6 +47,7 @@ object  RunScript {
     //val scriptCheckedList : StateFlow<List<ScriptInfo>> = _scriptCheckedList
     //var scriptSetList : List<ScriptInfo> = emptyList()
     //val globalSetList =  MutableStateFlow<List<ScriptSetInfo>>(emptyList())
+    //var scriptRunCoroutineScope = CoroutineScope(Dispatchers.IO)
     var scriptRunCoroutineScope = CoroutineScope(Dispatchers.IO)
 
     fun initGlobalSet(){
@@ -53,14 +58,14 @@ object  RunScript {
         }
     }
 
-    fun runScript(scriptSetInfo: ScriptSetInfo) {
+    fun runScript(scriptSetInfo: ScriptSetInfo, alterResult : ()->Unit) {
         //initOrb()
         //已选脚本
         scriptRunCoroutineScope.launch {
             when(scriptSetInfo.setValue){
                 WORK_TYPE01 ->{}
                 WORK_TYPE02 -> {
-                    runScriptByAdb()
+                    runScriptByAdb(alterResult)
                 }
                 WORK_TYPE03 -> {}
             }
@@ -72,7 +77,7 @@ object  RunScript {
     }
 
     //shell运行
-    private suspend fun runScriptByAdb(){
+    private suspend fun runScriptByAdb(alterResult:()->Unit){
         //println("开始运行${_scriptCheckedList.value.size}")
         _scriptCheckedList.value.forEach scriptForEach@{ si->
             if(si.currentRunNum < si.runsMaxNum){
@@ -115,12 +120,22 @@ object  RunScript {
 
                         val capTime = System.currentTimeMillis()
                         val captureBitmap= ShizukuUtil.iUserService?.execCap(CAPTURE)
-                        if (captureBitmap!=null) {
-                            val detectRes = ModelUtil.model.detect(captureBitmap,0.7f, 0.9f)
+                        val drawResult = captureBitmap?.copy(Bitmap.Config.ARGB_8888, true)
+
+                        if (captureBitmap!=null && drawResult!=null) {
+                            val detectRes = ModelUtil.model.detectAndDraw(captureBitmap,3,drawMap = drawResult)
+                            //val detectRes = ModelUtil.model.detect(captureBitmap,3)
                             println("captureBitmap:${captureBitmap.width},detectRes:${detectRes.size}")
+                            delay(5000)
+                            imgLayout.value = captureBitmap.asImageBitmap()
                             for (i in 0..5){
+                                detectRectFList.add(detectRes[i].rect)
                                 println("lab："+detectRes[i].label + ",prob："+detectRes[i].prob + ",rect："+detectRes[i].rect + ",detect："+detectRes[i])
                             }
+                            delay(5000)
+                            imgLayout.value = drawResult.asImageBitmap()
+                            delay(10000)
+                            return
                             /*val bitmap : Bitmap  = Bitmap.createBitmap(1280, 720, Bitmap.Config.ARGB_8888 )
                             Utils.matToBitmap(sourceMat, bitmap)
                             ScreenCaptureUtil.saveScreenCapture(bitmap)*/

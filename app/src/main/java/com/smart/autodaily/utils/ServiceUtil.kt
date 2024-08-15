@@ -5,6 +5,7 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
 import android.content.Context.ACCESSIBILITY_SERVICE
 import android.view.accessibility.AccessibilityManager
+import kotlinx.coroutines.delay
 import rikka.shizuku.Shizuku
 
 object ServiceUtil {
@@ -16,7 +17,7 @@ object ServiceUtil {
         }
     }
 
-    fun runUserService(context: Context){
+    suspend fun runUserService(context: Context){
         try {
             ShizukuUtil.requestShizukuPermission(context)
             for (i in 1 .. 10){
@@ -26,10 +27,10 @@ object ServiceUtil {
                             ShizukuUtil.userServiceArgs,
                             ShizukuUtil.serviceConnection
                         )
-                        //context.toastOnUi("shell服务启动成功！")
-                        return
                     }
+                    return
                 }
+                delay(1000)
             }
         }catch (e : Exception){
             context.toastOnUi("shizuku服务异常！")

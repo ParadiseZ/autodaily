@@ -37,11 +37,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.smart.autodaily.MainActivity
 import com.smart.autodaily.constant.AppBarTitle
 import com.smart.autodaily.constant.NavigationItem
 import com.smart.autodaily.constant.Ui
@@ -84,6 +86,8 @@ fun HomeScreen(
     //showActiveDialogFlag
     val showActiveDialogFlag by homeViewModel.showActiveDialogFlag.collectAsState()
     var currentScriptInfo : ScriptInfo? = null
+
+    val manActivityCtx = LocalContext.current
     //运行状态
     var runStatus by remember { mutableStateOf( false) }
     Scaffold (
@@ -126,10 +130,19 @@ fun HomeScreen(
                                 WORK_TYPE01 -> {}
                                 WORK_TYPE02 -> {
                                     ServiceUtil.runUserService(homeViewModel.context)
-                                    if (ShizukuUtil.grant && ShizukuUtil.iUserService != null) {
-                                        RunScript.initScriptData(appDb!!.scriptInfoDao.getAllScriptByChecked())
-                                        RunScript.runScript(it)
+                                    for(i in 0..5){
+                                        if (ShizukuUtil.grant && ShizukuUtil.iUserService != null) {
+                                            RunScript.initScriptData(appDb!!.scriptInfoDao.getAllScriptByChecked())
+                                            RunScript.runScript(it){
+                                                (manActivityCtx as MainActivity).requestOverlayPermission()
+                                            }
+                                            break
+                                        }
+                                        println("wait for ShizukuUtil.grant")
+                                        delay(1000)
                                     }
+                                    delay(3000)
+                                    (manActivityCtx as MainActivity).requestOverlayPermission()
                                 }
                                 WORK_TYPE03 -> {}
                             }

@@ -137,10 +137,10 @@ static void generate_grids_and_stride(const int target_w, const int target_h, st
         }
     }
 }
-static void generate_proposals(std::vector<GridAndStride> grid_strides, const ncnn::Mat& pred, float prob_threshold, std::vector<Object>& objects)
+static void generate_proposals(std::vector<GridAndStride> grid_strides, const ncnn::Mat& pred, float prob_threshold, int num_classes, std::vector<Object>& objects)
 {
     const int grid_size = grid_strides.size();
-    const int memo_size = 273;//mumu12超过该数会报错
+    const int memo_size = 20;//mumu12超过该数会报错273
     const int num_points = std::min(grid_size, memo_size);
     const int num_class = 3;
     const int reg_max_1 = 16;
@@ -269,7 +269,7 @@ int Yolo::load(AAssetManager* mgr, const char* modeltype, int _target_size, cons
     return 0;
 }
 
-int Yolo::detect(const cv::Mat& rgb, std::vector<Object>& objects, float prob_threshold, float nms_threshold)
+int Yolo::detect(const cv::Mat& rgb, std::vector<Object>& objects,int num_classes, float prob_threshold, float nms_threshold)
 {
     int width = rgb.cols;
     int height = rgb.rows;
@@ -318,7 +318,7 @@ int Yolo::detect(const cv::Mat& rgb, std::vector<Object>& objects, float prob_th
     LOGD("generate_grids_and_stride");
     generate_grids_and_stride(in_pad.w, in_pad.h, strides, grid_strides);
     LOGD("generate_proposals");
-    generate_proposals(grid_strides, out, prob_threshold, proposals);
+    generate_proposals(grid_strides, out, prob_threshold,num_classes, proposals);
     LOGD("qsort_descent_inplace");
     // sort all proposals by score from highest to lowest
     qsort_descent_inplace(proposals);
@@ -366,7 +366,7 @@ int Yolo::detect(const cv::Mat& rgb, std::vector<Object>& objects, float prob_th
     return 0;
 }
 
-int Yolo::draw(cv::Mat& rgb, const std::vector<Object>& objects)
+/*int Yolo::draw(cv::Mat& rgb, const std::vector<Object>& objects)
 {
     static const char* class_names[] = {
         "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light",
@@ -436,6 +436,61 @@ int Yolo::draw(cv::Mat& rgb, const std::vector<Object>& objects)
         cv::Scalar textcc = (color[0] + color[1] + color[2] >= 381) ? cv::Scalar(0, 0, 0) : cv::Scalar(255, 255, 255);
 
         cv::putText(rgb, text, cv::Point(x, y + label_size.height), cv::FONT_HERSHEY_SIMPLEX, 0.5, textcc, 1);
+    }
+
+    return 0;
+}*/
+int Yolo::draw(cv::Mat& rgb, const std::vector<Object>& objects)
+{
+    static const char* class_names[] = {
+            "SureYellow", "SureBlue", "SureGray"
+    };
+
+    static const unsigned char colors[3][3] = {
+            { 54,  67, 244},
+            { 99,  30, 233},
+            {176,  39, 156}
+    };
+
+    int color_index = 0;
+    //LOGD("into yolo draw");
+    for (size_t i = 0; i < objects.size(); i++)
+    {
+        const Object& obj = objects[i];
+        LOGD("draw i：%zu", i);
+
+//         fprintf(stderr, "%d = %.5f at %.2f %.2f %.2f x %.2f\n", obj.label, obj.prob,
+//                 obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height);
+
+        const unsigned char* color = colors[color_index % 3];
+        color_index++;
+
+        cv::Scalar cc(color[0], color[1], color[2]);
+        //LOGD("Scalar over：%d", i);
+        //LOGD("rgb.width %d, rgb.height: %d", rgb.cols, rgb.rows);
+        //LOGD("rectx：%f, recty：%f, width：%f, height：%f", obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height);
+        cv::rectangle(rgb, obj.rect, cc, 2);
+        //LOGD("rectangle：over");
+        char text[256];
+
+        sprintf(text, "%s %.1f%%", class_names[obj.label], obj.prob * 100);
+        //LOGD("text %s", text);
+        int baseLine = 0;
+        cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
+
+        int x = obj.rect.x;
+        int y = obj.rect.y - label_size.height - baseLine;
+        if (y < 0)
+            y = 0;
+        if (x + label_size.width > rgb.cols)
+            x = rgb.cols - label_size.width;
+
+        cv::rectangle(rgb, cv::Rect(cv::Point(x, y), cv::Size(label_size.width, label_size.height + baseLine)), cc, -1);
+        //LOGD("rectangle 2 over");
+        cv::Scalar textcc = (color[0] + color[1] + color[2] >= 381) ? cv::Scalar(0, 0, 0) : cv::Scalar(255, 255, 255);
+        //LOGD("textcc over");
+        cv::putText(rgb, text, cv::Point(x, y + label_size.height), cv::FONT_HERSHEY_SIMPLEX, 0.5, textcc, 1);
+        //LOGD("putText over");
     }
 
     return 0;

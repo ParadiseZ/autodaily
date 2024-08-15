@@ -65,6 +65,43 @@ cv::Mat bitmapToMat(JNIEnv *env, jobject j_argb8888_bitmap) {
     return c_rgba;
 }
 
+void matToBitmap(JNIEnv *env, cv::Mat & drawMat, jobject obj_bitmap){
+    //锁定画布
+    void *pixels;
+    AndroidBitmap_lockPixels(env,obj_bitmap,&pixels);
+    //获取Bitmap的信息
+    AndroidBitmapInfo bitmapInfo;
+    AndroidBitmap_getInfo(env,obj_bitmap,&bitmapInfo);
+    int ret;
+    // 将Mat数据复制到Bitmap
+    cv::Mat bitmapMat(bitmapInfo.height, bitmapInfo.width, CV_8UC4, pixels);
+    drawMat.copyTo(bitmapMat);
+    AndroidBitmap_unlockPixels(env, obj_bitmap);
+}
+
+jobjectArray changeDetectResultToJavaArray(JNIEnv *env, const std::vector<Object>& objects){
+    // 3. 将检测结果转换为Java对象数组
+    jclass detectionResultClass = env->FindClass("com/smart/autodaily/data/entity/DetectResult");
+    jmethodID detectionResultConstructor = env->GetMethodID(detectionResultClass, "<init>",
+                                                            "(IFLandroid/graphics/RectF;)V");
+
+    // 创建Java对象数组
+    jobjectArray resultArray = env->NewObjectArray(objects.size(), detectionResultClass, NULL);
+    //RectF
+    jclass rectFClass = env->FindClass("android/graphics/RectF");
+    jmethodID  rectFClassConstructor = env->GetMethodID(rectFClass, "<init>",
+                                                        "(FFFF)V");
+    for (size_t i = 0; i < objects.size(); ++i) {
+        Object obj = objects[i];
+        jobject rect = env->NewObject(rectFClass,
+                                      rectFClassConstructor,
+                                      obj.rect.x, obj.rect.y, obj.rect.x + obj.rect.width, obj.rect.y + obj.rect.height);
+        jobject detectionResult = env->NewObject(detectionResultClass, detectionResultConstructor,
+                                                 obj.label, obj.prob, rect);
+        env->SetObjectArrayElement(resultArray, i, detectionResult);
+    }
+    return resultArray;
+}
 
 extern "C" {
 
@@ -142,7 +179,7 @@ extern "C" {
 
     JNIEXPORT jobjectArray JNICALL
     Java_com_smart_autodaily_navpkg_AutoDaily_detect
-            (JNIEnv *env, jobject thiz, jobject imageData,
+            (JNIEnv *env, jobject thiz, jobject imageData, jint numClasses,
              jfloat threshold, jfloat nmsThreshold) {
         // 1. 从Bitmap转换为cv::Mat
         cv::Mat image =  bitmapToMat(env, imageData);
@@ -158,28 +195,27 @@ extern "C" {
         // 2. 调用detect方法
         std::vector<Object> objects;
         //Yolo detector;
-        g_yolo->detect(image, objects, threshold, nmsThreshold);
+        g_yolo->detect(image, objects,numClasses, threshold, nmsThreshold);
         LOGD("detect over");
-        // 3. 将检测结果转换为Java对象数组
-        jclass detectionResultClass = env->FindClass("com/smart/autodaily/data/entity/DetectResult");
-        jmethodID detectionResultConstructor = env->GetMethodID(detectionResultClass, "<init>",
-                                                                "(IFLandroid/graphics/RectF;)V");
 
-        // 创建Java对象数组
-        jobjectArray resultArray = env->NewObjectArray(objects.size(), detectionResultClass, NULL);
-        //RectF
-        jclass rectFClass = env->FindClass("android/graphics/RectF");
-        jmethodID  rectFClassConstructor = env->GetMethodID(rectFClass, "<init>",
-                                                            "(FFFF)V");
-        for (size_t i = 0; i < objects.size(); ++i) {
-            Object obj = objects[i];
-            jobject rect = env->NewObject(rectFClass,
-            rectFClassConstructor,
-                                          obj.rect.x, obj.rect.y, obj.rect.x + obj.rect.width, obj.rect.y + obj.rect.height);
-            jobject detectionResult = env->NewObject(detectionResultClass, detectionResultConstructor,
-                                                     obj.label, obj.prob, rect);
-            env->SetObjectArrayElement(resultArray, i, detectionResult);
-        }
-        return resultArray;
+        return changeDetectResultToJavaArray(env, objects);
+    }
+
+JNIEXPORT jobjectArray JNICALL
+Java_com_smart_autodaily_navpkg_AutoDaily_detectAndDraw
+        (JNIEnv *env, jobject thiz, jobject imageData, jint numClasses,
+         jfloat threshold, jfloat nmsThreshold, jobject drawBitMap) {
+        cv::Mat image =  bitmapToMat(env, imageData);
+
+        std::vector<Object> objects;
+        //Yolo detector;
+        g_yolo->detect(image, objects,numClasses, threshold, nmsThreshold);
+        LOGD("detect over");
+        cv::Mat drawMat = image.clone();
+        g_yolo ->draw(drawMat, objects);
+        LOGD("draw over");
+        matToBitmap(env,drawMat,drawBitMap);
+        LOGD("matToBitmapOver");
+    return changeDetectResultToJavaArray(env, objects);
     }
 }
