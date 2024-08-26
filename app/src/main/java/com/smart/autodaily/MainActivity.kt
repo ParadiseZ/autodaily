@@ -135,13 +135,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 ActivityResultContracts.StartActivityForResult()
             ) { result ->
                 if (result.resultCode != RESULT_OK) {
-                    initAlertWindow(50,10)
+                    initAlertWindow(700,400)
                 }
             }.run {
                 launch(intent)
             }
         } else {
-            initAlertWindow(50,10)
+            initAlertWindow(700,400)
         }
     }
 }

@@ -13,13 +13,14 @@ data class ScriptActionInfo(
     @ColumnInfo(name = "script_id") @SerializedName("script_id") val scriptId: Int,
     @ColumnInfo(name = "set_id") @SerializedName("set_id") val setId: Int,
     @ColumnInfo(name = "set_value") @SerializedName("set_value") var setValue: String,
-    @ColumnInfo(name = "pic_id") @SerializedName("pic_id") val picId : String,
+    @ColumnInfo(name = "pic_id") @SerializedName("pic_id") val picId : Int,
+    @ColumnInfo(name = "page_labels") @SerializedName("page_labels") val pageLabels : String,
+    @ColumnInfo(name = "click_label_idx") @SerializedName("click_label_idx") val clickLabelIdx : Int?,
+    //-1为第一个
+    @ColumnInfo(name = "click_label_position") @SerializedName("click_label_idx") val clickLabelPosition : Int = -1,
     @ColumnInfo(name = "action_string") @SerializedName("action_string") var actionString : String,
-    //pic_info
-    @ColumnInfo(name = "pic_name_list") @SerializedName("pic_name_list") val picNameList : String,
+
     //action_string
-    @ColumnInfo(name = "pic_not_found") @SerializedName("pic_not_found") val picNotFoundList : String?,
-    @ColumnInfo(name = "step_list") @SerializedName("step_list") val stepString : String?,
     @ColumnInfo(name = "add_time") @SerializedName("add_time") val addTime : String,
     @ColumnInfo(name = "update_time") @SerializedName("update_time") val updateTime : String,
 
@@ -30,11 +31,9 @@ data class ScriptActionInfo(
     @Ignore
     val command : ArrayList<Command> = arrayListOf()
     @Ignore
-    var picNeedFindList :List<String>? = null
+    var needFindSize : Int = -1
     @Ignore
-    var picNotNeedFindList :List<String>? = null
-    @Ignore
-    var stepList :List<Int>? = null
+    var labelSet : Set<Int> = hashSetOf()
     @Ignore
     var point:Point?=null
 }

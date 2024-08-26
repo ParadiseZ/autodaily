@@ -1,7 +1,6 @@
 package com.smart.autodaily.ui.conponent
 
 import android.graphics.PixelFormat
-import android.graphics.RectF
 import android.os.Build
 import android.view.Gravity
 import android.view.WindowManager
@@ -26,12 +25,12 @@ import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.smart.autodaily.base.MyComposeViewLifecycleOwner
+import com.smart.autodaily.data.entity.Rect
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import splitties.init.appCtx
 import splitties.systemservices.windowManager
 
-var detectRectFList : ArrayList<RectF> = arrayListOf()
 var imgLayout = mutableStateOf<ImageBitmap?>(null)
 val layoutParams = WindowManager.LayoutParams()
 var floatingView : ComposeView ?= null
