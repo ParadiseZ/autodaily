@@ -15,6 +15,8 @@ data class ScriptActionInfo(
     @ColumnInfo(name = "set_value") @SerializedName("set_value") var setValue: String,
     @ColumnInfo(name = "pic_id") @SerializedName("pic_id") val picId : Int,
     @ColumnInfo(name = "page_labels") @SerializedName("page_labels") val pageLabels : String,
+
+    @ColumnInfo(name = "except_labels") @SerializedName("except_labels") val exceptLabels : String?,
     @ColumnInfo(name = "click_label_idx") @SerializedName("click_label_idx") val clickLabelIdx : Int?,
     //-1为第一个
     @ColumnInfo(name = "click_label_position") @SerializedName("click_label_idx") val clickLabelPosition : Int = -1,
@@ -34,6 +36,8 @@ data class ScriptActionInfo(
     var needFindSize : Int = -1
     @Ignore
     var labelSet : Set<Int> = hashSetOf()
+    @Ignore
+    var exceptLabelSet : Set<Int> = hashSetOf()
     @Ignore
     var point:Point?=null
 }

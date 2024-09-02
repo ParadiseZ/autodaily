@@ -105,6 +105,11 @@ object  RunScript {
                         it.labelSet =  it.pageLabels.split(",").map{   labelStr->
                             labelStr.toInt()
                         }.toSet()
+                        it.exceptLabels?.let { exceptLabels->
+                            it.exceptLabelSet = exceptLabels.split(",").map{   labelStr->
+                                labelStr.toInt()
+                            }.toSet()
+                        }
                         it.needFindSize = it.labelSet.size
                     }
                     println("set:${set}")

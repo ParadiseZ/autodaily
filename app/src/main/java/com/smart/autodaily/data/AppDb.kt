@@ -5,10 +5,12 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.smart.autodaily.data.dao.AppInfoDao
 import com.smart.autodaily.data.dao.ScriptActionInfoDao
 import com.smart.autodaily.data.dao.ScriptInfoDao
 import com.smart.autodaily.data.dao.ScriptSetInfoDao
 import com.smart.autodaily.data.dao.UserInfoDao
+import com.smart.autodaily.data.entity.AppInfo
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptSetInfo
@@ -20,7 +22,12 @@ import java.util.Locale
 var appDb: AppDb ?=null
 @Database(version = 1,
     exportSchema = false,
-    entities = [ScriptInfo::class, ScriptSetInfo::class, UserInfo::class, ScriptActionInfo::class],
+    entities = [
+        ScriptInfo::class,
+        ScriptSetInfo::class,
+        UserInfo::class,
+        ScriptActionInfo::class,
+        AppInfo::class],
 /*    autoMigrations = [
         AutoMigration(from = 2, to = 3)
     ]*/
@@ -30,6 +37,7 @@ abstract class AppDb  :  RoomDatabase(){
     abstract val scriptSetInfoDao : ScriptSetInfoDao
     abstract val userInfoDao : UserInfoDao
     abstract val scriptActionInfoDao : ScriptActionInfoDao
+    abstract val appInfoDao : AppInfoDao
     companion object {
         // For Singleton instantiation
 
@@ -82,6 +90,14 @@ abstract class AppDb  :  RoomDatabase(){
                     (0,30,'true','SLIDER_THIRD','随机点击范围','',-1,1,'5','5','1,10',9,'true','false','false')
             """.trimIndent()
             db.execSQL(insertScriptSetGlobalSql)
+
+            @Language("sql")
+            val insertAppInfo = """
+                INSERT INTO app_info(id, type, value, desc) VALUES
+                (1, 'PRIVACY', 0, '隐私政策'),
+                (2, 'TERMS_OF_USE', 0, '使用条款')
+            """.trimIndent()
+            db.execSQL(insertAppInfo)
         }
     }
 }

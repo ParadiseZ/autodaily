@@ -133,9 +133,7 @@ fun HomeScreen(
                                     for(i in 0..5){
                                         if (ShizukuUtil.grant && ShizukuUtil.iUserService != null) {
                                             RunScript.initScriptData(appDb!!.scriptInfoDao.getAllScriptByChecked())
-                                            RunScript.runScript(it){
-                                                (manActivityCtx as MainActivity).requestOverlayPermission()
-                                            }
+                                            RunScript.runScript(it)
                                             break
                                         }
                                         println("wait for ShizukuUtil.grant")

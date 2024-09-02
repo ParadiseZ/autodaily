@@ -42,13 +42,13 @@ class ResetPasswordActivity: ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             // Theme wrappers and other composables may be needed based on your application setup
-            ResetPasswordScreem()
+            ResetPasswordScreen()
         }
     }
 }
 
 @Composable
-fun ResetPasswordScreem() {
+fun ResetPasswordScreen() {
     val resetPwdViewModel : ResetPasswordViewModel = viewModel()
     // You should use proper state-hoisting for real-world scenarios
     var username by remember { mutableStateOf("") }

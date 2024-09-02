@@ -32,8 +32,9 @@ class App : Application(){
             .enableLogger(true)
             //.enableLogger(BuildConfig.DEBUG)
             //.setLogger(EventLogger())
+        AppDb.getInstance(applicationContext)
         GlobalScope.launch(Dispatchers.IO){
-            AppDb.getInstance(applicationContext)
+
             UpdateUtil.checkScriptUpdate()
             ServiceUtil.runUserService(appCtx)
         }
