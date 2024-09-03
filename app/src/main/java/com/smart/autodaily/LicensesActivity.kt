@@ -140,11 +140,9 @@ fun LicenseDialogShow(
                         modifier = Modifier.padding(top = 3.dp),
                         text = privacy,
                         onClick = {
-                            val bundle = Bundle()
-                            bundle.putString("TYPE","PRIVACY")
                             viewModel.context.startActivity(
                                 Intent("android.intent.action.LICENSESHOW").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    .putExtra("showLicense",bundle)
+                                    .putExtra("showLicense","PRIVACY")
                             )
                         }
                     )
@@ -153,11 +151,9 @@ fun LicenseDialogShow(
                         modifier = Modifier.padding(top = 3.dp),
                         text = termsUse,
                         onClick = {
-                            val bundle = Bundle()
-                            bundle.putString("TYPE","TERMS_OF_USE")
                             viewModel.context.startActivity(
                                 Intent("android.intent.action.LICENSESHOW").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    .putExtra("showLicense",bundle)
+                                    .putExtra("showLicense","TERMS_OF_USE")
                             )
                         }
                     )
@@ -178,11 +174,9 @@ fun LicenseDialogShow(
                     ClickableText(
                         text = privacy,
                         onClick = {
-                            val bundle = Bundle()
-                            bundle.putString("TYPE","PRIVACY")
                             viewModel.context.startActivity(
                                 Intent("android.intent.action.LICENSESHOW").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    .putExtra("showLicense",bundle)
+                                    .putExtra("showLicense","PRIVACY")
                             )
                         }
                     )
@@ -198,11 +192,9 @@ fun LicenseDialogShow(
                     })
                     Text(text = "我已阅读并同意")
                     ClickableText(text = termsUse) {
-                        val bundle = Bundle()
-                        bundle.putString("TYPE","TERMS_OF_USE")
                         viewModel.context.startActivity(
                             Intent("android.intent.action.LICENSESHOW").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                .putExtra("showLicense",bundle)
+                                .putExtra("showLicense","TERMS_OF_USE")
                         )
                     }
                 }

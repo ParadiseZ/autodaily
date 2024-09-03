@@ -4,7 +4,9 @@ import android.content.Intent
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -36,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -213,91 +216,110 @@ fun HomeScreen(
         LazyColumn(
             modifier = modifier.padding(it)
         ) {
-            items(localScriptList){
-                scriptInfo ->
-                var checkedFlag by remember { mutableStateOf(scriptInfo.checkedFlag) }
-                RowScriptInfo(
-                    cardOnClick = {
-                        checkedFlag = !checkedFlag
-                        scriptInfo.checkedFlag = checkedFlag
-                        homeViewModel.appViewModel.updateScript(scriptInfo)
-                    },
-                    scriptInfo = scriptInfo,
-                    checkBox = {
-                        Checkbox(checked = checkedFlag, onCheckedChange = {
+            if(localScriptList.isNotEmpty()) {
+                items(localScriptList) { scriptInfo ->
+                    var checkedFlag by remember { mutableStateOf(scriptInfo.checkedFlag) }
+                    RowScriptInfo(
+                        cardOnClick = {
                             checkedFlag = !checkedFlag
                             scriptInfo.checkedFlag = checkedFlag
                             homeViewModel.appViewModel.updateScript(scriptInfo)
-                        })
-                    },
-                    iconInfo ={
-                        var dropdownIsOpen by remember { mutableStateOf(false) }
-                        IconButton(
-                            onClick = {
-                                dropdownIsOpen = !dropdownIsOpen
-                            },
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.MoreVert,
-                                contentDescription = null
-                            )
-                            DropdownMenu(
-                                expanded = dropdownIsOpen,
-                                onDismissRequest = { dropdownIsOpen = false },
-                                // 使用offset控制DropdownMenu的显示位置，基于按钮的位置和大小动态计算
+                        },
+                        scriptInfo = scriptInfo,
+                        checkBox = {
+                            Checkbox(checked = checkedFlag, onCheckedChange = {
+                                checkedFlag = !checkedFlag
+                                scriptInfo.checkedFlag = checkedFlag
+                                homeViewModel.appViewModel.updateScript(scriptInfo)
+                            })
+                        },
+                        iconInfo = {
+                            var dropdownIsOpen by remember { mutableStateOf(false) }
+                            IconButton(
+                                onClick = {
+                                    dropdownIsOpen = !dropdownIsOpen
+                                },
                             ) {
-                                // DropdownMenu的内容
-                                DropdownMenuItem(
-                                    text = {
-                                        Row{
-                                            Icon(imageVector = Icons.Outlined.Settings, contentDescription = null)
-                                            Text(text = "设置")
-                                        }
-                                    },
-                                    onClick = {
-                                        currentScriptInfo = scriptInfo
-                                        nhc.navSingleTopTo(NavigationItem.PERSON.route)
-                                    }
+                                Icon(
+                                    imageVector = Icons.Outlined.MoreVert,
+                                    contentDescription = null
                                 )
-                                DropdownMenuItem(
-                                    text = {
-                                        Row{
-                                            Icon(imageVector = Icons.Outlined.Refresh, contentDescription = null)
-                                            Text(text = "更新")
+                                DropdownMenu(
+                                    expanded = dropdownIsOpen,
+                                    onDismissRequest = { dropdownIsOpen = false },
+                                    // 使用offset控制DropdownMenu的显示位置，基于按钮的位置和大小动态计算
+                                ) {
+                                    // DropdownMenu的内容
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row {
+                                                Icon(
+                                                    imageVector = Icons.Outlined.Settings,
+                                                    contentDescription = null
+                                                )
+                                                Text(text = "设置")
+                                            }
+                                        },
+                                        onClick = {
+                                            currentScriptInfo = scriptInfo
+                                            nhc.navSingleTopTo(NavigationItem.PERSON.route)
                                         }
-                                    },
-                                    onClick = { /* 处理选项被点击的逻辑 */ }
-                                )
-                                DropdownMenuItem(
-                                    text = {
-                                        Row{
-                                            Icon(imageVector = Icons.Outlined.Share, contentDescription = null)
-                                            Text(text = "分享")
+                                    )
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row {
+                                                Icon(
+                                                    imageVector = Icons.Outlined.Refresh,
+                                                    contentDescription = null
+                                                )
+                                                Text(text = "更新")
+                                            }
+                                        },
+                                        onClick = { /* 处理选项被点击的逻辑 */ }
+                                    )
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row {
+                                                Icon(
+                                                    imageVector = Icons.Outlined.Share,
+                                                    contentDescription = null
+                                                )
+                                                Text(text = "分享")
+                                            }
+                                        },
+                                        onClick = { /* 处理选项被点击的逻辑 */ }
+                                    )
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row {
+                                                Icon(
+                                                    imageVector = Icons.Outlined.Delete,
+                                                    contentDescription = null
+                                                )
+                                                Text(text = "删除")
+                                            }
+                                        },
+                                        onClick = {
+                                            currentScriptInfo = scriptInfo
+                                            openDialog.value = !openDialog.value
                                         }
-                                    },
-                                    onClick = { /* 处理选项被点击的逻辑 */ }
-                                )
-                                DropdownMenuItem(
-                                    text = {
-                                        Row{
-                                            Icon(imageVector = Icons.Outlined.Delete, contentDescription = null)
-                                            Text(text = "删除")
-                                        }
-                                    },
-                                    onClick = {
-                                        currentScriptInfo = scriptInfo
-                                        openDialog.value = !openDialog.value
-                                    }
-                                )
+                                    )
 
-                                // 根据需要添加更多选项
+                                    // 根据需要添加更多选项
+                                }
                             }
+                            /*IconButtonCustom(icon = Icons.Outlined.MoreVert)
+                            IconButtonCustom(icon = Icons.Outlined.Info)
+                            IconButtonCustom(icon = Icons.Outlined.PlayArrow)*/
                         }
-                        /*IconButtonCustom(icon = Icons.Outlined.MoreVert)
-                        IconButtonCustom(icon = Icons.Outlined.Info)
-                        IconButtonCustom(icon = Icons.Outlined.PlayArrow)*/
+                    )
+                }
+            }else{
+                item {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+                        Text(text = "嗯......空空如也")
                     }
-                )
+                }
             }
         }
         if (openDialog.value){

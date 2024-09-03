@@ -2,7 +2,10 @@ package com.smart.autodaily.data.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Ignore
 import com.google.gson.annotations.SerializedName
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 @Entity(tableName = "script_info", primaryKeys = ["script_id"])
 data class ScriptInfo(
@@ -23,4 +26,11 @@ data class ScriptInfo(
     @ColumnInfo(name = "update_time") @SerializedName("update_time") var updateTime: String?,  //更新日期
     @ColumnInfo(name = "pic_path") @SerializedName("pic_path") var picPath: String, // 图片路径
     @ColumnInfo(name = "current_run_num") var currentRunNum: Int = 0, // 当前运行次数
-)
+){
+    @Ignore
+    private val _process = MutableStateFlow(0)
+    val process: StateFlow<Int> get() = _process
+    fun setProcess( process: Int){
+        this._process.value = process
+    }
+}

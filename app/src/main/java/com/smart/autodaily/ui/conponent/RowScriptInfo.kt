@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -22,6 +24,7 @@ import com.smart.autodaily.data.entity.ScriptInfo
 fun RowScriptInfo(
     modifier: Modifier = Modifier,
     cardOnClick: (scriptInfo: ScriptInfo) -> Unit,
+    surface: @Composable  () -> Unit = {},
     checkBox: @Composable  () -> Unit = {},
     iconInfo: @Composable  () -> Unit = {},
     scriptInfo : ScriptInfo
@@ -37,7 +40,7 @@ fun RowScriptInfo(
         Row (
             modifier = modifier
                 .fillMaxWidth()
-                .padding(vertical = Ui.SPACE_5),
+                .padding(top = Ui.SPACE_5),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ){
@@ -47,6 +50,7 @@ fun RowScriptInfo(
                 horizontalArrangement = Arrangement.spacedBy( Ui.SPACE_5   ),
             ){
                 Spacer(modifier = Modifier.width( Ui.SPACE_5 ))
+                surface()
                 checkBox()
                 //脚本名称信息等
                 Column{
@@ -73,6 +77,17 @@ fun RowScriptInfo(
                 iconInfo()
             }
             Spacer(modifier = Modifier.width( Ui.SPACE_5 ))
+        }
+        println(scriptInfo)
+        if(scriptInfo.isDownloaded !=1 ){
+            val process by scriptInfo.process.collectAsState()
+            Row (
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = Ui.SPACE_5)
+            ){
+                Text(text = process.toString())
+            }
         }
     }
 }

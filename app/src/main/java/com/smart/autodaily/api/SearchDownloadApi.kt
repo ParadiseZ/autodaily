@@ -4,10 +4,13 @@ import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.data.entity.resp.Response
+import okhttp3.ResponseBody
+import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
+import retrofit2.http.Streaming
 
 interface SearchDownloadApi {
     @GET("/query/getScriptByPage")
@@ -32,4 +35,8 @@ interface SearchDownloadApi {
 
     @GET("/queryByPageTest")
     suspend fun getScript(@Query("userName") userName : String, @Query("page") page : Int, @Query("pageSize") pageSize : Int) : List<ScriptInfo>
+
+    @GET("/query/downloadModel")
+    @Streaming
+    fun downloadModel(@Query("scriptId") scriptId : Int, @Query("fileName")type : String): Call<ResponseBody>
 }

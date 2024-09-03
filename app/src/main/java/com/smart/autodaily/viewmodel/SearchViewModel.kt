@@ -11,11 +11,15 @@ import com.smart.autodaily.api.RemoteApi
 import com.smart.autodaily.base.BaseViewModel
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.dataresource.ScriptNetDataSource
+import com.smart.autodaily.data.entity.DownloadState
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.data.entity.resp.Response
+import com.smart.autodaily.utils.DownloadManager
 import com.smart.autodaily.utils.PageUtil
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +27,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import splitties.init.appCtx
+import java.io.File
 import java.util.Date
 
 class SearchViewModel(application: Application)   : BaseViewModel(application = application)  {
@@ -82,17 +88,28 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
     /*
     * 下载脚本信息，以及脚本设置信息。？img信息、action信息
     * */
+    @OptIn(DelicateCoroutinesApi::class)
     fun downScriptByScriptId(scriptInfo : ScriptInfo) {
-        this.viewModelScope.launch {
-            withContext(Dispatchers.IO){
-                downByScriptId(scriptInfo)
+        GlobalScope.launch(Dispatchers.IO) {
+            //downByScriptId(scriptInfo)
+            DownloadManager.download(scriptInfo.scriptId, File(appCtx.getExternalFilesDir(""), "model.ncnn.param"),"param").collect{
+                when (it) {
+                    is DownloadState.InProgress -> {
+                        scriptInfo.setProcess(it.progress)
+                    }
+                    is DownloadState.Success -> {
+                    }
+                    is DownloadState.Error -> {
+
+                    }
+                }
             }
         }
     }
 
     private suspend fun downByScriptId(scriptInfo: ScriptInfo) {
         val result = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptInfo.scriptId)
-        val actionInfo = RemoteApi.searchDownRetrofit.downloadActionInfoByScriptId(scriptInfo.scriptId)
+        //val actionInfo = RemoteApi.searchDownRetrofit.downloadActionInfoByScriptId(scriptInfo.scriptId)
         var globalScriptSetResult = Response<List<ScriptSetInfo>>()
         val localScriptSetGlobal = appDb?.scriptSetInfoDao?.countScriptSetByScriptId(0)
         if (localScriptSetGlobal == 0) {
@@ -121,9 +138,9 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
             }
             //picInfo 图片信息
             //actionInfo 动作信息
-            actionInfo.data?.let {
+            /*actionInfo.data?.let {
                 appDb?.scriptActionInfoDao?.insert(it)
-            }
+            }*/
         }
     }
 }
