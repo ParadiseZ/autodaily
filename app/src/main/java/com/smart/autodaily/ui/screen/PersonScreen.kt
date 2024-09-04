@@ -1,5 +1,6 @@
 package com.smart.autodaily.ui.screen
 
+import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,14 +16,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.Create
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -48,12 +48,13 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.smart.autodaily.constant.BorderDirection
+import com.smart.autodaily.constant.Ui
+import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.ui.conponent.SingleBorderBox
 import com.smart.autodaily.utils.ToastUtil
 import com.smart.autodaily.viewmodel.PersonViewModel
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PersonScreen(modifier: Modifier,
     nhc: NavHostController,
@@ -63,7 +64,11 @@ fun PersonScreen(modifier: Modifier,
     val user by  personViewModel.appViewModel.user.collectAsState()
     //是否开启弹窗
     val openDialog = remember { mutableStateOf(false) }
-    //激活码
+    //是否显示好友邀请码悬浮窗
+    val inviteDialog = remember {
+        mutableStateOf(false)
+    }
+    //激活码、邀请码
     val keyInfo = remember { mutableStateOf("") }
     //是否开启确认按钮
     var keyConfirmEnable by remember { mutableStateOf(true) }
@@ -109,8 +114,6 @@ fun PersonScreen(modifier: Modifier,
                 }
             }
         }
-
-
         Spacer(modifier = Modifier.height(8.dp))
         
         Row (
@@ -139,33 +142,33 @@ fun PersonScreen(modifier: Modifier,
             PersonColumnFirst("到期", user?.expirationTime?:"--")
         }
 
-        PersonRowFirst(textLabel = "兑换码", imageVector = Icons.Default.ShoppingCart){
-            if (user == null){
-                personViewModel.context.startActivity(
-                    Intent("android.intent.action.LOGIN").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                )
-            }else{
-                openDialog.value = !openDialog.value
+        PersonRowFirst(textLabel = "兑换码", imageVector = Icons.Outlined.ShoppingCart){
+            if(!gotoLogin(personViewModel.context, user)){
+                openDialog.value = true
             }
         }
 
-        PersonRowFirst(textLabel = "输入好友邀请码", imageVector = Icons.Default.AccountCircle){
+        PersonRowFirst(textLabel = "输入好友邀请码", imageVector = Icons.Outlined.AccountCircle){
+            if(!gotoLogin(personViewModel.context, user)){
+                inviteDialog.value = true
+            }
+        }
+        PersonRowFirst(textLabel = "分享", imageVector = Icons.Outlined.Share){
+            gotoLogin(personViewModel.context, user)
+        }
+        PersonRowFirst(textLabel = "检查更新", imageVector = Icons.Outlined.Refresh){
 
         }
-        PersonRowFirst(textLabel = "分享", imageVector = Icons.Default.Share){
-
+        PersonRowFirst(textLabel = "反馈", imageVector = Icons.Outlined.Create){
+            gotoLogin(personViewModel.context, user)
         }
-        PersonRowFirst(textLabel = "检查更新", imageVector = Icons.Default.Refresh){
-
-        }
-        PersonRowFirst(textLabel = "反馈", imageVector = Icons.Default.Create){
-
-        }
-        PersonRowFirst(textLabel = "关于", imageVector = Icons.Default.Info){
+        PersonRowFirst(textLabel = "关于", imageVector = Icons.Outlined.Info){
 
         }
     }
     if (openDialog.value){
+        keyInfo.value = ""
+        keyConfirmEnable = true
         AlertDialog(
             //properties = DialogProperties(),
             onDismissRequest = {
@@ -180,7 +183,6 @@ fun PersonScreen(modifier: Modifier,
                             val result = personViewModel.inputKey(user!!.userId,keyInfo.value)
                             if (result.code == 200){
                                 openDialog.value = false
-                                keyConfirmEnable = true
                             }
                             result.message?.let {
                                 ToastUtil.show(personViewModel.context,
@@ -208,6 +210,61 @@ fun PersonScreen(modifier: Modifier,
             },
         )
     }
+
+    if (inviteDialog.value){
+        keyInfo.value = ""
+        keyConfirmEnable = true
+        AlertDialog(
+            //properties = DialogProperties(),
+            onDismissRequest = {
+                inviteDialog.value = false
+            },
+            confirmButton = {
+                OutlinedButton(
+                    enabled = keyConfirmEnable,
+                    onClick = {
+                        keyConfirmEnable = false
+                        personViewModel.viewModelScope.launch {
+                            val result = personViewModel.inputInvitorCode(user!!.userId,keyInfo.value)
+                            if (result.code == 200){
+                                inviteDialog.value = false
+                            }
+                            result.message?.let {
+                                ToastUtil.show(personViewModel.context,
+                                    it
+                                )
+                            }
+                            keyConfirmEnable = true
+                        }
+                    }
+                ){
+                    Text(text = "确定")
+                }
+            },
+            title = {
+                Text(
+                    text = "输入好友邀请码",
+                    fontWeight = FontWeight.W700,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            text = {
+                TextField(value = keyInfo.value, onValueChange ={
+                    keyInfo.value = it
+                })
+            },
+        )
+    }
+}
+
+fun gotoLogin(context: Context, user: UserInfo?) : Boolean {
+    if (user==null) {
+        context.startActivity(
+            Intent("android.intent.action.LOGIN").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+        return true
+    }
+    return false
 }
 
 @Composable
@@ -234,7 +291,7 @@ fun TextCustomFirst(
 fun PersonRowFirst(
     textLabel: String,
     imageVector: ImageVector,
-    onClick : ()->Unit
+    onClick :  ()->Unit
 ){
     Spacer(modifier = Modifier.height(8.dp))
     Row (
@@ -251,9 +308,11 @@ fun PersonRowFirst(
             verticalAlignment = Alignment.CenterVertically
         ){
             Icon(imageVector = imageVector, contentDescription = null)
+            Spacer(modifier = Modifier.width(Ui.SPACE_8))
             Text(text = textLabel)
         }
 
-        Text(text = "＞")
+        Text(text = ">")
     }
 }
+

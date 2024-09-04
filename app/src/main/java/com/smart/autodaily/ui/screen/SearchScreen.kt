@@ -16,8 +16,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,19 +58,22 @@ fun SearchScreen(
             collectAsLazyPagingItems = netSearScriptList,
             modifier =modifier.padding(it),
             listContent ={scriptInfo ->
-                var isDownloaded by remember { mutableIntStateOf(scriptInfo.isDownloaded) }
+                val isDownloaded = remember { mutableIntStateOf(scriptInfo.isDownloaded) }
+                val processShow = remember {
+                    mutableStateOf(false)
+                }
                 RowScriptInfo(
                     cardOnClick = {},
                     scriptInfo = scriptInfo,
                     surface = {
                       Box (
                           modifier = Modifier
-                              .size(50.dp)
+                              .size(48.dp)
                               .clip(RoundedCornerShape(50))
                               .background(Color(color[Random.nextInt(0, color.size)])),
                           contentAlignment = Alignment.Center
                       ) {
-                          Text(text = scriptInfo.scriptName.substring(0,1), color = Color.White)
+                          Text(text = scriptInfo.scriptName.substring(0,1))
                       }
                     },
                     iconInfo ={
@@ -83,9 +86,14 @@ fun SearchScreen(
                                 )
                                 .size(Ui.ICON_SIZE_40),
                             content ={
-                                if (isDownloaded == 1){
+                                if (isDownloaded.intValue == 1){
                                     Icon(
                                         painter = painterResource(id = R.drawable.baseline_download_done_24),
+                                        contentDescription = null
+                                    )
+                                }else if(isDownloaded.intValue == 2){
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.baseline_downloading_24),
                                         contentDescription = null
                                     )
                                 }else{
@@ -97,13 +105,17 @@ fun SearchScreen(
 
                             },
                             onClick = {
-                                if (scriptInfo.isDownloaded != 1){
+                                if (scriptInfo.isDownloaded == 0){
                                     searchViewModel.downScriptByScriptId( scriptInfo )
-                                    isDownloaded = 1
+                                    //下载中
+                                    isDownloaded.intValue=2
+                                    processShow.value =true
                                 }
                             }
                         )
-                    }
+                    },
+                    processShow = processShow,
+                    downloaded = isDownloaded
                 )
             }
         )

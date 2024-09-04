@@ -1,11 +1,10 @@
 package com.smart.autodaily.data.entity
 
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Ignore
 import com.google.gson.annotations.SerializedName
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 
 @Entity(tableName = "script_info", primaryKeys = ["script_id"])
 data class ScriptInfo(
@@ -28,9 +27,5 @@ data class ScriptInfo(
     @ColumnInfo(name = "current_run_num") var currentRunNum: Int = 0, // 当前运行次数
 ){
     @Ignore
-    private val _process = MutableStateFlow(0)
-    val process: StateFlow<Int> get() = _process
-    fun setProcess( process: Int){
-        this._process.value = process
-    }
+    var process = mutableIntStateOf(0)
 }

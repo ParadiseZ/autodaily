@@ -1,6 +1,7 @@
 package com.smart.autodaily.viewmodel
 
 import android.app.Application
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -9,6 +10,8 @@ import androidx.paging.cachedIn
 import androidx.paging.map
 import com.smart.autodaily.api.RemoteApi
 import com.smart.autodaily.base.BaseViewModel
+import com.smart.autodaily.constant.MODEL_BIN
+import com.smart.autodaily.constant.MODEL_PARAM
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.dataresource.ScriptNetDataSource
 import com.smart.autodaily.data.entity.DownloadState
@@ -17,9 +20,8 @@ import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.utils.DownloadManager
 import com.smart.autodaily.utils.PageUtil
-import kotlinx.coroutines.DelicateCoroutinesApi
+import com.smart.autodaily.utils.deleteFile
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -74,6 +76,7 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
                 if (scriptInfo.scriptId in localList.map { it.scriptId }){
                     scriptInfo.isDownloaded = 1
                 }
+                scriptInfo.process = mutableIntStateOf(0)
                 scriptInfo
             }
         }
@@ -88,20 +91,41 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
     /*
     * 下载脚本信息，以及脚本设置信息。？img信息、action信息
     * */
-    @OptIn(DelicateCoroutinesApi::class)
     fun downScriptByScriptId(scriptInfo : ScriptInfo) {
-        GlobalScope.launch(Dispatchers.IO) {
-            //downByScriptId(scriptInfo)
-            DownloadManager.download(scriptInfo.scriptId, File(appCtx.getExternalFilesDir(""), "model.ncnn.param"),"param").collect{
-                when (it) {
-                    is DownloadState.InProgress -> {
-                        scriptInfo.setProcess(it.progress)
-                    }
-                    is DownloadState.Success -> {
-                    }
-                    is DownloadState.Error -> {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO){
+                downloadModel(scriptInfo)
+                downByScriptId(scriptInfo)
+            }
+        }
+    }
 
-                    }
+    private suspend fun downloadModel(scriptInfo : ScriptInfo){
+        val externalParamFile = File(appCtx.getExternalFilesDir("") , MODEL_PARAM)
+        deleteFile(externalParamFile)
+        DownloadManager.download(scriptInfo.scriptId, externalParamFile,"param").collect{
+            when (it) {
+                is DownloadState.InProgress -> {
+                }
+                is DownloadState.Success -> {
+                }
+                is DownloadState.Error -> {
+                    deleteFile(externalParamFile)
+                    return@collect
+                }
+            }
+        }
+        val externalBinFile = File(appCtx.getExternalFilesDir("") , MODEL_BIN)
+        deleteFile(externalBinFile)
+        DownloadManager.download(scriptInfo.scriptId, externalBinFile,"bin").collect{
+            when (it) {
+                is DownloadState.InProgress -> {
+                    scriptInfo.process.intValue = it.progress
+                }
+                is DownloadState.Success -> {
+                }
+                is DownloadState.Error -> {
+                    deleteFile(externalBinFile)
                 }
             }
         }
@@ -141,6 +165,7 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
             /*actionInfo.data?.let {
                 appDb?.scriptActionInfoDao?.insert(it)
             }*/
+            scriptInfo.process.intValue = -1
         }
     }
 }

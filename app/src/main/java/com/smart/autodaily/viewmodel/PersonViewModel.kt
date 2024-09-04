@@ -24,6 +24,19 @@ class PersonViewModel(app : Application)  : BaseViewModel(application = app) {
         return res
     }
 
+    suspend fun inputInvitorCode(userId : Int, key : String) :Response<UserInfo>{
+        val res = ExceptionUtil.tryCatch(
+            tryFun = {
+                RemoteApi.userKeyRetrofit.inputInvitorCode(userId,key)
+            },
+            exceptionMsg ="保存失败，请稍后重试！"
+        )
+/*        if (res.code==200){
+            res.data?.let { appViewModel.updateUser(it) }
+        }*/
+        return res
+    }
+
     fun logout(userInfo : UserInfo){
         viewModelScope.launch {
             appDb!!.userInfoDao.delete(userInfo)

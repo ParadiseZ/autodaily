@@ -1,5 +1,6 @@
 package com.smart.autodaily.ui.conponent
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,16 +11,24 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.smart.autodaily.constant.BLUE_01
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 fun RowScriptInfo(
     modifier: Modifier = Modifier,
@@ -27,13 +36,17 @@ fun RowScriptInfo(
     surface: @Composable  () -> Unit = {},
     checkBox: @Composable  () -> Unit = {},
     iconInfo: @Composable  () -> Unit = {},
-    scriptInfo : ScriptInfo
+    scriptInfo : ScriptInfo,
+    processShow : MutableState<Boolean> = mutableStateOf(false),
+    downloaded : MutableIntState = mutableIntStateOf(0)
 ) {
+    val process by remember{
+        scriptInfo.process
+    }
     Spacer(modifier = Modifier.height(8.dp))
     Card(
         modifier = modifier
             .clickable {
-                //onItemClicked(item)
                 cardOnClick(scriptInfo)
             }
     ){
@@ -78,16 +91,23 @@ fun RowScriptInfo(
             }
             Spacer(modifier = Modifier.width( Ui.SPACE_5 ))
         }
-        println(scriptInfo)
-        if(scriptInfo.isDownloaded !=1 ){
-            val process by scriptInfo.process.collectAsState()
+        Spacer(modifier = modifier.height(Ui.SPACE_5))
+        if (processShow.value && process>0 && process!=100){
             Row (
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = Ui.SPACE_5)
+                    .padding(bottom = Ui.SPACE_5),
+                horizontalArrangement = Arrangement.Center
             ){
-                Text(text = process.toString())
+                LinearProgressIndicator(
+                    progress = { process.toFloat()/100 },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(BLUE_01),
+                )
             }
+        }
+        if ( process == -1 ){
+            downloaded.intValue = 1
         }
     }
 }
