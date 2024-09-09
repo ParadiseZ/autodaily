@@ -8,14 +8,18 @@ import android.os.IBinder
 import com.smart.autodaily.BuildConfig
 import com.smart.autodaily.IUserService
 import com.smart.autodaily.service.UserService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import rikka.shizuku.Shizuku
 import rikka.shizuku.Shizuku.UserServiceArgs
-import splitties.init.appCtx
 
 
 object ShizukuUtil {
     var grant : Boolean = false
     var iUserService : IUserService?=null
+    val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     fun initShizuku(){
         //权限
@@ -93,7 +97,10 @@ object ShizukuUtil {
         override fun onServiceConnected(componentName: ComponentName, iBinder: IBinder) {
             if (iBinder.pingBinder()) {
                 iUserService = IUserService.Stub.asInterface(iBinder)
-                appCtx.toastOnUi("shizuku连接成功！")
+                scope.launch {
+                    ServiceUtil.serviceBoundChannel.send(Unit)
+                }
+                //appCtx.toastOnUi("shizuku连接成功！")
             }
         }
         override fun onServiceDisconnected(componentName: ComponentName) {

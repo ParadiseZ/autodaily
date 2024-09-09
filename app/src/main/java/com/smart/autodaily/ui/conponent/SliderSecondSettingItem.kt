@@ -18,10 +18,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.smart.autodaily.constant.SettingType
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptSetInfo
-import com.smart.autodaily.data.entity.SettingType
-
 @Composable
 fun SliderSecondSettingItem(
     setting: ScriptSetInfo,

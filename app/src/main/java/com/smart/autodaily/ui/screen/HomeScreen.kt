@@ -1,5 +1,6 @@
 package com.smart.autodaily.ui.screen
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.provider.Settings
 import android.widget.Toast
@@ -46,15 +47,13 @@ import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.smart.autodaily.MainActivity
 import com.smart.autodaily.constant.AppBarTitle
 import com.smart.autodaily.constant.NavigationItem
 import com.smart.autodaily.constant.Ui
-import com.smart.autodaily.data.appDb
+import com.smart.autodaily.constant.WORK_TYPE01
+import com.smart.autodaily.constant.WORK_TYPE02
+import com.smart.autodaily.constant.WORK_TYPE03
 import com.smart.autodaily.data.entity.ScriptInfo
-import com.smart.autodaily.data.entity.WORK_TYPE01
-import com.smart.autodaily.data.entity.WORK_TYPE02
-import com.smart.autodaily.data.entity.WORK_TYPE03
 import com.smart.autodaily.handler.RunScript
 import com.smart.autodaily.ui.conponent.RowScriptInfo
 import com.smart.autodaily.ui.conponent.navSingleTopTo
@@ -62,16 +61,16 @@ import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.ToastUtil
-import com.smart.autodaily.utils.toastOnUi
 import com.smart.autodaily.viewmodel.HomeViewModel
 import com.smart.autodaily.viewmodel.mediaProjectionServiceStartFlag
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import splitties.init.appCtx
 
 @OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("StateFlowValueCalledInComposition")
+
 @Composable
 fun HomeScreen(
     modifier: Modifier,
@@ -89,10 +88,9 @@ fun HomeScreen(
     //showActiveDialogFlag
     val showActiveDialogFlag by homeViewModel.showActiveDialogFlag.collectAsState()
     var currentScriptInfo : ScriptInfo? = null
-
     val manActivityCtx = LocalContext.current
     //运行状态
-    var runStatus by remember { mutableStateOf( false) }
+    val runStatus by homeViewModel.appViewModel.isRunning.collectAsState(initial = 0)
     Scaffold (
         modifier = modifier,
         topBar = {
@@ -105,18 +103,19 @@ fun HomeScreen(
         //脚本页面运行按钮
         floatingActionButtonPosition = FabPosition.End,
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    /*if(Build.VERSION.SDK_INT <=  Build.VERSION_CODES.S_V2){
-                        accessibilityAndMediaProjectionRequest()
-                    }
-                    if (Build.VERSION.SDK_INT >=  Build.VERSION_CODES.TIRAMISU){
-                        ServiceUtil.runUserService(homeViewModel.context)
-                        if(ShizukuUtil.grant && ShizukuUtil.iUserService !=null){
-                            homeViewModel.viewModelScope.launch {
-                                RunScript.initScriptData(appDb!!.scriptInfoDao.getAllScriptByChecked())
-                                RunScript.runScript()
-                                *//*for (i in 1..3){
+            if (runStatus !=2 ){
+                FloatingActionButton(
+                    onClick = {
+                        /*if(Build.VERSION.SDK_INT <=  Build.VERSION_CODES.S_V2){
+                            accessibilityAndMediaProjectionRequest()
+                        }
+                        if (Build.VERSION.SDK_INT >=  Build.VERSION_CODES.TIRAMISU){
+                            ServiceUtil.runUserService(homeViewModel.context)
+                            if(ShizukuUtil.grant && ShizukuUtil.iUserService !=null){
+                                homeViewModel.viewModelScope.launch {
+                                    RunScript.initScriptData(appDb!!.scriptInfoDao.getAllScriptByChecked())
+                                    RunScript.runScript()
+                                    *//*for (i in 1..3){
                                     //RunScript.runScript(i)
                                     RunScript.runScript(1)
                                     delay(2000)
@@ -124,93 +123,77 @@ fun HomeScreen(
                             }
                         }
                     }*/
-                    println("runStatus:$runStatus")
-                    println(RunScript.scriptRunCoroutineScope.isActive)
-                    homeViewModel.viewModelScope.launch {
-                        RunScript.initGlobalSet()
-                        val set =  RunScript.globalSetMap.value[8]?.let {
-                            when(it.setValue) {
-                                WORK_TYPE01 -> {}
-                                WORK_TYPE02 -> {
-                                    ServiceUtil.runUserService(homeViewModel.context)
-                                    for(i in 0..5){
-                                        if (ShizukuUtil.grant && ShizukuUtil.iUserService != null) {
-                                            RunScript.initScriptData(appDb!!.scriptInfoDao.getAllScriptByChecked())
-                                            RunScript.runScript(it)
-                                            break
-                                        }
-                                        println("wait for ShizukuUtil.grant")
-                                        delay(1000)
-                                    }
-                                    delay(3000)
-                                    (manActivityCtx as MainActivity).requestOverlayPermission()
-                                }
-                                WORK_TYPE03 -> {}
+                        //println(RunScript.scriptRunCoroutineScope[Job])
+                        homeViewModel.appViewModel.appScope.launch {
+                            if (runStatus==1){
+                                homeViewModel.appViewModel.stopRunScript()
+                            }else if(runStatus == 0){
+                                homeViewModel.appViewModel.runScript()
                             }
-                        } ?: {
-                            homeViewModel.context.toastOnUi("请先设置工作模式！")
                         }
-                    }
-                    /*if (runStatus){
-                        RunScript.stopRunScript()
-                    }else{
 
-                        runStatus = true
-                    }*/
+                        /*if (runStatus){
+                            RunScript.stopRunScript()
+                        }else{
 
-
-
-
-
-
-                    //}
-
-                    /*val clickResult =homeViewModel.runButtonClick()
-                        when(clickResult){
-                            RunButtonClickResult.NOT_LOGIN->{
-                                startActivity(homeViewModel.context,
-                                    Intent(homeViewModel.context, LoginActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                                    null
-                                )
-                            }
-                            RunButtonClickResult.LOGIN_SUCCESS->{
-                                val clickResult = homeViewModel.runScriptCheck()
-                                if (clickResult.code!=200){
-                                    ToastUtil.show(homeViewModel.context, clickResult.message.toString())
-                                }else {
-                                    if(!ServiceUtil.isAccessibilityServiceEnabled(homeViewModel.context)){
-                                        ToastUtil.show(homeViewModel.context, "请先开启无障碍服务!")
-                                        startActivity(
-                                            homeViewModel.context,
-                                            Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                                            null
-                                        )
-                                    }
-                                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
-                                        homeViewModel.appViewModel.runScript()
-                                    }else{
-                                        if(ScreenCaptureUtil.mps !=null){
-                                            homeViewModel.appViewModel.runScript()
-                                        } else {//未开启则引导开启
-                                            (ScreenCaptureUtil.mediaProjectionDataMap["startActivityForResultLauncher"] as ActivityResultLauncher<Intent>).launch(
-                                                ScreenCaptureUtil.mediaProjectionDataMap["mediaProjectionIntent"] as Intent
-                                            )
-                                            //ScreenCaptureUtil.mediaProjectionDataMap["resolver"]=homeViewModel.context.contentResolver//用来测试图片保存
-                                        }
-                                    }
-                                }
-                            }
+                            runStatus = true
                         }*/
 
 
-                }
-            ) {
-                if (runStatus){
-                    Icon(Icons.Filled.Close, contentDescription = "停止运行")
-                }else{
-                    Icon(Icons.Filled.PlayArrow, contentDescription = "开始运行")
+
+
+
+
+                        //}
+
+                        /*val clickResult =homeViewModel.runButtonClick()
+                            when(clickResult){
+                                RunButtonClickResult.NOT_LOGIN->{
+                                    startActivity(homeViewModel.context,
+                                        Intent(homeViewModel.context, LoginActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                                        null
+                                    )
+                                }
+                                RunButtonClickResult.LOGIN_SUCCESS->{
+                                    val clickResult = homeViewModel.runScriptCheck()
+                                    if (clickResult.code!=200){
+                                        ToastUtil.show(homeViewModel.context, clickResult.message.toString())
+                                    }else {
+                                        if(!ServiceUtil.isAccessibilityServiceEnabled(homeViewModel.context)){
+                                            ToastUtil.show(homeViewModel.context, "请先开启无障碍服务!")
+                                            startActivity(
+                                                homeViewModel.context,
+                                                Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                                                null
+                                            )
+                                        }
+                                        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
+                                            homeViewModel.appViewModel.runScript()
+                                        }else{
+                                            if(ScreenCaptureUtil.mps !=null){
+                                                homeViewModel.appViewModel.runScript()
+                                            } else {//未开启则引导开启
+                                                (ScreenCaptureUtil.mediaProjectionDataMap["startActivityForResultLauncher"] as ActivityResultLauncher<Intent>).launch(
+                                                    ScreenCaptureUtil.mediaProjectionDataMap["mediaProjectionIntent"] as Intent
+                                                )
+                                                //ScreenCaptureUtil.mediaProjectionDataMap["resolver"]=homeViewModel.context.contentResolver//用来测试图片保存
+                                            }
+                                        }
+                                    }
+                                }
+                            }*/
+
+
+                    }
+                ) {
+                    if (runStatus == 1){
+                        Icon(Icons.Filled.Close, contentDescription = "停止运行")
+                    }else if (runStatus ==0 ){
+                        Icon(Icons.Filled.PlayArrow, contentDescription = "开始运行")
+                    }
                 }
             }
+
         },
     ){
         LazyColumn(

@@ -5,10 +5,13 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
 import android.content.Context.ACCESSIBILITY_SERVICE
 import android.view.accessibility.AccessibilityManager
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import rikka.shizuku.Shizuku
 
 object ServiceUtil {
+    //服务连接时发送、
+    val serviceBoundChannel = Channel<Unit>(Channel.UNLIMITED)
     fun isAccessibilityServiceEnabled(context: Context): Boolean {
         val am = context.getSystemService(ACCESSIBILITY_SERVICE) as AccessibilityManager
         val accessibilityServices = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
@@ -17,6 +20,9 @@ object ServiceUtil {
         }
     }
 
+    suspend fun waitShizukuService(){
+        serviceBoundChannel.receive()
+    }
     suspend fun runUserService(context: Context){
         try {
             ShizukuUtil.requestShizukuPermission(context)
@@ -27,6 +33,8 @@ object ServiceUtil {
                             ShizukuUtil.userServiceArgs,
                             ShizukuUtil.serviceConnection
                         )
+                    }else{
+                        serviceBoundChannel.send(Unit)
                     }
                     return
                 }

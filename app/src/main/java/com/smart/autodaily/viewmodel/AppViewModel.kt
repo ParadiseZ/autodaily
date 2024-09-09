@@ -4,19 +4,31 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.smart.autodaily.api.RemoteApi
+import com.smart.autodaily.constant.WORK_TYPE01
+import com.smart.autodaily.constant.WORK_TYPE02
+import com.smart.autodaily.constant.WORK_TYPE03
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.data.entity.request.Request
 import com.smart.autodaily.handler.RunScript
+import com.smart.autodaily.utils.ServiceUtil
+import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.ToastUtil
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import splitties.init.appCtx
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AppViewModel (application: Application) : AndroidViewModel(application){
     /*private val _localScriptList = MutableStateFlow<PagingData<ScriptInfo>>(PagingData.empty())
     val localScriptList: StateFlow<PagingData<ScriptInfo>> = _localScriptList*/
@@ -30,6 +42,12 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     private val _user  = MutableStateFlow<UserInfo?>(null)
     val user : StateFlow<UserInfo?> get() = _user
 
+    private val _isRunning = MutableStateFlow(0)
+    val isRunning : StateFlow<Int> get() = _isRunning
+
+    private val _supervisorJob = SupervisorJob()
+    val appScope = CoroutineScope(Dispatchers.IO + _supervisorJob)
+
     //加载用户
     init {
         viewModelScope.launch {
@@ -37,6 +55,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
             loadScriptAll()
         }
     }
+
 
     private fun updateAndLoadUserInfo(){
         viewModelScope.launch {
@@ -91,11 +110,39 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
         }
     }
 
-    fun runScript(){
-        //RunScript.runScript()
+    suspend fun runScript(){
+        RunScript.globalSetMap.value[8]?.let {
+            when(it.setValue) {
+                WORK_TYPE01 -> {
+                    _isRunning.value = 1
+                }
+                WORK_TYPE02 -> {
+                    _isRunning.value = 2//启动服务
+                    RunScript.initScriptData(appDb!!.scriptInfoDao.getAllScriptByChecked())
+                    ServiceUtil.runUserService(appCtx)
+                    ServiceUtil.waitShizukuService()
+                    if(ShizukuUtil.grant && ShizukuUtil.iUserService != null){
+                        _isRunning.value = 1//运行中
+                        RunScript.runScript(it)
+                    }
+                    //(manActivityCtx as MainActivity).requestOverlayPermission()
+                }
+                WORK_TYPE03 -> {
+                    _isRunning.value = 1
+                }
+            }
+        }
     }
 
     fun stopRunScript(){
-        RunScript.stopRunScript()
+        _isRunning.value = 0
+        appScope.coroutineContext.cancelChildren()
+        _supervisorJob.cancelChildren()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        appScope.cancel()
+        _supervisorJob.cancel()
     }
 }

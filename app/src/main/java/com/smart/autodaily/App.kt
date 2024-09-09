@@ -10,6 +10,7 @@ import com.jeremyliao.liveeventbus.LiveEventBus
 import com.smart.autodaily.config.AppConfig.channelIdDownload
 import com.smart.autodaily.data.AppDb
 import com.smart.autodaily.handler.ExceptionHandler
+import com.smart.autodaily.handler.RunScript
 import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.UpdateUtil
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -34,7 +35,8 @@ class App : Application(){
             //.setLogger(EventLogger())
         AppDb.getInstance(applicationContext)
         GlobalScope.launch(Dispatchers.IO){
-
+            //初始化全局设置
+            RunScript.initGlobalSet()
             UpdateUtil.checkScriptUpdate()
             ServiceUtil.runUserService(appCtx)
         }

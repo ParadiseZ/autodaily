@@ -39,8 +39,8 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.smart.autodaily.constant.AppBarTitle
 import com.smart.autodaily.constant.PermissionSettingText
 import com.smart.autodaily.constant.SettingTitle
+import com.smart.autodaily.constant.SettingType
 import com.smart.autodaily.constant.Ui
-import com.smart.autodaily.data.entity.SettingType
 import com.smart.autodaily.service.MediaProjectionService
 import com.smart.autodaily.ui.conponent.CheckBoxSettingItem
 import com.smart.autodaily.ui.conponent.RadioButtonSettingItem

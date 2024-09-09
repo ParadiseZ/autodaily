@@ -3,6 +3,7 @@ package com.smart.autodaily.data.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import com.google.gson.annotations.SerializedName
+import com.smart.autodaily.constant.SettingType
 
 @Entity(tableName = "script_set_info", primaryKeys = ["script_id", "set_id"])
 data class ScriptSetInfo(
@@ -25,11 +26,3 @@ data class ScriptSetInfo(
     @ColumnInfo(name = "update_time") @SerializedName("update_time") var updateTime: String?
 )
 
-
-enum class SettingType {
-    SWITCH, SLIDER, TEXT_FIELD, CHECK_BOX, RADIO_BUTTON, SLIDER_SECOND, TITLE, SLIDER_THIRD
-}
-
-const val WORK_TYPE01 = "无障碍+录屏(安卓7-12)"
-const val WORK_TYPE02 = "shizuku"
-const val WORK_TYPE03 = "root"

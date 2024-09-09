@@ -9,6 +9,9 @@ import com.smart.autodaily.command.START
 import com.smart.autodaily.command.Skip
 import com.smart.autodaily.command.Sleep
 import com.smart.autodaily.constant.ActionString
+import com.smart.autodaily.constant.WORK_TYPE01
+import com.smart.autodaily.constant.WORK_TYPE02
+import com.smart.autodaily.constant.WORK_TYPE03
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.DetectResult
 import com.smart.autodaily.data.entity.Point
@@ -16,21 +19,13 @@ import com.smart.autodaily.data.entity.Rect
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptSetInfo
-import com.smart.autodaily.data.entity.WORK_TYPE01
-import com.smart.autodaily.data.entity.WORK_TYPE02
-import com.smart.autodaily.data.entity.WORK_TYPE03
 import com.smart.autodaily.utils.ModelUtil
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.debug
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import splitties.init.appCtx
 import java.util.Date
 
@@ -47,7 +42,6 @@ object  RunScript {
     //var scriptSetList : List<ScriptInfo> = emptyList()
     //val globalSetList =  MutableStateFlow<List<ScriptSetInfo>>(emptyList())
     //var scriptRunCoroutineScope = CoroutineScope(Dispatchers.IO)
-    var scriptRunCoroutineScope = CoroutineScope(Dispatchers.IO)
 
     fun initGlobalSet(){
         //map
@@ -58,22 +52,16 @@ object  RunScript {
         }
     }
 
-    fun runScript(scriptSetInfo: ScriptSetInfo) {
-        //initOrb()
-        //已选脚本
-        scriptRunCoroutineScope.launch {
-            when(scriptSetInfo.setValue){
-                WORK_TYPE01 ->{}
-                WORK_TYPE02 -> {
-                    runScriptByAdb()
-                }
-                WORK_TYPE03 -> {}
+    suspend fun runScript(scriptSetInfo: ScriptSetInfo) {
+        when(scriptSetInfo.setValue){
+            WORK_TYPE01 ->{}
+            WORK_TYPE02 -> {
+                //runScriptByAdb()
+                println("runScriptByAdb()")
+                delay(5000)
             }
-            /*if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
-                runScriptByAdb()
-            }*/
+            WORK_TYPE03 -> {}
         }
-
     }
 
     //shell运行
@@ -291,9 +279,6 @@ object  RunScript {
     fun initScriptData(scriptList : List<ScriptInfo>){
         this._scriptCheckedList.value = scriptList
     }
-    fun stopRunScript(){
-        scriptRunCoroutineScope.cancel()
-    }
 
 /*    fun updateScript(scriptInfo: ScriptInfo){
         checkAndRestartScopeState()
@@ -307,13 +292,4 @@ object  RunScript {
             appDb!!.scriptSetInfoDao.update(scriptSetInfo)
         }
     }*/
-
-    private fun checkAndRestartScopeState(){
-        if (
-            !scriptRunCoroutineScope.isActive
-        ){
-            scriptRunCoroutineScope = CoroutineScope(Dispatchers.IO)
-        }
-    }
-
 }
