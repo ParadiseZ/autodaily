@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.smart.autodaily.api.RemoteApi
 import com.smart.autodaily.base.BaseViewModel
+import com.smart.autodaily.constant.ResponseCode
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.data.entity.resp.Response
@@ -16,9 +17,9 @@ class PersonViewModel(app : Application)  : BaseViewModel(application = app) {
             tryFun = {
                 RemoteApi.userKeyRetrofit.inputKey(userId,key)
             },
-            exceptionMsg ="兑换失败"
+            exceptionMsg ="兑换失败!"
         )
-        if (res.code==200){
+        if (res.code==ResponseCode.SUCCESS.code){
             res.data?.let { appViewModel.updateUser(it) }
         }
         return res

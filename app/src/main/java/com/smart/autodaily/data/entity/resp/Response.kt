@@ -8,10 +8,6 @@ class Response<T> {
     @SerializedName("message") var message: String? = null
     //或用于内测版
     @SerializedName("data") var data: T ?= null
-    //需要激活的
-    @SerializedName("official_data") var officialData: T ?=  null
-    //可以直接运行的
-    @SerializedName("normal_data") var normalData: Map<Int,String>? = null
 
 
 
@@ -50,7 +46,7 @@ class Response<T> {
 
         fun <T> error(message: String): Response<T> {
             return Response<T>().apply {
-                this.code = -1
+                this.code = ResponseCode.ERROR.code
                 this.message = message
                 this.data = null
             }

@@ -1,6 +1,7 @@
 package com.smart.autodaily.ui.screen
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.widget.Toast
@@ -44,23 +45,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.core.content.ContextCompat.startActivity
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.smart.autodaily.constant.AppBarTitle
 import com.smart.autodaily.constant.NavigationItem
+import com.smart.autodaily.constant.ResponseCode
 import com.smart.autodaily.constant.Ui
-import com.smart.autodaily.constant.WORK_TYPE01
-import com.smart.autodaily.constant.WORK_TYPE02
-import com.smart.autodaily.constant.WORK_TYPE03
 import com.smart.autodaily.data.entity.ScriptInfo
-import com.smart.autodaily.handler.RunScript
+import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.ui.conponent.RowScriptInfo
 import com.smart.autodaily.ui.conponent.navSingleTopTo
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ServiceUtil
-import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.ToastUtil
+import com.smart.autodaily.utils.checkLoginRes
+import com.smart.autodaily.utils.toastOnUi
 import com.smart.autodaily.viewmodel.HomeViewModel
 import com.smart.autodaily.viewmodel.mediaProjectionServiceStartFlag
 import kotlinx.coroutines.MainScope
@@ -81,12 +80,7 @@ fun HomeScreen(
     val openDialog = remember { mutableStateOf(false) }
     //加载本地数据
     val localScriptList by homeViewModel.appViewModel.localScriptListAll.collectAsState()
-    val needActiveList by homeViewModel.invalidScriptList.collectAsState()
     val user by homeViewModel.appViewModel.user.collectAsState()
-    //currentNeedActiveListIndex
-    val curNeedAcListIdx  by homeViewModel.curNeedAcListIdx.collectAsState()
-    //showActiveDialogFlag
-    val showActiveDialogFlag by homeViewModel.showActiveDialogFlag.collectAsState()
     var currentScriptInfo : ScriptInfo? = null
     val manActivityCtx = LocalContext.current
     //运行状态
@@ -123,23 +117,16 @@ fun HomeScreen(
                             }
                         }
                     }*/
-                        //println(RunScript.scriptRunCoroutineScope[Job])
                         homeViewModel.appViewModel.appScope.launch {
                             if (runStatus==1){
                                 homeViewModel.appViewModel.stopRunScript()
                             }else if(runStatus == 0){
-                                homeViewModel.appViewModel.runScript()
+                                checkLoginRes(rbcr =  homeViewModel.runButtonClick())
+                                if(scriptCheckResHand(res = homeViewModel.runScriptCheck())){
+                                    homeViewModel.appViewModel.runScript()
+                                }
                             }
                         }
-
-                        /*if (runStatus){
-                            RunScript.stopRunScript()
-                        }else{
-
-                            runStatus = true
-                        }*/
-
-
 
 
 
@@ -349,56 +336,17 @@ fun HomeScreen(
                 },
             )
         }
-        if (showActiveDialogFlag && curNeedAcListIdx < needActiveList.size){
-            AlertDialog(
-                onDismissRequest = {
-                    homeViewModel.cancelActiveScript(curNeedAcListIdx)
-                },
-                confirmButton = {
-                    OutlinedButton(
-                        onClick = {
-                            homeViewModel.viewModelScope.launch {
-                                val res = homeViewModel.activeScriptById(curNeedAcListIdx)
-                                if (res.code!=200){
-                                    res.message?.let { it1 ->
-                                        ToastUtil.show(homeViewModel.context,
-                                            it1
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    ){
-                        Text(text = "激活")
-                    }
-                },
-                dismissButton = {
-                    OutlinedButton(
-                        onClick = {
-                            homeViewModel.cancelActiveScript(curNeedAcListIdx)
-                        }
-                    ){
-                        Text(text = "取消")
-                    }
-                },
-                title = {
-                    Text(
-                        text = "确认操作",
-                        fontWeight = FontWeight.W700,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                },
-                text = {
-                    Text(
-                        text = "${needActiveList[curNeedAcListIdx].scriptName}已到期，是否花费1次机会激活它？剩余次数：${user?.canActivateNum}",
-                        fontSize = Ui.SIZE_16
-                    )
-                },
-            )
-        }
+
     }
 }
 
+private fun scriptCheckResHand(context: Context= appCtx , res : Response<String>) : Boolean{
+    if (res.code==ResponseCode.SUCCESS_OK.code){
+        return true
+    }
+    context.toastOnUi(res.message)
+    return false
+}
 
 private fun accessibilityAndMediaProjectionRequest() {
     if (!ServiceUtil.isAccessibilityServiceEnabled(appCtx)) {

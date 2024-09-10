@@ -2,6 +2,7 @@ package com.smart.autodaily.constant
 
 enum class ResponseCode(var code: Int, var message: String) {
     SUCCESS(200,"操作成功!"),
+    SUCCESS_OK(666,"操作成功!"),
     FAILURE(201,"操作失败"),
     /**系统相关的错误码：5开头**/
     ERROR(500,"系统异常，请稍后重试"),

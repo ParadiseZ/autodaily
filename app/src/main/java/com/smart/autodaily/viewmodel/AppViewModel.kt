@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.smart.autodaily.api.RemoteApi
+import com.smart.autodaily.constant.ResponseCode
 import com.smart.autodaily.constant.WORK_TYPE01
 import com.smart.autodaily.constant.WORK_TYPE02
 import com.smart.autodaily.constant.WORK_TYPE03
@@ -14,7 +15,7 @@ import com.smart.autodaily.data.entity.request.Request
 import com.smart.autodaily.handler.RunScript
 import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.ShizukuUtil
-import com.smart.autodaily.utils.ToastUtil
+import com.smart.autodaily.utils.toastOnUi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -65,11 +66,11 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                     if(_user.value!=null){
                         val req : Request<Int> = Request(data = _user.value!!.userId)
                         val res = RemoteApi.updateRetrofit.updateUserInfo(req)
-                        if (res.code == 200){
+                        if (res.code == ResponseCode.SUCCESS.code){
                             res.data?.let { it1 -> appDb?.userInfoDao?.update(it1) }
                             loadUserInfo()
-                        }else if (res.code== 999){
-                            ToastUtil.showLong(getApplication<Application>().applicationContext, res.message.toString())
+                        }else{
+                            appCtx.toastOnUi(res.message.toString())
                         }
                     }
                 }catch (e : Exception){

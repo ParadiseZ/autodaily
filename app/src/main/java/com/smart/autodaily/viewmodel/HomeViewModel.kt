@@ -11,11 +11,8 @@ import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.request.Request
 import com.smart.autodaily.data.entity.resp.Response
-import com.smart.autodaily.utils.ExceptionUtil
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class HomeViewModel(application: Application) : BaseViewModel(application = application) {
@@ -71,72 +68,13 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
     }
     //运行检测【检测需要激活的、可以运行的】
 
-    suspend fun runScriptCheck() : Response<List<Int>>{
-        val checkedScriptIds = appDb!!.scriptInfoDao.getAllCheckedScript()
-        if(checkedScriptIds.isEmpty()){
+    suspend fun runScriptCheck() : Response<String>{
+        val checkedScriptNum = appDb!!.scriptInfoDao.getAllCheckedScript().size
+        if(checkedScriptNum==0){
             return Response.error("未选择脚本")
         }
-        val request = Request(appViewModel.user.value, checkedScriptIds)
-        val checkResultList = ExceptionUtil.tryCatchList(
-            tryFun = RemoteApi.runRetrofit.runCheck(request),
-            exceptionMsg = "运行失败！"
-        )
-        if(checkResultList.code==200){
-            //更新未到期的内容
-            checkResultList.normalData?.map {
-                appDb!!.scriptInfoDao.updateExpirationTimeByScriptId(it.key, it.value)
-            }
-            checkResultList.officialData?.let {
-                //赋值数据
-                appDb!!.scriptInfoDao.getLocalScriptByIds(it).collectLatest {
-                    _invalidScriptList.value = it
-                }
-                //从0开始
-                _curNeedAcListIdx.value = 0
-                _showActiveDialogFlag.value =true
-            }
-        }
-        return checkResultList
-    }
-
-    //激活脚本
-    suspend fun  activeScriptById(index : Int) : Response<String>{
-        if(appViewModel.user.value?.canActivateNum!! <=0){
-            _showActiveDialogFlag.value = false
-            return Response.error("可激活次数不足！")
-        }
-        val request:Request<Int> = Request(appViewModel.user.value, _invalidScriptList.value[index].scriptId)
-        val res = ExceptionUtil.tryCatch(
-            tryFun = RemoteApi.runRetrofit.activeScript(request),
-            exceptionMsg = "激活失败！"
-        )
-        if (res.code==200){
-            appViewModel.user.value?.canActivateNum = appViewModel.user.value?.canActivateNum?.minus(1)
-            appViewModel.user.value?.let { appDb!!.userInfoDao.update(it) }
-            _invalidScriptList.value[index].expirationTime = res.data
-            appViewModel.updateScript(_invalidScriptList.value[index])
-        }
-        dialogController()
-        return res
-    }
-
-    //取消激活
-    fun cancelActiveScript(curIndex:Int){
-        viewModelScope.launch {
-            _invalidScriptList.value[curIndex].checkedFlag = false
-            appViewModel.updateScript(_invalidScriptList.value[curIndex])
-            if (curIndex<_invalidScriptList.value.size){
-                _curNeedAcListIdx.value += 1
-            }
-            dialogController()
-        }
-    }
-
-    private fun dialogController(){
-        viewModelScope.launch {
-            _showActiveDialogFlag.value = false
-            delay(1000)
-            _showActiveDialogFlag.value = true
-        }
+        val request = Request(appViewModel.user.value, checkedScriptNum)
+        val checkResult = RemoteApi.runRetrofit.runCheck(request)
+        return checkResult
     }
 }

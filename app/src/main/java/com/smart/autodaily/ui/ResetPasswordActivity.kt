@@ -30,6 +30,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.smart.autodaily.constant.ResponseCode
 import com.smart.autodaily.ui.conponent.LockScreenLoading
 import com.smart.autodaily.utils.ToastUtil
 import com.smart.autodaily.utils.ValidUtil
@@ -161,7 +162,7 @@ fun ResetPasswordScreen() {
                                     val resetResult = resetPwdViewModel.resetPwdByEmail(username,emailCheckCode, password)
                                     isLocked.value = false
                                     ToastUtil.show(resetPwdViewModel.context,resetResult.message.toString())
-                                    if (resetResult.code==200){
+                                    if (resetResult.code== ResponseCode.SUCCESS.code){
                                         resetPwdViewModel.context.startActivity(
                                             Intent("android.intent.action.LOGIN")
                                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
