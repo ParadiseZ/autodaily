@@ -6,6 +6,10 @@ object AppBarTitle {
     const val HOME_SCREEN ="本地列表"
     const val SETTING_SCREEN ="全局设置"
     const val PERSON_SCREEN ="我的"
+
+    const val COIN_DETAIL_SCREEN ="AD币详情"
+    const val COIN_EXCHANGE ="AD币兑换"
+    const val USER_KEY_RECORD ="兑换码记录"
 }
 
 object SettingTitle {

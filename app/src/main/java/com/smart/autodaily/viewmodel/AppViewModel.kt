@@ -29,10 +29,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import splitties.init.appCtx
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class AppViewModel (application: Application) : AndroidViewModel(application){
-    /*private val _localScriptList = MutableStateFlow<PagingData<ScriptInfo>>(PagingData.empty())
-    val localScriptList: StateFlow<PagingData<ScriptInfo>> = _localScriptList*/
     //本地脚本列表
     private val _localScriptAll = MutableStateFlow<List<ScriptInfo>>(emptyList())
     val localScriptListAll: StateFlow<List<ScriptInfo>> = _localScriptAll

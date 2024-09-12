@@ -27,7 +27,7 @@ object ScreenCaptureUtil : CoroutineScope by MainScope(){
     var imgReader: ImageReader? = null//截图时获取，超过MAX_IMAGE_NUM释放再获取
     var virtualDisplay: VirtualDisplay? = null//截图时获取，超过MAX_IMAGE_NUM释放再获取
 
-    fun getDisplayMetrics(context: Context) : DisplayMetrics? {
+    fun getDisplayMetrics(context: Context) : DisplayMetrics {
         return context.resources.displayMetrics
     }
 

@@ -1,6 +1,6 @@
 package com.smart.autodaily.ui.screen
 
-import android.content.Context
+import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -49,12 +49,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.smart.autodaily.constant.BorderDirection
 import com.smart.autodaily.constant.Ui
-import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.ui.conponent.SingleBorderBox
 import com.smart.autodaily.utils.ToastUtil
+import com.smart.autodaily.utils.isLogin
 import com.smart.autodaily.viewmodel.PersonViewModel
 import kotlinx.coroutines.launch
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun PersonScreen(modifier: Modifier,
     nhc: NavHostController,
@@ -92,7 +93,7 @@ fun PersonScreen(modifier: Modifier,
                     user?.let {
                         Text(text = it.email)
                         TextCustomFirst( "邀请码："+it.inviteCode)
-                        TextCustomFirst("A币："+it.password)
+                        TextCustomFirst("AD币："+String.format("%.2f",it.virtualCoin))
                     }
                 }
                 TextButton(
@@ -108,9 +109,7 @@ fun PersonScreen(modifier: Modifier,
                 ) {
                     user?.let {
                         Text(text = "退出>")
-                    } ?: let{
-                        Text(text = "登录>")
-                    }
+                    } ?: Text(text = "登录>")
                 }
             }
         }
@@ -131,7 +130,7 @@ fun PersonScreen(modifier: Modifier,
                 direction = BorderDirection.RIGHT,
                 content = {}
             )
-            PersonColumnFirst("剩余",(user?.canActivateNum?:"--").toString() + "个")
+            PersonColumnFirst("单次运行",(user?.canRunNum?:"--").toString() + "个")
             SingleBorderBox(
                 modifier = Modifier
                     .width(1.dp)
@@ -143,24 +142,25 @@ fun PersonScreen(modifier: Modifier,
         }
 
         PersonRowFirst(textLabel = "兑换码", imageVector = Icons.Outlined.ShoppingCart){
-            if(!gotoLogin(personViewModel.context, user)){
+            if(isLogin(personViewModel.context, user)){
                 openDialog.value = true
             }
         }
-
-        PersonRowFirst(textLabel = "输入好友邀请码", imageVector = Icons.Outlined.AccountCircle){
-            if(!gotoLogin(personViewModel.context, user)){
-                inviteDialog.value = true
+        user?.let {
+            if(it.inviteCodeFather==null){
+                PersonRowFirst(textLabel = "输入好友邀请码", imageVector = Icons.Outlined.AccountCircle){
+                    inviteDialog.value = true
+                }
             }
         }
         PersonRowFirst(textLabel = "分享", imageVector = Icons.Outlined.Share){
-            gotoLogin(personViewModel.context, user)
+            isLogin(personViewModel.context, user)
         }
         PersonRowFirst(textLabel = "检查更新", imageVector = Icons.Outlined.Refresh){
 
         }
         PersonRowFirst(textLabel = "反馈", imageVector = Icons.Outlined.Create){
-            gotoLogin(personViewModel.context, user)
+            isLogin(personViewModel.context, user)
         }
         PersonRowFirst(textLabel = "关于", imageVector = Icons.Outlined.Info){
 
@@ -198,7 +198,7 @@ fun PersonScreen(modifier: Modifier,
             },
             title = {
                 Text(
-                    text = "输入兑换码",
+                    text = "请输入您的兑换码",
                     fontWeight = FontWeight.W700,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -243,7 +243,7 @@ fun PersonScreen(modifier: Modifier,
             },
             title = {
                 Text(
-                    text = "输入好友邀请码",
+                    text = "输入好友邀请码，得vip",
                     fontWeight = FontWeight.W700,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -255,16 +255,6 @@ fun PersonScreen(modifier: Modifier,
             },
         )
     }
-}
-
-fun gotoLogin(context: Context, user: UserInfo?) : Boolean {
-    if (user==null) {
-        context.startActivity(
-            Intent("android.intent.action.LOGIN").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        )
-        return true
-    }
-    return false
 }
 
 @Composable

@@ -126,6 +126,7 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
                 }
                 is DownloadState.Error -> {
                     deleteFile(externalBinFile)
+                    scriptInfo.process.intValue = -1
                 }
             }
         }

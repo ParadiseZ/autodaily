@@ -74,7 +74,7 @@ object  RunScript {
                     ShizukuUtil.iUserService?.execLine(START+si.packageName)
                     //读取模型
                     ScreenCaptureUtil.getDisplayMetrics(appCtx)
-                        ?.let { ModelUtil.reloadModel("bh3/cn/model.ncnn", 640,false) }
+                    ModelUtil.reloadModel("bh3/cn/model.ncnn", 640,false)
                 }catch (e: Exception){
                     println("app启动失败！")
                     //appCtx.toastOnUi("app启动失败！")

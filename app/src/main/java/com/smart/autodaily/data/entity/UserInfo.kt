@@ -18,11 +18,13 @@ data class UserInfo (
     //类型名称
     @ColumnInfo(name = "key_type_name")   @SerializedName("key_type_name")   var keyTypeName: String?,
     //可激活个数
-    @ColumnInfo(name = "can_activate_num")   @SerializedName("can_activate_num")   var canActivateNum: Int?,
+    @ColumnInfo(name = "can_run_num")   @SerializedName("can_run_num")   var canRunNum: Int?,
     //过期时间
     @ColumnInfo(name = "expiration_time")   @SerializedName("expiration_time")   var expirationTime: String?,
     //注册时间
     @ColumnInfo(name = "register_time")    @SerializedName("register_time")  val registerTime: String,
+    //虚拟币{AD币}
+    @ColumnInfo(name = "virtual_coin")    @SerializedName("virtual_coin")  val virtualCoin: Float?=0f,
     //是否登录
     @ColumnInfo(name = "isLogin") var isLogin: Boolean?
 )

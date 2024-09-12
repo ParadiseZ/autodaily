@@ -58,7 +58,7 @@ import com.smart.autodaily.ui.conponent.navSingleTopTo
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.ToastUtil
-import com.smart.autodaily.utils.checkLoginRes
+import com.smart.autodaily.utils.isLogin
 import com.smart.autodaily.utils.toastOnUi
 import com.smart.autodaily.viewmodel.HomeViewModel
 import com.smart.autodaily.viewmodel.mediaProjectionServiceStartFlag
@@ -121,7 +121,7 @@ fun HomeScreen(
                             if (runStatus==1){
                                 homeViewModel.appViewModel.stopRunScript()
                             }else if(runStatus == 0){
-                                checkLoginRes(rbcr =  homeViewModel.runButtonClick())
+                                isLogin(homeViewModel.context, user);
                                 if(scriptCheckResHand(res = homeViewModel.runScriptCheck())){
                                     homeViewModel.appViewModel.runScript()
                                 }
