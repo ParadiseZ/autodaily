@@ -4,17 +4,13 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Create
@@ -26,7 +22,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -38,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
@@ -74,46 +68,50 @@ fun PersonScreen(modifier: Modifier,
     //是否开启确认按钮
     var keyConfirmEnable by remember { mutableStateOf(true) }
     //登出后更新user
-    Column{
-        SingleBorderBox(
-            modifier = Modifier.padding(8.dp),
-            direction = BorderDirection.BOTTOM
+    Column {
+        Row(
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row (
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ){
-                Surface(color = Color.Yellow, modifier = Modifier.size(50.dp), shape = CircleShape) {
+
+                /*Surface(color = Color.Yellow, modifier = Modifier.size(50.dp), shape = CircleShape) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
                         Text(text = "Hello Word")
                     }
-                }
-                Column {
-                    user?.let {
-                        Text(text = it.email)
-                        TextCustomFirst( "邀请码："+it.inviteCode)
-                        TextCustomFirst("AD币："+String.format("%.2f",it.virtualCoin))
-                    }
-                }
-                TextButton(
-                    onClick = {
-                        if (user == null){
-                            personViewModel.context.startActivity(
-                                Intent("android.intent.action.LOGIN").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            )
-                        }else{
-                            personViewModel.logout(user!!)
-                        }
-                    }
-                ) {
-                    user?.let {
-                        Text(text = "退出>")
-                    } ?: Text(text = "登录>")
+                }*/
+            Column {
+                user?.let {
+                    Text(text = it.email)
+                    TextCustomFirst( "邀请码："+it.inviteCode)
+                    Text(
+                        modifier = Modifier.clickable {
+                                                      personViewModel.context.startActivity(
+                                                          Intent("android.intent.action.COIN EXCHANGE").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                      )
+                        },
+                        fontSize = TextUnit(14f, TextUnitType.Sp),text = "AD币："+if(it.virtualCoin == null) 0 else String.format("%.2f",it.virtualCoin))
+                    //TextCustomFirst()
                 }
             }
+            TextButton(
+                onClick = {
+                    if (user == null){
+                        personViewModel.context.startActivity(
+                            Intent("android.intent.action.LOGIN").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        )
+                    }else{
+                        personViewModel.logout(user!!)
+                    }
+                }
+            ) {
+                user?.let {
+                    Text(text = "退出>")
+                } ?: Text(text = "登录>")
+            }
         }
-        Spacer(modifier = Modifier.height(8.dp))
         
         Row (
             modifier = Modifier
@@ -147,7 +145,7 @@ fun PersonScreen(modifier: Modifier,
             }
         }
         user?.let {
-            if(it.inviteCodeFather==null){
+            if(it.inviteCodeFather.isNullOrBlank()){
                 PersonRowFirst(textLabel = "输入好友邀请码", imageVector = Icons.Outlined.AccountCircle){
                     inviteDialog.value = true
                 }

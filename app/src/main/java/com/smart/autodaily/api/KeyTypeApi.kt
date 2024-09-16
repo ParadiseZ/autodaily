@@ -6,6 +6,6 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface KeyTypeApi {
-    @GET("/getKeyTypeList")
+    @GET("/getExchangeVipKeyType")
     suspend fun getKeyTypeList(@Query("page") page : Int, @Query("pageSize") pageSize : Int) : Response<List<KeyTypeExchange>>
 }

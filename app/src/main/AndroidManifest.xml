@@ -37,6 +37,35 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ui.CoinExchangeActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AutoDaily">
+            <intent-filter>
+                <action android:name="android.intent.action.COIN EXCHANGE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ui.CoinDetailActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AutoDaily">
+            <intent-filter>
+                <action android:name="android.intent.action.COINDETAIL" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ui.UserKeyRecordActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AutoDaily">
+            <intent-filter>
+                <action android:name="android.intent.action.USERKEYRECORD" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <activity
             android:name=".LicenseShowActivity"
             android:exported="true">
