@@ -52,7 +52,7 @@
             android:exported="true"
             android:theme="@style/Theme.AutoDaily">
             <intent-filter>
-                <action android:name="android.intent.action.COINDETAIL" />
+                <action android:name="android.intent.action.COIN DETAIL" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -61,7 +61,7 @@
             android:exported="true"
             android:theme="@style/Theme.AutoDaily">
             <intent-filter>
-                <action android:name="android.intent.action.USERKEYRECORD" />
+                <action android:name="android.intent.action.KEY RECORD" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>

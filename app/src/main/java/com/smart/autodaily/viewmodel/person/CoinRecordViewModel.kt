@@ -18,6 +18,9 @@ class CoinRecordViewModel(app: Application) : BaseViewModel(application = app) {
     val virtualcoinRecordList : StateFlow<PagingData<VirtualCoinRecord>> get()= _virtualCoinRecordList
 
     suspend fun getVirtualCoinRecord(){
+        appViewModel.user.value?:let {
+            appViewModel.loadUserInfo()
+        }
         Pager(PagingConfig(pageSize = PageUtil.PAGE_SIZE, initialLoadSize =PageUtil.INITIALOAD_SIZE, prefetchDistance = PageUtil.PREFETCH_DISTANCE)) {
             CoinRecordDataSource(
                 RemoteApi.virtualCoinApi,

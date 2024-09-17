@@ -18,7 +18,6 @@ import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.toastOnUi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelChildren
@@ -77,7 +76,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
         }
     }
 
-    private suspend fun loadUserInfo() {
+    suspend fun loadUserInfo() {
         appDb?.userInfoDao?.queryUserInfo()?.collectLatest {
             _user.value = it
         }

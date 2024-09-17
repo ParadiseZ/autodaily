@@ -10,10 +10,12 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -22,9 +24,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -32,9 +36,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.smart.autodaily.constant.AppBarTitle
+import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.KeyTypeExchange
+import com.smart.autodaily.ui.conponent.MyButton
 import com.smart.autodaily.ui.theme.AutoDailyTheme
 import com.smart.autodaily.utils.ScreenCaptureUtil
+import com.smart.autodaily.utils.gotoCoinDetail
+import com.smart.autodaily.utils.toastOnUi
 import com.smart.autodaily.viewmodel.person.CoinExchangeViewModel
 import kotlinx.coroutines.launch
 import splitties.init.appCtx
@@ -82,6 +90,9 @@ fun CoinExchange(
     }
     val displayMetrics = ScreenCaptureUtil.getDisplayMetrics(appCtx)
     val cols = if(displayMetrics.widthPixels < displayMetrics.heightPixels){2}else{3}
+    val exchangeDialog = remember {
+        mutableStateOf(false)
+    }
     LazyVerticalGrid(
         columns = GridCells.Fixed(cols),
         modifier = modifier
@@ -91,27 +102,64 @@ fun CoinExchange(
                 horizontalAlignment = Alignment.CenterHorizontally
             ){
                 Text(text = "剩余：" + (user?.virtualCoin?.toString() ?: "0"),fontSize = TextUnit(24f, TextUnitType.Sp))
-                Button(onClick = {
-                    //appCtx.startActivity()
-                }) {
-                    Text(text = "详情")
-                }
+                MyButton(text ="详情", onclick = {gotoCoinDetail(viewModel.context)})
             }
         }
         items(keyTypeList.itemCount){ keyIdx->
             keyTypeList[keyIdx]?.let {
                 KeyTypeItem(it) {
+                    exchangeDialog.value = true
                     selectTypeId.intValue = it.id
                 }
             }
         }
     }
-    LaunchedEffect(key1 = selectTypeId.intValue){
-        if (selectTypeId.intValue != -1){
-            viewModel.viewModelScope.launch {
-                viewModel.exchangeVip(selectTypeId.intValue)
-            }
-        }
+
+    if(exchangeDialog.value){
+        AlertDialog(
+            onDismissRequest = {
+                exchangeDialog.value = false
+            },
+            confirmButton = {
+                OutlinedButton(
+                    enabled = exchangeDialog.value,
+                    onClick = {
+                        viewModel.viewModelScope.launch {
+                            val res = viewModel.exchangeVip(selectTypeId.intValue)
+                            res?.let {
+                                appCtx.toastOnUi(it.message)
+                            }
+                            exchangeDialog.value = false
+                        }
+                    }
+                ){
+                    Text(text = "确定")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    enabled = exchangeDialog.value,
+                    onClick = {
+                        exchangeDialog.value = false
+                    }
+                ){
+                    Text(text = "取消")
+                }
+            },
+            title = {
+                Text(
+                    text = "确认操作",
+                    fontWeight = FontWeight.W700,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            text = {
+                Text(
+                    text = "您确定要兑换它吗？",
+                    fontSize = Ui.SIZE_16
+                )
+            },
+        )
     }
 }
 
@@ -129,11 +177,7 @@ fun KeyTypeItem(
                 Text(text = keyType.buyPrice.toString()+"AD币",fontSize = TextUnit(12f, TextUnitType.Sp))
                 Text(text = keyType.price.toString()+"AD币",textDecoration =TextDecoration.LineThrough,fontSize = TextUnit(12f, TextUnitType.Sp))
             }
-            Button(onClick = {
-                onClick()
-            }) {
-                Text(text = "兑换")
-            }
+            MyButton(text ="兑换", onclick = {onClick()})
         }
 
     }

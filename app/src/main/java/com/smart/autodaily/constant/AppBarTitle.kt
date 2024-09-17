@@ -9,7 +9,7 @@ object AppBarTitle {
 
     const val COIN_DETAIL_SCREEN ="AD币详情"
     const val COIN_EXCHANGE ="AD币兑换"
-    const val USER_KEY_RECORD ="兑换码记录"
+    const val USER_KEY_RECORD ="兑换码使用记录"
 }
 
 object SettingTitle {

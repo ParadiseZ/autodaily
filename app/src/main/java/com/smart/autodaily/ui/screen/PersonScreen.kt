@@ -1,7 +1,7 @@
 package com.smart.autodaily.ui.screen
 
 import android.annotation.SuppressLint
-import android.content.Intent
+import android.content.ClipData
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Create
 import androidx.compose.material.icons.outlined.Info
@@ -43,11 +44,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.smart.autodaily.constant.BorderDirection
 import com.smart.autodaily.constant.Ui
+import com.smart.autodaily.ui.conponent.MyButton
 import com.smart.autodaily.ui.conponent.SingleBorderBox
 import com.smart.autodaily.utils.ToastUtil
+import com.smart.autodaily.utils.gotoExchange
+import com.smart.autodaily.utils.gotoUserKeyRecord
 import com.smart.autodaily.utils.isLogin
+import com.smart.autodaily.utils.startActivity
+import com.smart.autodaily.utils.toastOnUi
 import com.smart.autodaily.viewmodel.PersonViewModel
 import kotlinx.coroutines.launch
+import splitties.systemservices.clipboardManager
 
 @SuppressLint("DefaultLocale")
 @Composable
@@ -85,23 +92,34 @@ fun PersonScreen(modifier: Modifier,
             Column {
                 user?.let {
                     Text(text = it.email)
-                    TextCustomFirst( "邀请码："+it.inviteCode)
-                    Text(
-                        modifier = Modifier.clickable {
-                                                      personViewModel.context.startActivity(
-                                                          Intent("android.intent.action.COIN EXCHANGE").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                                      )
-                        },
-                        fontSize = TextUnit(14f, TextUnitType.Sp),text = "AD币："+if(it.virtualCoin == null) 0 else String.format("%.2f",it.virtualCoin))
+                    Row ( verticalAlignment = Alignment.CenterVertically){
+                        TextCustomFirst( "邀请码："+it.inviteCode)
+                        TextButton(onClick = {
+                            clipboardManager.setPrimaryClip(ClipData.newPlainText("", it.inviteCode))
+                            personViewModel.context.toastOnUi("已复制！")
+                        }){
+                            Text(text = "点击复制")
+                        }
+                    }
+                    Row (
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        Text(
+                            modifier = Modifier
+                                .clickable {
+                                    gotoExchange(personViewModel.context)
+                                },
+                            fontSize = TextUnit(14f, TextUnitType.Sp),text = "AD币："+if(it.virtualCoin == null) 0 else String.format("%.2f",it.virtualCoin))
+                        MyButton(text ="兑换", onclick = { gotoExchange(personViewModel.context) })
+                    }
+
                     //TextCustomFirst()
                 }
             }
             TextButton(
                 onClick = {
                     if (user == null){
-                        personViewModel.context.startActivity(
-                            Intent("android.intent.action.LOGIN").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        )
+                        startActivity(action = "android.intent.action.LOGIN")
                     }else{
                         personViewModel.logout(user!!)
                     }
@@ -144,6 +162,11 @@ fun PersonScreen(modifier: Modifier,
                 openDialog.value = true
             }
         }
+        PersonRowFirst(textLabel = "兑换记录", imageVector = Icons.AutoMirrored.Outlined.List){
+            if(isLogin(personViewModel.context, user)){
+                gotoUserKeyRecord(personViewModel.context)
+            }
+        }
         user?.let {
             if(it.inviteCodeFather.isNullOrBlank()){
                 PersonRowFirst(textLabel = "输入好友邀请码", imageVector = Icons.Outlined.AccountCircle){
@@ -152,16 +175,20 @@ fun PersonScreen(modifier: Modifier,
             }
         }
         PersonRowFirst(textLabel = "分享", imageVector = Icons.Outlined.Share){
-            isLogin(personViewModel.context, user)
+            if (isLogin(personViewModel.context, user)){
+                clipboardManager.setPrimaryClip(ClipData.newPlainText("", "省肝神器AutoDaily，解放您的双手！在这里下载：https://www.baidu.com后填入我的邀请码：${user!!.inviteCode} ，免费得周vip3！"))
+                personViewModel.context.toastOnUi("已复制分享信息到剪切板！")
+            }
         }
         PersonRowFirst(textLabel = "检查更新", imageVector = Icons.Outlined.Refresh){
-
+            personViewModel.context.toastOnUi("嗯，还未开发")
         }
         PersonRowFirst(textLabel = "反馈", imageVector = Icons.Outlined.Create){
             isLogin(personViewModel.context, user)
+            personViewModel.context.toastOnUi("嗯，还未开发")
         }
         PersonRowFirst(textLabel = "关于", imageVector = Icons.Outlined.Info){
-
+            personViewModel.context.toastOnUi("嗯，还未开发")
         }
     }
     if (openDialog.value){
@@ -176,19 +203,24 @@ fun PersonScreen(modifier: Modifier,
                 OutlinedButton(
                     enabled = keyConfirmEnable,
                     onClick = {
-                        keyConfirmEnable = false
-                        personViewModel.viewModelScope.launch {
-                            val result = personViewModel.inputKey(user!!.userId,keyInfo.value)
-                            if (result.code == 200){
-                                openDialog.value = false
+                        if (keyInfo.value.isBlank()){
+                            personViewModel.context.toastOnUi("输入内容不能为空！")
+                        }else{
+                            keyConfirmEnable = false
+                            personViewModel.viewModelScope.launch {
+                                val result = personViewModel.inputKey(user!!.userId,keyInfo.value)
+                                if (result.code == 200){
+                                    openDialog.value = false
+                                }
+                                result.message?.let {
+                                    ToastUtil.show(personViewModel.context,
+                                        it
+                                    )
+                                }
+                                keyConfirmEnable = true
                             }
-                            result.message?.let {
-                                ToastUtil.show(personViewModel.context,
-                                    it
-                                )
-                            }
-                            keyConfirmEnable = true
                         }
+
                     }
                 ){
                     Text(text = "确定")
@@ -221,18 +253,22 @@ fun PersonScreen(modifier: Modifier,
                 OutlinedButton(
                     enabled = keyConfirmEnable,
                     onClick = {
-                        keyConfirmEnable = false
-                        personViewModel.viewModelScope.launch {
-                            val result = personViewModel.inputInvitorCode(user!!.userId,keyInfo.value)
-                            if (result.code == 200){
-                                inviteDialog.value = false
+                        if (keyInfo.value.isBlank()){
+                            personViewModel.context.toastOnUi("输入内容不能为空！")
+                        }else{
+                            keyConfirmEnable = false
+                            personViewModel.viewModelScope.launch {
+                                val result = personViewModel.inputInvitorCode(user!!.userId,keyInfo.value)
+                                if (result.code == 200){
+                                    inviteDialog.value = false
+                                }
+                                result.message?.let {
+                                    ToastUtil.show(personViewModel.context,
+                                        it
+                                    )
+                                }
+                                keyConfirmEnable = true
                             }
-                            result.message?.let {
-                                ToastUtil.show(personViewModel.context,
-                                    it
-                                )
-                            }
-                            keyConfirmEnable = true
                         }
                     }
                 ){

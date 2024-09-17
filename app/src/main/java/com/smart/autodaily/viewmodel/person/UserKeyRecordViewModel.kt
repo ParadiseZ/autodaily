@@ -18,6 +18,9 @@ class UserKeyRecordViewModel(app: Application) : BaseViewModel(application = app
     val userKeyRecords : StateFlow<PagingData<UserKeyRecord>> get()= _userKeyRecords
 
     suspend fun getUserKeyRecord(){
+        appViewModel.user.value?:let {
+            appViewModel.loadUserInfo()
+        }
         Pager(PagingConfig(pageSize = PageUtil.PAGE_SIZE, initialLoadSize = PageUtil.INITIALOAD_SIZE, prefetchDistance = PageUtil.PREFETCH_DISTANCE)) {
             UserKeyRecordDataSource(
                 RemoteApi.userKeyRecordApi,

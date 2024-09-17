@@ -33,6 +33,9 @@ class CoinExchangeViewModel (app: Application) : BaseViewModel(application = app
 
     suspend fun exchangeVip(keyTypeId : Int)  : Response<UserInfo>?{
         var res: Response<UserInfo>? = null
+        appViewModel.user.value?:let{
+            appViewModel.loadUserInfo()
+        }
         appViewModel.user.value?.userId?.let {
             res = RemoteApi.virtualCoinApi.exchangeVip(it, keyTypeId)
             if (res!!.code == ResponseCode.SUCCESS.code) {
