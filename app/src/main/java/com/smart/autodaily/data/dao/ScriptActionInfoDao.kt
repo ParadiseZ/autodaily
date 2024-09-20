@@ -4,7 +4,6 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.RoomWarnings
 import androidx.room.Transaction
 import com.smart.autodaily.data.entity.ScriptActionInfo
 
@@ -49,18 +48,18 @@ interface ScriptActionInfoDao {
     fun getCheckedByScriptId(scriptId: Int) : List<ScriptActionInfo>*/
 
 
-    @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
     @Query(
+            /*非slider类型，筛选a.set_value = b.set_value、已选择的数据，【TITLE、CHECKBOX、RADIO_BUTTON】*/
             "select a.* " +
-            //"a.id, a.script_id, a.set_id, a.set_value, a.pic_id, a.action_string" +
             " FROM script_action_info a " +
             "inner join script_set_info b on a.set_id = b.set_id and a.script_id = b.script_id and a.set_value = b.set_value " +
             "where b.checked_flag = 1 and b.set_type not like 'SLIDER%' and a.script_id =:scriptId and a.set_id in( :setId )" +
             "union all " +
-            //"select a.id, a.script_id, a.set_id, a.set_value, a.pic_id, a.action_string " +
-            "select a.* " +
+            /*筛选全局设置*/
+            "select a   .* " +
             "from script_action_info a where a.script_id = :scriptId and a.set_id = 0 "+
             "union all " +
+                    /*slider类型，只有单个值*/
             "select a.* " +
             "from script_action_info a " +
             "inner join script_set_info b on a.set_id = b.set_id and a.script_id = b.script_id " +
