@@ -87,8 +87,8 @@ abstract class AppDb  :  RoomDatabase(){
                     (0,6,'true','RADIO_BUTTON','匹配算法','',-1,1,'算法一（更快）,算法二（更准）','算法二（更准）','',0,'true','false','false'),
                     (0,7,'true','RADIO_BUTTON','脚本日志记录','',-1,1,'关闭,运行结果,INFO','运行结果','',0,'true','false','false'),
                     (0,8,'true','RADIO_BUTTON','工作模式','',-1,1,'无障碍+录屏(安卓7-12),shizuku,root','shizuku','',0,'true','false','false'),
-                    (0,30,'true','SLIDER_THIRD','随机点击范围','',-1,1,'5','5','1,10',9,'true','false','false')
-                    (0,31,'true','CHECK_BOX','使用gpu推理','',-1,1,'true','true','','','true','false','false')
+                    (0,9,'true','SLIDER_THIRD','随机点击范围','',-1,1,'5','5','1,10',9,'true','false','false')
+                    (0,10,'true','CHECK_BOX','使用gpu推理','',-1,1,'true','true','','','true','false','false')
             """.trimIndent()
             db.execSQL(insertScriptSetGlobalSql)
 

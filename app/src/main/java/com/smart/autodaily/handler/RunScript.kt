@@ -66,7 +66,7 @@ object  RunScript {
     //shell运行
     private suspend fun runScriptByAdb(){
         val intervalTime = _globalSetMap.value[3]?.setValue?.toInt()?.times(1000)?.toLong()?:1000
-        val useGpu = _globalSetMap.value[31]?.setValue?.toBoolean()?:true
+        val useGpu = _globalSetMap.value[10]?.setValue?.toBoolean()?:true
         //println("开始运行${_scriptCheckedList.value.size}")
         _scriptCheckedList.value.forEach scriptForEach@{ si->
             if(si.currentRunNum < si.runsMaxNum){
