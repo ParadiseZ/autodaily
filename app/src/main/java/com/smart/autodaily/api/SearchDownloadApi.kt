@@ -3,6 +3,7 @@ package com.smart.autodaily.api
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptSetInfo
+import com.smart.autodaily.data.entity.VersionInfo
 import com.smart.autodaily.data.entity.resp.Response
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -25,7 +26,7 @@ interface SearchDownloadApi {
     ) : Response<List<ScriptInfo>>
 
     @POST("/query/checkUpdateByIdAndVer")
-    suspend fun checkUpdateByIdAndVer(@Body scriptInfoList : Map<Int, String>) : Response<Map<Int, String>>
+    suspend fun checkUpdateByIdAndVer(@Body scriptInfoList : Map<Int, String>) : Response<Map<Int, VersionInfo>>
 
     @GET("/query/downloadScriptSetByScriptId")
     suspend fun downScriptSetByScriptId(@Query("scriptId") scriptId : Int) : Response<List<ScriptSetInfo>>

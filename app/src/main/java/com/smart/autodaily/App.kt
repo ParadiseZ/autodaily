@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import com.jakewharton.threetenabp.AndroidThreeTen
 import com.jeremyliao.liveeventbus.LiveEventBus
 import com.smart.autodaily.config.AppConfig.channelIdDownload
 import com.smart.autodaily.data.AppDb
@@ -26,6 +27,8 @@ class App : Application(){
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate() {
         super.onCreate()
+        //初始化时区
+        AndroidThreeTen.init(this);
         Thread.setDefaultUncaughtExceptionHandler(ExceptionHandler(this))
         LiveEventBus.config()
             .lifecycleObserverAlwaysActive(true)

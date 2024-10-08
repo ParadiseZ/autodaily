@@ -10,7 +10,7 @@ import com.google.gson.annotations.SerializedName
 data class ScriptInfo(
     @ColumnInfo(name = "script_id") @SerializedName("script_id") val scriptId: Int,
     @ColumnInfo(name = "script_name") @SerializedName("script_name")var scriptName: String,  // 脚本名称
-    @ColumnInfo(name = "last_version") @SerializedName("last_version")  val lastVersion: Int,   // 最新版本号
+    @ColumnInfo(name = "last_version") @SerializedName("last_version") var lastVersion: Int?,   // 最新版本号
     //@ColumnInfo(name = "expiration_time") @SerializedName("expiration_time")var expirationTime: String?,    // 到期时间
     @ColumnInfo(name = "package_name") @SerializedName("package_name")val packageName: String, // 包名
     @ColumnInfo(name = "runs_max_num") @SerializedName("runs_max_num")var runsMaxNum: Int = 1, // 最大运行次数
@@ -27,6 +27,7 @@ data class ScriptInfo(
     @ColumnInfo(name = "download_time") var downloadTime: String, // 下载日期
     @ColumnInfo(name = "is_downloaded") var isDownloaded: Int = 0, // 是否已下载
     @ColumnInfo(name = "current_run_num") var currentRunNum: Int = 0, // 当前运行次数
+    @ColumnInfo(name = "need_app_update") var needAppUpdate: Int = 0, // 当前运行次数
 ){
     @Ignore
     var process = mutableIntStateOf(0)  //下载进度条

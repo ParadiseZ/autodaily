@@ -106,7 +106,7 @@ fun SearchScreen(
                             },
                             onClick = {
                                 if (scriptInfo.isDownloaded == 0){
-                                    searchViewModel.downScriptByScriptId( scriptInfo )
+                                    searchViewModel.appViewModel.downScriptByScriptId( scriptInfo )
                                     //下载中
                                     isDownloaded.intValue=2
                                     processShow.value =true

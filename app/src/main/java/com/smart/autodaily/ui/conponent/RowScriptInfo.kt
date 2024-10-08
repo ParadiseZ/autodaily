@@ -73,11 +73,11 @@ fun RowScriptInfo(
                         if(scriptInfo.isDownloaded == 1){
                             Text(text = "版本："+scriptInfo.scriptVersion, fontSize = Ui.SIZE_10 )
                             Spacer(modifier = Modifier.width( Ui.SPACE_5 ))
-                            if (scriptInfo.scriptVersion != scriptInfo.lastVersion){
+                            if ( scriptInfo.lastVersion!=null && scriptInfo.scriptVersion != scriptInfo.lastVersion){
                                 Text(text = "最新："+scriptInfo.lastVersion, fontSize = Ui.SIZE_10 )
                             }
                         }else{
-                            Text(text = "最新："+scriptInfo.lastVersion, fontSize = Ui.SIZE_10 )
+                            Text(text = "版本："+scriptInfo.lastVersion, fontSize = Ui.SIZE_10 )
                         }
                     }
                 }

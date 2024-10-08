@@ -12,7 +12,7 @@ interface ScriptActionInfoDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(saiList: List<ScriptActionInfo>)
 
-    @Query("SELECT * FROM script_action_info where set_id = :setId and script_id = :scriptId and set_value = :setValue")
+    @Query("SELECT * FROM script_action_info where flow_id = :setId and script_id = :scriptId and set_value = :setValue")
     fun getSingle(setId: Int, scriptId: Int, setValue: String): ScriptActionInfo
 
     @Query("DELETE FROM script_action_info where script_id = :scriptId")
@@ -47,23 +47,11 @@ interface ScriptActionInfoDao {
             "where b.checked_flag = 1 and b.set_type not like 'SLIDER%' and a.script_id =:scriptId ")
     fun getCheckedByScriptId(scriptId: Int) : List<ScriptActionInfo>*/
 
+    @Query("select a.*  FROM script_action_info a, script_set_info b where b.flow_id in (:flowIds) and b.flow_id_type = :flowIdType and a.flow_id = b.flow_id and a.script_id = b.script_id  and  (a.set_value = b.set_value or a.set_value is null) " +
+            "union  " +
+            "select a.*  FROM script_action_info a where a.flow_id=0 and a.script_id = :scriptId")
+    fun getCheckedBySetId(scriptId: Int,flowIds: List<Int>, flowIdType: Int) : List<ScriptActionInfo>
 
-    @Query(
-            /*非slider类型，筛选a.set_value = b.set_value、已选择的数据，【TITLE、CHECKBOX、RADIO_BUTTON】*/
-            "select a.* " +
-            " FROM script_action_info a " +
-            "inner join script_set_info b on a.set_id = b.set_id and a.script_id = b.script_id and a.set_value = b.set_value " +
-            "where b.checked_flag = 1 and b.set_type not like 'SLIDER%' and a.script_id =:scriptId and a.set_id in( :setId )" +
-            "union all " +
-            /*筛选全局设置*/
-            "select a   .* " +
-            "from script_action_info a where a.script_id = :scriptId and a.set_id = 0 "+
-            "union all " +
-                    /*slider类型，只有单个值*/
-            "select a.* " +
-            "from script_action_info a " +
-            "inner join script_set_info b on a.set_id = b.set_id and a.script_id = b.script_id " +
-            "where a.script_id = :scriptId and b.set_type like 'SLIDER%' and a.set_id in( :setId ) "
-    )
-    fun getCheckedBySetId(setId: List<Int>, scriptId: Int) : List<ScriptActionInfo>
+    @Query("select *  FROM script_action_info where script_id = :scriptId and flow_id in (:flowIds)")
+    fun getBackActionByScriptId(scriptId: Int, flowIds : List<Int>) : List<ScriptActionInfo>
 }

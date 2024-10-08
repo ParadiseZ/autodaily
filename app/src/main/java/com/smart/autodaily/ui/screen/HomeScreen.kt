@@ -76,8 +76,10 @@ fun HomeScreen(
     nhc: NavHostController,
     homeViewModel : HomeViewModel = viewModel()
 ) {
-    //弹窗
+    //删除弹窗
     val openDialog = remember { mutableStateOf(false) }
+    //更新弹窗
+    val  newDialog = remember { mutableStateOf(false) }
     //加载本地数据
     val localScriptList by homeViewModel.appViewModel.localScriptListAll.collectAsState()
     val user by homeViewModel.appViewModel.user.collectAsState()
@@ -245,7 +247,10 @@ fun HomeScreen(
                                                 Text(text = "更新")
                                             }
                                         },
-                                        onClick = { /* 处理选项被点击的逻辑 */ }
+                                        onClick = {
+                                            currentScriptInfo = scriptInfo
+                                            newDialog.value = !newDialog.value
+                                        }
                                     )
                                     DropdownMenuItem(
                                         text = {
@@ -337,6 +342,50 @@ fun HomeScreen(
             )
         }
 
+        if (newDialog.value){
+            AlertDialog(
+                onDismissRequest = {
+                    newDialog.value = false
+                },
+                confirmButton = {
+                    OutlinedButton(
+                        enabled = newDialog.value,
+                        onClick = {
+                            currentScriptInfo?.let { scriptInfo->
+                                homeViewModel.deleteScript(scriptInfo);
+                                homeViewModel.appViewModel.downScriptByScriptId(scriptInfo);
+                            }
+                            newDialog.value = false
+                        }
+                    ){
+                        Text(text = "确定")
+                    }
+                },
+                dismissButton = {
+                    OutlinedButton(
+                        enabled = newDialog.value,
+                        onClick = {
+                            newDialog.value = false
+                        }
+                    ){
+                        Text(text = "取消")
+                    }
+                },
+                title = {
+                    Text(
+                        text = "确认操作",
+                        fontWeight = FontWeight.W700,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                },
+                text = {
+                    Text(
+                        text = "更新可能会删除您的设置，您确定要更新吗？",
+                        fontSize = Ui.SIZE_16
+                    )
+                },
+            )
+        }
     }
 }
 

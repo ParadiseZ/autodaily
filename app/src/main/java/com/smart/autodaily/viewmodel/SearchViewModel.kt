@@ -10,17 +10,9 @@ import androidx.paging.cachedIn
 import androidx.paging.map
 import com.smart.autodaily.api.RemoteApi
 import com.smart.autodaily.base.BaseViewModel
-import com.smart.autodaily.constant.MODEL_BIN
-import com.smart.autodaily.constant.MODEL_PARAM
-import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.dataresource.ScriptNetDataSource
-import com.smart.autodaily.data.entity.DownloadState
 import com.smart.autodaily.data.entity.ScriptInfo
-import com.smart.autodaily.data.entity.ScriptSetInfo
-import com.smart.autodaily.data.entity.resp.Response
-import com.smart.autodaily.utils.DownloadManager
 import com.smart.autodaily.utils.PageUtil
-import com.smart.autodaily.utils.deleteFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,9 +21,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import splitties.init.appCtx
-import java.io.File
-import java.util.Date
 
 class SearchViewModel(application: Application)   : BaseViewModel(application = application)  {
     //远程数据
@@ -81,92 +70,5 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
             }
         }
         return updatedNetSearchResult.cachedIn(viewModelScope)
-    }
-
-    /*
-    * 获取本地脚本信息
-    * */
-
-
-    /*
-    * 下载脚本信息，以及脚本设置信息。？img信息、action信息
-    * */
-    fun downScriptByScriptId(scriptInfo : ScriptInfo) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO){
-                downloadModel(scriptInfo)
-                downByScriptId(scriptInfo)
-            }
-        }
-    }
-
-    private suspend fun downloadModel(scriptInfo : ScriptInfo){
-        val externalParamFile = File(appCtx.getExternalFilesDir("") , MODEL_PARAM)
-        deleteFile(externalParamFile)
-        DownloadManager.download(scriptInfo.scriptId, externalParamFile,"param").collect{
-            when (it) {
-                is DownloadState.InProgress -> {
-                }
-                is DownloadState.Success -> {
-                }
-                is DownloadState.Error -> {
-                    deleteFile(externalParamFile)
-                    return@collect
-                }
-            }
-        }
-        val externalBinFile = File(appCtx.getExternalFilesDir("") , MODEL_BIN)
-        deleteFile(externalBinFile)
-        DownloadManager.download(scriptInfo.scriptId, externalBinFile,"bin").collect{
-            when (it) {
-                is DownloadState.InProgress -> {
-                    scriptInfo.process.intValue = it.progress
-                }
-                is DownloadState.Success -> {
-                }
-                is DownloadState.Error -> {
-                    deleteFile(externalBinFile)
-                    scriptInfo.process.intValue = -1
-                }
-            }
-        }
-    }
-
-    private suspend fun downByScriptId(scriptInfo: ScriptInfo) {
-        val result = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptInfo.scriptId)
-        //val actionInfo = RemoteApi.searchDownRetrofit.downloadActionInfoByScriptId(scriptInfo.scriptId)
-        var globalScriptSetResult = Response<List<ScriptSetInfo>>()
-        val localScriptSetGlobal = appDb?.scriptSetInfoDao?.countScriptSetByScriptId(0)
-        if (localScriptSetGlobal == 0) {
-            globalScriptSetResult = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(0)
-        }
-        //val scriptSetDownload = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptId)
-        appDb?.runInTransaction{
-            //scriptInfo
-            scriptInfo.isDownloaded = 1
-            scriptInfo.scriptVersion = scriptInfo.lastVersion
-            scriptInfo.downloadTime = Date().toString()
-            appDb?.scriptInfoDao?.insert(scriptInfo)
-            //ScriptSet 全局设置
-            globalScriptSetResult.data?.let {
-                appDb?.scriptSetInfoDao?.insert(it)
-            }
-            //scriptSetDownload.data?.let {
-                //appDb?.scriptSetInfoDao?.insert(it)
-           // }
-            //ScriptSet 设置
-            result.data?.let {
-                /*it.map{ ssi->
-
-                }*/
-                appDb?.scriptSetInfoDao?.insert(it)
-            }
-            //picInfo 图片信息
-            //actionInfo 动作信息
-            /*actionInfo.data?.let {
-                appDb?.scriptActionInfoDao?.insert(it)
-            }*/
-            scriptInfo.process.intValue = -1
-        }
     }
 }

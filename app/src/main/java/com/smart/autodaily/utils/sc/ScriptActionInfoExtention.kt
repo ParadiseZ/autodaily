@@ -1,10 +1,8 @@
 package com.smart.autodaily.utils.sc
 
 import com.jeremyliao.liveeventbus.LiveEventBus
-import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.Point
 import com.smart.autodaily.data.entity.ScriptActionInfo
-import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.handler.ActionHandler
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ShizukuUtil
@@ -43,40 +41,8 @@ fun ScriptActionInfo.asLongClick(point: Point?= null) : ScriptActionInfo{
     return this
 }
 
-fun ScriptActionInfo.overSet(ssi: ScriptSetInfo, result : Boolean = true, alsoUpdateParent : Boolean = false) : ScriptActionInfo{
-    if (alsoUpdateParent){
-        appDb!!.scriptSetInfoDao.updateParentAndChildResultFlag(setId, result)
-        //更新遍历数据，影响外层while循环[父级ScriptSetInfo]
-        ssi.resultFlag = result
-    }else{
-        appDb!!.scriptSetInfoDao.updateResultFlag(setId, result)
-        //只停止自身，scriptActionList.forEach {}停止自身时直接跳过
-        this.skipFlag =  true
-    }
-    return this
-}
-
-fun ScriptActionInfo.check(setId : Int) : ScriptActionInfo{
-    if( appDb!!.scriptSetInfoDao.getResultFlag(setId)   ){
-        this.skipFlag = false
-    }else{
-        this.skipFlag = true
-    }
-    return this
-}
-
 fun ScriptActionInfo.skip() : ScriptActionInfo{
     this.skipFlag = true
-    return this
-}
-
-fun ScriptActionInfo.overScript(function : ()->Unit) : ScriptActionInfo{
-    function()
-    return this
-}
-
-fun ScriptActionInfo.runStep(sai: ScriptActionInfo) : ScriptActionInfo{
-
     return this
 }
 

@@ -27,8 +27,8 @@ interface ScriptInfoDao {
     @Query("SELECT * FROM Script_Info where  current_status!=2 and checked_flag = 1 and next_run_date <= Date()")
     fun getAllScriptByChecked() : List<ScriptInfo>
 
-    @Query("SELECT script_id,last_version FROM Script_Info where  current_status!=2")
-    fun getIdAndLastVer() : List<ScriptInfoCheckUpdate>
+    @Query("SELECT script_id,script_version FROM Script_Info where  current_status!=2 and last_version is null")
+    fun getIdAndVersion() : List<ScriptInfoCheckUpdate>
 
     @Query("SELECT * FROM Script_Info WHERE script_id = :scriptId and  current_status!=2")
     fun getScriptInfoByScriptId(scriptId : Int) : ScriptInfo
@@ -38,14 +38,12 @@ interface ScriptInfoDao {
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
     fun update( scriptInfo: ScriptInfo )
-    @Query("update script_info set expiration_time=:expirationTime where script_id = :scriptId")
-    fun updateExpirationTimeByScriptId(scriptId : Int, expirationTime : String)
 
     @Delete
     fun delete( scriptInfo: ScriptInfo )
 
-    @Query("update Script_Info set last_version = :lastVer where script_id = :scriptId and  current_status!=2")
-    fun updateLastVerById(scriptId: Int , lastVer : String)
+    @Query("update Script_Info set last_version = :lastVer where script_id = :scriptId and need_app_update = :needAppUpdate and  current_status!=2")
+    fun updateLastVerById(scriptId: Int , lastVer : Int , needAppUpdate : Int)
 
     @Query("select * from Script_Info where current_status!=2")
     fun getLocalScriptAll() : Flow<List<ScriptInfo>>

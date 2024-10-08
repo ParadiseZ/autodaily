@@ -8,11 +8,13 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.smart.autodaily.data.dao.AppInfoDao
 import com.smart.autodaily.data.dao.ScriptActionInfoDao
 import com.smart.autodaily.data.dao.ScriptInfoDao
+import com.smart.autodaily.data.dao.ScriptRunStatusDao
 import com.smart.autodaily.data.dao.ScriptSetInfoDao
 import com.smart.autodaily.data.dao.UserInfoDao
 import com.smart.autodaily.data.entity.AppInfo
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
+import com.smart.autodaily.data.entity.ScriptRunStatus
 import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.data.entity.UserInfo
 import org.intellij.lang.annotations.Language
@@ -27,6 +29,7 @@ var appDb: AppDb ?=null
         ScriptSetInfo::class,
         UserInfo::class,
         ScriptActionInfo::class,
+        ScriptRunStatus::class,
         AppInfo::class],
 /*    autoMigrations = [
         AutoMigration(from = 2, to = 3)
@@ -38,6 +41,7 @@ abstract class AppDb  :  RoomDatabase(){
     abstract val userInfoDao : UserInfoDao
     abstract val scriptActionInfoDao : ScriptActionInfoDao
     abstract val appInfoDao : AppInfoDao
+    abstract val scriptRunStatusDao : ScriptRunStatusDao
     companion object {
         // For Singleton instantiation
 
@@ -74,7 +78,7 @@ abstract class AppDb  :  RoomDatabase(){
         }
 
         private fun initData(db: SupportSQLiteDatabase){
-            @Language("sql")
+            /*@Language("sql")
             val insertScriptSetGlobalSql = """
                 INSERT INTO script_set_info 
                 (script_id, set_id, checked_flag, set_type, set_name, set_desc, set_parent_id, set_level, set_default_value, set_value, set_range, set_step, is_show, result_flag, once_flag) 
@@ -90,7 +94,7 @@ abstract class AppDb  :  RoomDatabase(){
                     (0,9,'true','SLIDER_THIRD','随机点击范围','',-1,1,'5','5','1,10',9,'true','false','false')
                     (0,10,'true','CHECK_BOX','使用gpu推理','',-1,1,'true','true','','','true','false','false')
             """.trimIndent()
-            db.execSQL(insertScriptSetGlobalSql)
+            db.execSQL(insertScriptSetGlobalSql)*/
 
             @Language("sql")
             val insertAppInfo = """

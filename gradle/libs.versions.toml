@@ -26,8 +26,7 @@ tesseract4androidOpenmp = "4.7.0"
 splitties = "3.0.0"
 shizukuApi  = "13.1.5"
 shizukuProvider = "13.1.5"
-appcompat = "1.7.0"
-material = "1.12.0"
+threetenabp = "1.4.7"
 
 
 [libraries]
@@ -70,8 +69,7 @@ splitties-toast-android = { group = "com.louiscad.splitties", name = "splitties-
 splitties-systemservices-android = { group = "com.louiscad.splitties", name = "splitties-systemservices-android", version.ref = "splitties" }
 splitties-appctx-android = { group = "com.louiscad.splitties", name = "splitties-appctx-android", version.ref = "splitties" }
 splitties-alertdialog-appcompat-coroutines-android = { group = "com.louiscad.splitties", name = "splitties-alertdialog-appcompat-coroutines-android", version.ref = "splitties" }
-androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+threetenabp = { module = "com.jakewharton.threetenabp:threetenabp", version.ref = "threetenabp" }
 
 
 

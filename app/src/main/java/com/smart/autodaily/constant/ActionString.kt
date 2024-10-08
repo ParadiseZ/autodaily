@@ -10,5 +10,6 @@ object ActionString {
     const val CHECK = "check"
     const val OVER_SET = "os"
     const val FINISH = "f"
+    const val JUMP = "jump"
     const val STEP = "step"
 }
