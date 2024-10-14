@@ -22,7 +22,7 @@ data class ScriptInfo(
     @ColumnInfo(name = "img_size") @SerializedName("img_size") val imgSize: Int = 576, // 类别数量
 
     @ColumnInfo(name = "checked_flag") var checkedFlag: Boolean = true,     // 是否选中
-    @ColumnInfo(name = "script_version") var scriptVersion: Int, // 脚本版本号
+    @ColumnInfo(name = "script_version") var scriptVersion: Int = 0, // 脚本版本号
     @ColumnInfo(name = "next_run_date") var nextRunDate: String?,   // 下次运行日期
     @ColumnInfo(name = "download_time") var downloadTime: String, // 下载日期
     @ColumnInfo(name = "is_downloaded") var isDownloaded: Int = 0, // 是否已下载

@@ -14,6 +14,7 @@ import com.smart.autodaily.data.dataresource.ScriptNetDataSource
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.utils.PageUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class SearchViewModel(application: Application)   : BaseViewModel(application = application)  {
+    private val refreshRequests = Channel<Unit>(1)
     //远程数据
     private val _remoteScriptList = MutableStateFlow<PagingData<ScriptInfo>>(PagingData.empty())
     val remoteScriptList: StateFlow<PagingData<ScriptInfo>> = _remoteScriptList
@@ -70,5 +72,9 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
             }
         }
         return updatedNetSearchResult.cachedIn(viewModelScope)
+    }
+
+    fun refresh() {
+        refreshRequests.trySend(Unit)
     }
 }

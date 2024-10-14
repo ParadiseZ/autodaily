@@ -205,7 +205,9 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
         appDb?.runInTransaction{
             //scriptInfo
             scriptInfo.isDownloaded = 1
-            scriptInfo.scriptVersion = scriptInfo.lastVersion!!
+            scriptInfo.lastVersion?.let {
+                scriptInfo.scriptVersion = it   //更新（即重新下载）时使用
+            }
             scriptInfo.lastVersion = null //检测更新时使用
             scriptInfo.downloadTime = LocalDateTime.now().toString()
             appDb?.scriptInfoDao?.insert(scriptInfo)

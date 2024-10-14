@@ -21,7 +21,7 @@ data class ScriptSetInfo(
     @ColumnInfo(name = "set_range") @SerializedName("set_range") val setRange: String?,
     @ColumnInfo(name = "set_step") @SerializedName("set_step") val setStep: Int=0,
     @ColumnInfo(name = "flow_id") @SerializedName("flow_id") val flowId: Int?,
-    @ColumnInfo(name = "is_show") @SerializedName("is_show") val isShow: Boolean = true,
+    @ColumnInfo(name = "is_show") @SerializedName("is_show") val isShow: Int = 1,
     @ColumnInfo(name = "result_flag") @SerializedName("result_flag") var resultFlag: Boolean = false,
     @ColumnInfo(name = "add_time") @SerializedName("add_time") val addTime: String?,
     @ColumnInfo(name = "update_time") @SerializedName("update_time") var updateTime: String?,

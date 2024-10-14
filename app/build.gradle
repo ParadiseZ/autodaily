@@ -82,6 +82,7 @@ dependencies {
 
     //导航
     implementation libs.androidx.navigation.compose
+        //下拉刷新使用
     implementation libs.androidx.material.android
     //ViewModel
     implementation libs.androidx.lifecycle.viewmodel.ktx

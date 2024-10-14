@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.smart.autodaily.constant.SettingType
 import com.smart.autodaily.constant.Ui
@@ -49,6 +51,10 @@ fun SliderSecondSettingItem(
                 valueRange = setRange[0].toFloat()..setRange[1].toFloat(),
                 steps = setting.setStep,
                 value = sliderValue,
+                colors = SliderDefaults.colors(
+                    thumbColor = Color.White, // 圆圈的颜色
+                    activeTrackColor = Color(0xFF0079D3)
+                ),
                 onValueChange = {
                 sliderValue = it
                 setting.setValue = it.toString()

@@ -28,7 +28,7 @@ class App : Application(){
     override fun onCreate() {
         super.onCreate()
         //初始化时区
-        AndroidThreeTen.init(this);
+        AndroidThreeTen.init(this)
         Thread.setDefaultUncaughtExceptionHandler(ExceptionHandler(this))
         LiveEventBus.config()
             .lifecycleObserverAlwaysActive(true)
@@ -48,7 +48,7 @@ class App : Application(){
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
         //反射开启
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             Reflection.unseal(base)
         }
     }
