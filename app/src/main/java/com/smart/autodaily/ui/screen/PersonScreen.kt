@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.AccountCircle
@@ -93,7 +94,9 @@ fun PersonScreen(modifier: Modifier,
                 user?.let {
                     Text(text = it.email)
                     Row ( verticalAlignment = Alignment.CenterVertically){
-                        TextCustomFirst( "邀请码："+it.inviteCode)
+                        SelectionContainer {
+                            TextCustomFirst( "邀请码："+it.inviteCode)
+                        }
                         TextButton(onClick = {
                             clipboardManager.setPrimaryClip(ClipData.newPlainText("", it.inviteCode))
                             personViewModel.context.toastOnUi("已复制！")

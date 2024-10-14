@@ -22,6 +22,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.smart.autodaily.constant.BLUE_01
@@ -48,6 +50,11 @@ fun RowScriptInfo(
         modifier = modifier
             .clickable {
                 cardOnClick(scriptInfo)
+            }.drawWithContent  {
+                drawContent()
+                if (scriptInfo.isDownloaded== 1 && scriptInfo.lastVersion!=null){
+                    drawCircle(Color(0xffe7614e), 18.dp.toPx() / 2, center = Offset(drawContext.size.width, 0f))
+                }
             }
     ){
         Row (

@@ -124,7 +124,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
             ShizukuUtil.removeShizuku()
         }
-        windowManager.removeView(floatingView)
+        if (floatingView != null){
+            windowManager.removeView(floatingView)
+        }
     }
 
     fun requestOverlayPermission() {
