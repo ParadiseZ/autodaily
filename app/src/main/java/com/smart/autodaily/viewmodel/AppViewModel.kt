@@ -21,12 +21,11 @@ import com.smart.autodaily.handler.RunScript
 import com.smart.autodaily.utils.DownloadManager
 import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.ShizukuUtil
+import com.smart.autodaily.utils.cancelChildrenJob
 import com.smart.autodaily.utils.deleteFile
+import com.smart.autodaily.utils.runScope
 import com.smart.autodaily.utils.toastOnUi
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,17 +41,12 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     private val _localScriptAll = MutableStateFlow<List<ScriptInfo>>(emptyList())
     val localScriptListAll: StateFlow<List<ScriptInfo>> = _localScriptAll
     //加载本地数据的标志
-    private val _loadDataFlagFlow = MutableStateFlow(false)
-    val loadDataFlagFlow: StateFlow<Boolean> get() = _loadDataFlagFlow
     //本地用户
     private val _user  = MutableStateFlow<UserInfo?>(null)
     val user : StateFlow<UserInfo?> get() = _user
 
     private val _isRunning = MutableStateFlow(0)
     val isRunning : StateFlow<Int> get() = _isRunning
-
-    private val _supervisorJob = SupervisorJob()
-    val appScope = CoroutineScope(Dispatchers.IO + _supervisorJob)
 
     //加载用户
     init {
@@ -101,7 +95,6 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                     _localScriptAll.value = it
                 }
             }
-
         }
     }
 
@@ -116,20 +109,29 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
         }
     }
 
+    fun setIsRunning(state : Int){
+        _isRunning.value = state
+    }
+
     suspend fun runScript(){
+        println("work type："+RunScript.globalSetMap.value[8]?.setValue)
         RunScript.globalSetMap.value[8]?.let {
             when(it.setValue) {
                 WORK_TYPE01 -> {
                     _isRunning.value = 1
                 }
                 WORK_TYPE02 -> {
-                    _isRunning.value = 2//启动服务
-                    RunScript.initScriptData(appDb!!.scriptInfoDao.getAllScriptByChecked())
+                    //_isRunning.value = 2//启动服务
                     ServiceUtil.runUserService(appCtx)
+                    RunScript.initScriptData(appDb!!.scriptInfoDao.getAllScriptByChecked())
                     ServiceUtil.waitShizukuService()
                     if(ShizukuUtil.grant && ShizukuUtil.iUserService != null){
                         _isRunning.value = 1//运行中
                         RunScript.runScriptByAdb()
+                    }else{
+                        _isRunning.value = 0//启动服务失败
+                        appCtx.toastOnUi("请检查shizuku服务！")
+                        return
                     }
                     //(manActivityCtx as MainActivity).requestOverlayPermission()
                 }
@@ -141,9 +143,10 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     }
 
     fun stopRunScript(){
-        _isRunning.value = 0
-        appScope.coroutineContext.cancelChildren()
-        _supervisorJob.cancelChildren()
+        if (_isRunning.value==1){
+            runScope.coroutineContext.cancelChildren()
+            _isRunning.value = 0
+        }
     }
 
     //下载
@@ -158,9 +161,13 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
 
     //下载模型
     private suspend fun downloadModel(scriptInfo : ScriptInfo){
-        val externalParamFile = File(appCtx.getExternalFilesDir("") , MODEL_PARAM)
+        val modelFilePath = File(appCtx.getExternalFilesDir(""), scriptInfo.modelPath)
+        val externalParamFile = File(modelFilePath, MODEL_PARAM)
         //删除旧文件
         deleteFile(externalParamFile)
+        if (!modelFilePath.exists()){
+            modelFilePath.mkdirs()
+        }
         DownloadManager.download(scriptInfo.scriptId, externalParamFile,"param").collect{
             when (it) {
                 is DownloadState.InProgress -> {
@@ -173,7 +180,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                 }
             }
         }
-        val externalBinFile = File(appCtx.getExternalFilesDir("") , MODEL_BIN)
+        val externalBinFile = File(modelFilePath , MODEL_BIN)
         //删除旧文件
         deleteFile(externalBinFile)
         DownloadManager.download(scriptInfo.scriptId, externalBinFile,"bin").collect{
@@ -195,12 +202,13 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     //下载脚本数据
     private suspend fun downByScriptId(scriptInfo: ScriptInfo) {
         val result = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptInfo.scriptId)
-        //val actionInfo = RemoteApi.searchDownRetrofit.downloadActionInfoByScriptId(scriptInfo.scriptId)
+        val scriptAction = RemoteApi.searchDownRetrofit.downloadActionInfoByScriptId(scriptInfo.scriptId)
         var globalScriptSetResult = Response<List<ScriptSetInfo>>()
         val localScriptSetGlobal = appDb?.scriptSetInfoDao?.countScriptSetByScriptId(0)
         if (localScriptSetGlobal == 0) {
             globalScriptSetResult = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(0)
         }
+
         //val scriptSetDownload = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptId)
         appDb?.runInTransaction{
             //scriptInfo
@@ -227,16 +235,15 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
             }
             //picInfo 图片信息
             //actionInfo 动作信息
-            /*actionInfo.data?.let {
+            scriptAction.data?.let {
                 appDb?.scriptActionInfoDao?.insert(it)
-            }*/
+            }
             scriptInfo.process.intValue = -1
         }
     }
 
     override fun onCleared() {
         super.onCleared()
-        appScope.cancel()
-        _supervisorJob.cancel()
+        cancelChildrenJob()
     }
 }

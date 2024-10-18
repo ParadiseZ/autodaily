@@ -10,4 +10,8 @@ interface AppInfoDao {
 
     @Query("update APP_INFO set value = :value where id =:id")
     fun updateValueById(id: Int, value : Boolean)
+
+    //未使用
+    @Query("select * from APP_INFO where id =:id")
+    fun getInfoByInt(id: Int) : Boolean
 }

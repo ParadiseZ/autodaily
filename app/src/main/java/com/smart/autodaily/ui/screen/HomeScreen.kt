@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
-import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -12,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
@@ -19,7 +19,6 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
@@ -32,33 +31,36 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.core.content.ContextCompat.startActivity
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.smart.autodaily.constant.AppBarTitle
-import com.smart.autodaily.constant.NavigationItem
 import com.smart.autodaily.constant.ResponseCode
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.ui.conponent.RowScriptInfo
-import com.smart.autodaily.ui.conponent.navSingleTopTo
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.ToastUtil
 import com.smart.autodaily.utils.isLogin
+import com.smart.autodaily.utils.runScope
 import com.smart.autodaily.utils.toastOnUi
 import com.smart.autodaily.viewmodel.HomeViewModel
 import com.smart.autodaily.viewmodel.mediaProjectionServiceStartFlag
@@ -66,9 +68,10 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import splitties.init.appCtx
+import java.io.InterruptedIOException
 
 @OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint("StateFlowValueCalledInComposition")
+@SuppressLint("StateFlowValueCalledInComposition", "SuspiciousIndentation")
 
 @Composable
 fun HomeScreen(
@@ -84,11 +87,17 @@ fun HomeScreen(
     val localScriptList by homeViewModel.appViewModel.localScriptListAll.collectAsState()
     val user by homeViewModel.appViewModel.user.collectAsState()
     var currentScriptInfo : ScriptInfo? = null
-    val manActivityCtx = LocalContext.current
-    //运行状态
+    //script运行状态
     val runStatus by homeViewModel.appViewModel.isRunning.collectAsState(initial = 0)
+    //提示信息设置
+    val snackbarHostState = remember { SnackbarHostState() }
+    //设置详细展开、提示信息设置公用
+    val scope = rememberCoroutineScope()
     Scaffold (
         modifier = modifier,
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         topBar = {
             TopAppBar(
                 title = {
@@ -99,90 +108,48 @@ fun HomeScreen(
         //脚本页面运行按钮
         floatingActionButtonPosition = FabPosition.End,
         floatingActionButton = {
-            if (runStatus !=2 ){
-                FloatingActionButton(
-                    onClick = {
-                        /*if(Build.VERSION.SDK_INT <=  Build.VERSION_CODES.S_V2){
-                            accessibilityAndMediaProjectionRequest()
-                        }
-                        if (Build.VERSION.SDK_INT >=  Build.VERSION_CODES.TIRAMISU){
-                            ServiceUtil.runUserService(homeViewModel.context)
-                            if(ShizukuUtil.grant && ShizukuUtil.iUserService !=null){
-                                homeViewModel.viewModelScope.launch {
-                                    RunScript.initScriptData(appDb!!.scriptInfoDao.getAllScriptByChecked())
-                                    RunScript.runScript()
-                                    *//*for (i in 1..3){
-                                    //RunScript.runScript(i)
-                                    RunScript.runScript(1)
-                                    delay(2000)
-                                }*//*
-                            }
-                        }
-                    }*/
-                        homeViewModel.appViewModel.appScope.launch {
-                            if (runStatus==1){
+            when(runStatus){
+                1->{
+                    FloatingActionButton (
+                        shape = MaterialTheme.shapes.medium.copy(CornerSize(percent = 50)),
+                        onClick = {
+                            homeViewModel.viewModelScope.launch {
                                 homeViewModel.appViewModel.stopRunScript()
-                            }else if(runStatus == 0){
-                                isLogin(homeViewModel.context, user);
-                                if(scriptCheckResHand(res = homeViewModel.runScriptCheck())){
-                                    homeViewModel.appViewModel.runScript()
-                                }
                             }
                         }
-
-
-
-
-                        //}
-
-                        /*val clickResult =homeViewModel.runButtonClick()
-                            when(clickResult){
-                                RunButtonClickResult.NOT_LOGIN->{
-                                    startActivity(homeViewModel.context,
-                                        Intent(homeViewModel.context, LoginActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                                        null
-                                    )
-                                }
-                                RunButtonClickResult.LOGIN_SUCCESS->{
-                                    val clickResult = homeViewModel.runScriptCheck()
-                                    if (clickResult.code!=200){
-                                        ToastUtil.show(homeViewModel.context, clickResult.message.toString())
-                                    }else {
-                                        if(!ServiceUtil.isAccessibilityServiceEnabled(homeViewModel.context)){
-                                            ToastUtil.show(homeViewModel.context, "请先开启无障碍服务!")
-                                            startActivity(
-                                                homeViewModel.context,
-                                                Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                                                null
-                                            )
-                                        }
-                                        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
-                                            homeViewModel.appViewModel.runScript()
-                                        }else{
-                                            if(ScreenCaptureUtil.mps !=null){
-                                                homeViewModel.appViewModel.runScript()
-                                            } else {//未开启则引导开启
-                                                (ScreenCaptureUtil.mediaProjectionDataMap["startActivityForResultLauncher"] as ActivityResultLauncher<Intent>).launch(
-                                                    ScreenCaptureUtil.mediaProjectionDataMap["mediaProjectionIntent"] as Intent
-                                                )
-                                                //ScreenCaptureUtil.mediaProjectionDataMap["resolver"]=homeViewModel.context.contentResolver//用来测试图片保存
-                                            }
-                                        }
-                                    }
-                                }
-                            }*/
-
-
-                    }
-                ) {
-                    if (runStatus == 1){
-                        Icon(Icons.Filled.Close, contentDescription = "停止运行")
-                    }else if (runStatus ==0 ){
-                        Icon(Icons.Filled.PlayArrow, contentDescription = "开始运行")
+                    ) {
+                        Icon(Icons.Filled.Close, contentDescription = "stop")
                     }
                 }
+                0->{
+                    FloatingActionButton (
+                        shape = MaterialTheme.shapes.medium.copy(CornerSize(percent = 50)),
+                        onClick = {
+                            runScope.launch {
+                                homeViewModel.appViewModel.setIsRunning(2)
+                                if(isLogin(homeViewModel.context, user)){
+                                    val res : Response<String>
+                                    try {
+                                        res =  homeViewModel.runScriptCheck()
+                                    }catch(e : InterruptedIOException){
+                                        appCtx.toastOnUi("网络连接超时！")
+                                        homeViewModel.appViewModel.setIsRunning(0)
+                                        return@launch
+                                    }
+                                    if(scriptCheckResHand(res =res)){
+                                        homeViewModel.appViewModel.runScript()
+                                    }
+                                }else{
+                                    homeViewModel.appViewModel.setIsRunning(0)
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Filled.PlayArrow, contentDescription = "start")
+                    }
+                }
+                else->{}
             }
-
         },
     ){
         LazyColumn(
@@ -233,8 +200,13 @@ fun HomeScreen(
                                             }
                                         },
                                         onClick = {
+                                            dropdownIsOpen = false
                                             currentScriptInfo = scriptInfo
-                                            nhc.navSingleTopTo(NavigationItem.PERSON.route)
+                                            appCtx.startActivity(
+                                                Intent("android.intent.action.SCRIPT SET DETAIL")
+                                                    .putExtra("CUR_SCRIPT_ID", scriptInfo.scriptId)
+                                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                            )
                                         }
                                     )
                                     DropdownMenuItem(
@@ -249,20 +221,10 @@ fun HomeScreen(
                                         },
                                         onClick = {
                                             currentScriptInfo = scriptInfo
+                                            dropdownIsOpen = false
+                                            homeViewModel.appViewModel.stopRunScript()
                                             newDialog.value = !newDialog.value
                                         }
-                                    )
-                                    DropdownMenuItem(
-                                        text = {
-                                            Row {
-                                                Icon(
-                                                    imageVector = Icons.Outlined.Share,
-                                                    contentDescription = null
-                                                )
-                                                Text(text = "分享")
-                                            }
-                                        },
-                                        onClick = { /* 处理选项被点击的逻辑 */ }
                                     )
                                     DropdownMenuItem(
                                         text = {
@@ -276,6 +238,8 @@ fun HomeScreen(
                                         },
                                         onClick = {
                                             currentScriptInfo = scriptInfo
+                                            dropdownIsOpen = false
+                                            homeViewModel.appViewModel.stopRunScript()
                                             openDialog.value = !openDialog.value
                                         }
                                     )
@@ -303,21 +267,23 @@ fun HomeScreen(
                     openDialog.value = false
                 },
                 confirmButton = {
-                    OutlinedButton(
+                    TextButton(
                         enabled = openDialog.value,
                         onClick = {
                             currentScriptInfo?.let { scriptInfo->
                                 homeViewModel.deleteScript(scriptInfo)
                             }
                             openDialog.value = false
-                            Toast.makeText(homeViewModel.context, "删除成功！", Toast.LENGTH_SHORT).show()
+                            scope.launch {
+                                snackbarHostState.showSnackbar("删除成功！")
+                            }
                         }
                     ){
                         Text(text = "确定")
                     }
                 },
                 dismissButton = {
-                    OutlinedButton(
+                    TextButton(
                         enabled = openDialog.value,
                         onClick = {
                             openDialog.value = false
@@ -352,8 +318,8 @@ fun HomeScreen(
                         enabled = newDialog.value,
                         onClick = {
                             currentScriptInfo?.let { scriptInfo->
-                                homeViewModel.deleteScript(scriptInfo);
-                                homeViewModel.appViewModel.downScriptByScriptId(scriptInfo);
+                                homeViewModel.deleteScript(scriptInfo)
+                                homeViewModel.appViewModel.downScriptByScriptId(scriptInfo)
                             }
                             newDialog.value = false
                         }

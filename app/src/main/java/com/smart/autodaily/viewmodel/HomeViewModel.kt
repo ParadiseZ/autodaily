@@ -11,11 +11,13 @@ import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.request.Request
 import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.utils.deleteFile
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import splitties.init.appCtx
 import java.io.File
 
 class HomeViewModel(application: Application) : BaseViewModel(application = application) {
+    private val updateScriptSetReq =  Channel<Unit>(1)
     init {
         viewModelScope.launch {
             //checkUpdateAll(true)
@@ -29,8 +31,8 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
                     appDb!!.scriptInfoDao.delete(sc)
                     appDb!!.scriptSetInfoDao.deleteScriptSetInfoByScriptId(sc.scriptId)
                     appDb!!.scriptActionInfoDao.deleteByScriptId(sc.scriptId)
-                    val externalParamFile = File(appCtx.getExternalFilesDir("") , MODEL_PARAM)
-                    val externalBinFile = File(appCtx.getExternalFilesDir("") , MODEL_BIN)
+                    val externalParamFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_PARAM)
+                    val externalBinFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_BIN)
                     deleteFile(externalBinFile)
                     deleteFile(externalParamFile)
                 }
@@ -51,7 +53,6 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
             return Response.error("未选择脚本")
         }
         val request = Request(appViewModel.user.value, checkedScriptNum)
-        val checkResult = RemoteApi.runRetrofit.runCheck(request)
-        return checkResult
+        return RemoteApi.runRetrofit.runCheck(request)
     }
 }

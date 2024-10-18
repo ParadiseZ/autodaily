@@ -17,7 +17,6 @@ set(ncnn_DIR ${CMAKE_SOURCE_DIR}/ncnn-20240410-android-vulkan/${ANDROID_ABI}/lib
 find_package(ncnn REQUIRED)
 #设置opencv
 set(OpenCV_DIR ${CMAKE_SOURCE_DIR}/opencv-mobile-4.10.0-android/sdk/native/jni)
-#set(OpenCV_DIR ${CMAKE_SOURCE_DIR}/opencv-mobile-3.4.20-android/sdk/native/jni)
 find_package(OpenCV REQUIRED core imgproc)
 
 # Creates and names a library, sets it as either STATIC

@@ -6,25 +6,25 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import android.os.Process
+import android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE
 import com.jakewharton.threetenabp.AndroidThreeTen
 import com.jeremyliao.liveeventbus.LiveEventBus
 import com.smart.autodaily.config.AppConfig.channelIdDownload
 import com.smart.autodaily.data.AppDb
 import com.smart.autodaily.handler.ExceptionHandler
 import com.smart.autodaily.handler.RunScript
-import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.UpdateUtil
-import kotlinx.coroutines.DelicateCoroutinesApi
+import com.smart.autodaily.utils.partScope
+import com.smart.autodaily.utils.updateScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
 import me.weishu.reflection.Reflection
-import splitties.init.appCtx
 import splitties.systemservices.notificationManager
 
 
 class App : Application(){
-    @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate() {
         super.onCreate()
         //初始化时区
@@ -37,11 +37,16 @@ class App : Application(){
             //.enableLogger(BuildConfig.DEBUG)
             //.setLogger(EventLogger())
         AppDb.getInstance(applicationContext)
-        GlobalScope.launch(Dispatchers.IO){
+        Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE)
+
+        partScope.launch(Dispatchers.IO){
             //初始化全局设置
             RunScript.initGlobalSet()
-            UpdateUtil.checkScriptUpdate()
-            ServiceUtil.runUserService(appCtx)
+            try {
+                UpdateUtil.checkScriptUpdate()
+            }catch (e : Exception){
+                updateScope.coroutineContext.cancelChildren()
+            }
         }
     }
 

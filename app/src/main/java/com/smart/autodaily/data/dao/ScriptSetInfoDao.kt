@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.smart.autodaily.data.entity.ScriptSetInfo
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ScriptSetInfoDao {
@@ -41,8 +42,12 @@ interface ScriptSetInfoDao {
     @Query("select * from script_set_info where script_id=:scriptId and flow_id=0")
     fun getScriptGlobalSet(scriptId: Int) :List<ScriptSetInfo>
 
-    @Query("select * from script_set_info where script_id=:scriptId and checked_flag=1 and is_max_level = :isMaxLevel")
+    //去掉为0的，全局设置的
+    @Query("select * from script_set_info where script_id=:scriptId and checked_flag=1 and is_max_level = :isMaxLevel and flow_parent_id not like '0%'")
     fun getScriptSetByScriptId(scriptId: Int, isMaxLevel : Int) :MutableList<ScriptSetInfo>
+    //去掉隐藏的，这里提供给用户查看
+    @Query("select * from script_set_info where script_id=:scriptId and is_show= 1 order by sort")
+    fun getScriptSetByScriptId(scriptId: Int) : Flow<List<ScriptSetInfo>>
 
     @Query("select count(1) from script_set_info where script_id=:scriptId and checked_flag=1 and flow_id in (:flowIds)")
     fun countCheckedNumByParentFlowId(scriptId: Int ,flowIds : List<Int>) : Int

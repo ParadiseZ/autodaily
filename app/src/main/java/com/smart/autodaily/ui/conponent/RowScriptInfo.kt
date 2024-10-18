@@ -14,16 +14,12 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.smart.autodaily.constant.BLUE_01
@@ -39,22 +35,16 @@ fun RowScriptInfo(
     checkBox: @Composable  () -> Unit = {},
     iconInfo: @Composable  () -> Unit = {},
     scriptInfo : ScriptInfo,
-    processShow : MutableState<Boolean> = mutableStateOf(false),
-    downloaded : MutableIntState = mutableIntStateOf(0)
+    processShow : MutableState<Boolean> = mutableStateOf(false)
 ) {
     val process by remember{
         scriptInfo.process
     }
     Spacer(modifier = Modifier.height(8.dp))
     Card(
-        modifier = modifier
+        modifier = modifier.padding(start = 8.dp, end = 8.dp)
             .clickable {
                 cardOnClick(scriptInfo)
-            }.drawWithContent  {
-                drawContent()
-                if (scriptInfo.isDownloaded== 1 && scriptInfo.lastVersion!=null){
-                    drawCircle(Color(0xffe7614e), 18.dp.toPx() / 2, center = Offset(drawContext.size.width, 0f))
-                }
             }
     ){
         Row (
@@ -74,7 +64,17 @@ fun RowScriptInfo(
                 checkBox()
                 //脚本名称信息等
                 Column{
-                    Text(text = scriptInfo.scriptName, fontSize = Ui.SIZE_16 )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = scriptInfo.scriptName, fontSize = Ui.SIZE_16 )
+                        Spacer(modifier = Modifier.width( Ui.SPACE_5 ))
+                        if (scriptInfo.currentStatus==0){
+                            Text(text = "Beta", fontSize = Ui.SIZE_10 , color = Color.Red)
+                            Spacer(modifier = Modifier.width( Ui.SPACE_5 ))
+                        }
+                        scriptInfo.lastVersion?.takeIf { scriptInfo.scriptVersion in 1..<it }?.let {
+                            Text(text = "New", fontSize = Ui.SIZE_10 , color = Color.Green)
+                        }
+                    }
                     Spacer(modifier = Modifier.height( Ui.SPACE_5 ))
                     Row{
                         if(scriptInfo.isDownloaded == 1){
@@ -85,6 +85,7 @@ fun RowScriptInfo(
                             }
                         }else{
                             Text(text = "版本："+scriptInfo.lastVersion, fontSize = Ui.SIZE_10 )
+                            Spacer(modifier = Modifier.width( Ui.SPACE_5 ))
                         }
                     }
                 }
@@ -114,7 +115,7 @@ fun RowScriptInfo(
             }
         }
         if ( process == -1 ){
-            downloaded.intValue = 1
+            scriptInfo.downState.intValue =1
         }
     }
 }

@@ -111,6 +111,7 @@ fun SettingScreen(
                                     SettingType.SLIDER_SECOND -> SliderSecondSettingItem(setting,onSliderValueChange = {  settingViewModel.updateGlobalSetting(setting)  })
                                     SettingType.TITLE ->TitleSettingItem(setting.setName)
                                     SettingType.SLIDER_THIRD  ->  SliderSettingItem(setting,onSliderValueChange = {  settingViewModel.updateGlobalSetting(setting)  })
+                                    SettingType.DROPDOWN_MENU -> {}
                                 }
                             }
                         }
@@ -237,7 +238,8 @@ fun RowSwitchPermission(
     onSwitchChange: (Boolean) -> Unit
 ) {
     Row(
-        modifier = Modifier.padding(horizontal = Ui.SPACE_8,vertical = Ui.SPACE_4)
+        modifier = Modifier
+            .padding(horizontal = Ui.SPACE_8, vertical = Ui.SPACE_4)
             .clickable {
                 onSwitchChange(!isSwitchOpen.value)
             },
@@ -259,7 +261,8 @@ fun RowIconButtonPermission(
     iconButtonOnClick: () -> Unit,
 ){
     Row(
-        modifier = Modifier.padding(horizontal = Ui.SPACE_8,vertical = Ui.SPACE_4)
+        modifier = Modifier
+            .padding(horizontal = Ui.SPACE_8, vertical = Ui.SPACE_4)
             .clickable { iconButtonOnClick() },
         verticalAlignment = Alignment.CenterVertically
     ){

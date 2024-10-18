@@ -21,10 +21,16 @@
 #if __ARM_NEON
 #include <arm_neon.h>
 #endif // __ARM_NEON
+/*#include <jni.h>
+#include <cstdio>
+ #include <unistd.h>
+ */
+#include <fcntl.h>
 
-
-static Yolo* g_yolo = 0;
+static Yolo* g_yolo = nullptr;
 static ncnn::Mutex lock;
+static FILE * paramFile = nullptr;
+static FILE * modelFile = nullptr;
 
 #define LOGD(...) ((void)__android_log_print(ANDROID_LOG_DEBUG, "ncnn", __VA_ARGS__))
 
@@ -143,8 +149,53 @@ extern "C" {
         return JNI_TRUE;
     }
 
-    JNIEXPORT jobjectArray JNICALL
-    Java_com_smart_autodaily_navpkg_AutoDaily_detect
+    JNIEXPORT jboolean JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_loadModelSec(JNIEnv* env, jobject thiz,
+                                                                                      jstring paramPath, jstring modelPath, jint targetSize, jboolean use_gpu)
+    {
+        // Get the actual characters of the string
+        const char* param_str = env -> GetStringUTFChars(paramPath,nullptr);
+        const char* bin_str = env -> GetStringUTFChars(modelPath,nullptr);
+
+        paramFile = fdopen(open(param_str, O_RDONLY), "r");
+        modelFile = fdopen(open(bin_str, O_RDONLY), "r");
+
+        if (paramFile == nullptr || modelFile == nullptr) {
+            fclose(paramFile);
+            fclose(modelFile);
+            env -> ReleaseStringUTFChars(paramPath, param_str);
+            env -> ReleaseStringUTFChars(modelPath, bin_str);
+            return JNI_FALSE;
+        }
+        const int target_sizes[] = {targetSize};
+        /*const float mean_vals[][3] ={
+                {103.53f, 116.28f, 123.675f},
+        };*/
+        const float norm_vals[][3] ={
+                { 1 / 255.f, 1 / 255.f, 1 / 255.f },
+        };
+        int target_size = target_sizes[0];
+        // reload
+        {
+            ncnn::MutexLockGuard g(lock);
+            if (!g_yolo)
+                g_yolo = new Yolo;
+            if (ncnn::get_gpu_count() == 0)
+            {
+                g_yolo->load(paramFile, modelFile, target_size , norm_vals[0], false);
+            }
+            else
+            {
+                g_yolo->load(paramFile, modelFile, target_size , norm_vals[0], use_gpu);
+            }
+        }
+        fclose(paramFile);
+        fclose(modelFile);
+        env -> ReleaseStringUTFChars(paramPath, param_str);
+        env -> ReleaseStringUTFChars(modelPath, bin_str);
+        return JNI_TRUE;
+    }
+
+    JNIEXPORT jobjectArray JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_detect
             (JNIEnv *env, jobject thiz, jobject imageData, jint numClasses,
              jfloat threshold, jfloat nmsThreshold) {
         // 1. 从Bitmap转换为cv::Mat
@@ -161,8 +212,7 @@ extern "C" {
         return changeDetectResultToJavaArray(env, objects);
     }
 
-JNIEXPORT jobjectArray JNICALL
-Java_com_smart_autodaily_navpkg_AutoDaily_detectAndDraw
+    JNIEXPORT jobjectArray JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_detectAndDraw
         (JNIEnv *env, jobject thiz, jobject imageData, jint numClasses,
          jfloat threshold, jfloat nmsThreshold, jobject drawBitMap) {
         cv::Mat img =  bitmapToMat(env, imageData);

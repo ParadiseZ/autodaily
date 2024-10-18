@@ -1,12 +1,16 @@
 package com.smart.autodaily.handler
 
+import com.smart.autodaily.command.AdbBack
 import com.smart.autodaily.command.AdbClick
+import com.smart.autodaily.command.AdbPartClick
 import com.smart.autodaily.command.CAPTURE
 import com.smart.autodaily.command.Return
 import com.smart.autodaily.command.START
 import com.smart.autodaily.command.Skip
 import com.smart.autodaily.command.Sleep
 import com.smart.autodaily.constant.ActionString
+import com.smart.autodaily.constant.MODEL_BIN
+import com.smart.autodaily.constant.MODEL_PARAM
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.DetectResult
 import com.smart.autodaily.data.entity.Point
@@ -20,14 +24,16 @@ import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.debug
 import com.smart.autodaily.utils.isBetweenHour
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import com.smart.autodaily.utils.partScope
+import com.smart.autodaily.utils.runScope
+import com.smart.autodaily.utils.toastOnUi
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalDate
+import splitties.init.appCtx
 
 
 object  RunScript {
@@ -36,8 +42,6 @@ object  RunScript {
 
     private val _globalSetMap = MutableStateFlow<Map<Int, ScriptSetInfo>>(emptyMap())
     val globalSetMap : StateFlow<Map<Int, ScriptSetInfo>> get() = _globalSetMap
-
-    private val partScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
 
     //val scriptCheckedList : StateFlow<List<ScriptInfo>> = _scriptCheckedList
@@ -56,28 +60,33 @@ object  RunScript {
 
     //shell运行
     suspend fun runScriptByAdb(){
-        val intervalTime = _globalSetMap.value[3]?.setValue?.toInt()?.times(1000)?.toLong()?:2000
-        val useGpu = _globalSetMap.value[10]?.setValue?.toBoolean()?:true
+        val intervalTime = _globalSetMap.value[3]?.setValue?.toFloat()?.times(1000)?.toLong()?:2000
+        val useGpu = _globalSetMap.value[10]?.setValue?.toBoolean()?:false
         //println("开始运行${_scriptCheckedList.value.size}")
+        println("select num："+_scriptCheckedList.value.size)
         _scriptCheckedList.value.forEach scriptForEach@{ si->
             if(si.currentRunNum < si.runsMaxNum){
                 //启动app
                 try {
                     partScope.launch {
+                        println("start APP")
                         ShizukuUtil.iUserService?.execLine(START +si.packageName)
                     }
-                    //读取模型
-                    ModelUtil.reloadModel(si.modelPath+"/model.ncnn", si.imgSize , useGpu)
+                    println("load model")
+                    //ModelUtil.reloadModel(si.modelPath+"/model.ncnn", si.imgSize, useGpu)
+                    appCtx.getExternalFilesDir("")?.let {
+                        //读取模型
+                        ModelUtil.reloadModelSec(
+                            it.path+"/"+si.modelPath+"/"+ MODEL_PARAM,
+                            it.path+"/"+si.modelPath+"/"+ MODEL_BIN,
+                            si.imgSize , useGpu
+                        )
+                    }
                 }catch (e: Exception){
-                    println("app启动失败！")
-                    //appCtx.toastOnUi("app启动失败！")
-                    //return@scriptForEach
+                    println("start app failed")
+                    appCtx.toastOnUi("app启动失败！")
+                    return
                 }
-                //获取屏幕宽高
-                //ScreenCaptureUtil.setDisplayMetrics(appCtx)
-                //println("DisplayMetrics:${ScreenCaptureUtil.displayMetrics?.heightPixels}}")
-                //val scriptGlobalSet = appDb!!.scriptSetInfoDao.getScriptGlobalSet(si.scriptId)
-                ScreenCaptureUtil.getDisplayMetrics()
                 //最小子项
                 val maxSet = appDb!!.scriptSetInfoDao.getScriptSetByScriptId(si.scriptId, 1)
                 //最小子项的上级or项
@@ -145,12 +154,16 @@ object  RunScript {
                         }
                         scriptActionArrayList.add(res)
                     }
-                    val loopRes = loopDo(scriptActionArrayList, set, si.classesNum, jumpData , intervalTime)
-                    when(loopRes){
-                        "setForEach"->return@setForEach
-                        "capException" -> println("capException")
-                        //无匹配标签，尝试在返回操作集中寻找
-                        "NO_MATCH_LABELS" ->  loopDo(backActionArrayList, set, si.classesNum, jumpData , intervalTime)
+                    run LoopDo@{
+                        when(loopDo(scriptActionArrayList, set, si.classesNum, jumpData , intervalTime)){
+                            "setForEach"->return@setForEach
+                            "capException" -> println("capException")
+                            //无匹配标签，尝试在返回操作集中寻找
+                            "NO_MATCH_LABELS" ->  {
+                                loopDo(backActionArrayList, set, si.classesNum, jumpData , intervalTime)
+                                return@LoopDo
+                            }
+                        }
                     }
                 }//set for each
             }else{
@@ -167,15 +180,8 @@ object  RunScript {
             run  capLoop@{
                 val capTime = System.currentTimeMillis()
                 val captureBitmap = ShizukuUtil.iUserService?.execCap(CAPTURE)
-                //val drawResult = captureBitmap?.copy(Bitmap.Config.ARGB_8888, true)
                 if (captureBitmap != null) {
                     val detectRes = ModelUtil.model.detect(captureBitmap, classNum)
-                    /*val detectRes = ModelUtil.model.detectAndDraw(captureBitmap,3,drawMap = drawResult)
-                    println("captureBitmap:${captureBitmap.width},detectRes:${detectRes.size}")
-                    for (i in detectRes.indices){
-                        detectRectFList.add(detectRes[i].rect)
-                        println("lab："+detectRes[i].label + ",prob："+detectRes[i].prob + ",rect："+detectRes[i].rect + ",detect："+detectRes[i])
-                    }*/
                     if (detectRes.isNotEmpty()) {
                         val detectLabels = detectRes.map { it.label }.toSet().sortedBy {
                             it
@@ -212,6 +218,17 @@ object  RunScript {
                                                 }
                                             }
                                         }
+                                        is AdbPartClick ->{
+                                            setClickPartPoints(sai,cmd,detectRes)
+                                            if (sai.executeMax > 1) {
+                                                sai.executeCur += 1
+                                                if (sai.executeCur >= sai.executeMax) {
+                                                    sai.executeCur = 0
+                                                    sai.skipFlag = true
+                                                }
+                                            }
+                                            cmd.exec(sai)
+                                        }
 
                                         is AdbClick -> {
                                             setPoints(sai, detectRes, detectLabels.size < detectRes.size)
@@ -224,7 +241,6 @@ object  RunScript {
                                             }
                                             cmd.exec(sai)
                                         }
-
                                         else -> {
                                             cmd.exec(sai)
                                         }
@@ -294,52 +310,86 @@ object  RunScript {
                     sai.point = Point(clickRes.xCenter + it.toFloat(), clickRes.yCenter + it.toFloat())
                 }
             }
-            println("point = ${sai.point}")
         }
     }
 
-    //操作映射为函数
-    private fun initActionFun(scriptActionInfo: ScriptActionInfo){
-        scriptActionInfo.actionString.split(";").forEach {  action->
-            //debug("action = ${action}")
-            when(action){
-                ActionString.CLICK-> {
-                    if (scriptActionInfo.clickLabelPosition == 5){
-                        val point =Point((ScreenCaptureUtil.displayMetrics!!.widthPixels/2).toFloat(),(ScreenCaptureUtil.displayMetrics!!.heightPixels/2).toFloat())
-                        scriptActionInfo.command.add (AdbClick(point) )
-                    }else{
-                        scriptActionInfo.command.add (AdbClick())
-                    }
+    private fun setClickPartPoints(sai: ScriptActionInfo,adbPart : AdbPartClick, detectRes: Array<DetectResult>){
+        val clickRes = detectRes.firstOrNull { it.label == sai.clickLabelIdx }
+        globalSetMap.value[9]?.setValue?.let {
+            if (clickRes != null){
+                if (adbPart.type=="x"){
+                    sai.point = Point(clickRes.rect.x+clickRes.rect.width/adbPart.part/2 * (2*adbPart.idx -1)+ it.toFloat(), clickRes.yCenter + it.toFloat())
+                }else{
+                    sai.point = Point(clickRes.xCenter + it.toFloat(), clickRes.rect.y+clickRes.rect.height/adbPart.part/2 * (2*adbPart.idx -1)+ it.toFloat())
                 }
-                ActionString.FINISH ->{
-                    scriptActionInfo.command.add (Return(ActionString.FINISH))
-                }
-                ActionString.SKIP ->{
-                    scriptActionInfo.command.add(Skip())
-                }
-                ActionString.SLEEP -> {
-                    scriptActionInfo.command.add(Sleep())
-                }
-                else ->{
-                    when{
-                        action.startsWith(  ActionString.SLEEP  ) -> {
-                            val sleepTime = action.substring(   ActionString.SLEEP.length+1, action.length-1   ).toLong()
-                            scriptActionInfo.command.add(Sleep(sleepTime))
-                        }
-                    }
-                }
-                /*action.startsWith(ActionString.STEP).toString() -> {
-                    val setId = action.substring(ActionString.STEP.length, action.length-1).toInt()
-                    for(element in scriptActionList) {
-                        if (element.setId == setId) {
-                            println("使setId为$setId 停止")
-                            break
-                        }
-                    }
-                }*/
             }
         }
     }
+    //操作映射为函数
+    private fun initActionFun(scriptActionInfo: ScriptActionInfo){
+        try {
+            scriptActionInfo.actionString.split(";").forEach {  action->
+                //debug("action = ${action}")
+                when(action){
+                    ActionString.CLICK-> {
+                        if (scriptActionInfo.clickLabelPosition == 5){
+                            val displayMetrics = ScreenCaptureUtil.getDisplayMetrics(appCtx)
+                            val point =Point((displayMetrics.widthPixels/2).toFloat(),(displayMetrics.heightPixels/2).toFloat())
+                            scriptActionInfo.command.add (AdbClick(point) )
+                        }else{
+                            scriptActionInfo.command.add (AdbClick())
+                        }
+                    }
+                    ActionString.FINISH ->{
+                        scriptActionInfo.command.add (Return(ActionString.FINISH))
+                    }
+                    ActionString.SKIP ->{
+                        scriptActionInfo.command.add(Skip())
+                    }
+                    ActionString.SLEEP -> {
+                        scriptActionInfo.command.add(Sleep())
+                    }
+                    ActionString.BACK ->{
+                        scriptActionInfo.command.add(AdbBack())
+                    }
+                    else ->{
+                        when{
+                            action.startsWith(  ActionString.SLEEP  ) -> {
+                                val sleepTime = action.substring(   ActionString.SLEEP.length+1, action.length-1   ).toLong()
+                                scriptActionInfo.command.add(Sleep(sleepTime))
+                            }
+                            action.startsWith( ActionString.CLICK_PART ) ->{
+                                val type = if(action.contains("x")){"x"}else{"y"}
+                                val lastIdx =  action.indexOfLast { it==',' }
+                                val part = action.substring(   ActionString.CLICK_PART.length+3, lastIdx ).toInt()
+                                val idx = action.substring(action.indexOfLast { it==',' }+1, action.length-1 ).toInt()
+                                scriptActionInfo.command.add(AdbPartClick(type, part, idx))
+                            }
+                        }
+                    }
+                    /*action.startsWith(ActionString.STEP).toString() -> {
+                        val setId = action.substring(ActionString.STEP.length, action.length-1).toInt()
+                        for(element in scriptActionList) {
+                            if (element.setId == setId) {
+                                println("使setId为$setId 停止")
+                                break
+                            }
+                        }
+                    }*/
+                }
+            }
+        }catch (e : Exception){
+            println(scriptActionInfo)
+            println(e.message)
+            runScope.coroutineContext.cancelChildren()
+            appCtx.toastOnUi("初始化action失败，请联系管理员！")
+        }
+    }
+
+    /*private fun runningExceptionHandler(toastMsg : String){
+        runScope.coroutineContext.cancelChildren()
+        appCtx.toastOnUi(toastMsg)
+    }*/
 
     //匹配
     //初始化已选择脚本数据，HomeScreen调用

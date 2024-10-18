@@ -16,7 +16,7 @@ fun TitleSettingItem(
         Row (
             modifier = modifier.fillMaxWidth()
         ){
-            Text(text = "★$title")
+            Text(text = title)
         }
     }
 }

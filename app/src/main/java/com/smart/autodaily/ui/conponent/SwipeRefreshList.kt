@@ -48,6 +48,7 @@ import kotlinx.coroutines.launch
 fun <T : Any> SwipeRefreshList(
     collectAsLazyPagingItems: LazyPagingItems<T>,
     listContent: @Composable (T) -> Unit,
+    refreshFun : () -> Unit = {},
     modifier: Modifier
 ) {
     val scope = rememberCoroutineScope()
@@ -58,7 +59,8 @@ fun <T : Any> SwipeRefreshList(
     val  refreshState =  rememberPullRefreshState(refreshing = refreshFlag, onRefresh = {
         //下拉刷新
         scope.launch{
-            collectAsLazyPagingItems.refresh()
+            //collectAsLazyPagingItems.refresh()
+            refreshFun()
             refreshFlag = true
             delay(Ui.DELAY_TIME)
             refreshFlag = isLoading

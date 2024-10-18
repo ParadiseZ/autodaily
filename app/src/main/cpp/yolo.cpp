@@ -63,7 +63,7 @@ static void qsort_descent_inplace(std::vector<Object>& objects)
     qsort_descent_inplace(objects, 0, objects.size() - 1);
 }
 
-static void nms_sorted_bboxes(const std::vector<Object>& faceobjects, std::vector<int>& picked, float nms_threshold, bool agnostic = false)
+static void nms_sorted_bboxes(const std::vector<Object> &faceobjects, std::vector<int> &picked,float nms_threshold)
 {
     picked.clear();
 
@@ -84,7 +84,7 @@ static void nms_sorted_bboxes(const std::vector<Object>& faceobjects, std::vecto
         {
             const Object& b = faceobjects[picked[j]];
 
-            if (!agnostic && a.label != b.label)
+            if (a.label != b.label)
                 continue;
 
             // intersection over union
@@ -187,7 +187,27 @@ int Yolo::load(AAssetManager* mgr,const char* modeltype, int _target_size, const
     norm_vals[2] = _norm_vals[2];
     return 0;
 }
+int Yolo::load(FILE * paramFile,FILE * modelFile, int _target_size, const float* _norm_vals, bool use_gpu)
+{
+    yolo.clear();
+    ncnn::set_cpu_powersave(2);
+    ncnn::set_omp_num_threads(ncnn::get_big_cpu_count());
 
+    yolo.opt = ncnn::Option();
+#if NCNN_VULKAN
+    yolo.opt.use_vulkan_compute = use_gpu;
+#endif
+    yolo.opt.num_threads = ncnn::get_big_cpu_count();
+    yolo.opt.blob_allocator = &blob_pool_allocator;
+    yolo.opt.workspace_allocator = &workspace_pool_allocator;
+    yolo.load_param(paramFile);
+    yolo.load_model(modelFile);
+    target_size = _target_size;
+    norm_vals[0] = _norm_vals[0];
+    norm_vals[1] = _norm_vals[1];
+    norm_vals[2] = _norm_vals[2];
+    return 0;
+}
 void Yolo::detect(const cv::Mat& bgr, std::vector<Object>& objects, const int num_labels, float prob_threshold, float nms_threshold)
 {
     int img_w = bgr.cols;

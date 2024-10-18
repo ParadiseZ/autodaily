@@ -15,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -41,11 +40,11 @@ fun SearchScreen(
     modifier: Modifier,
     searchViewModel: SearchViewModel = viewModel(),
 ){
-    val loadDataFlagFlow by searchViewModel.loadDataFlagFlow.collectAsState()
     val netSearScriptList = searchViewModel.remoteScriptList.collectAsLazyPagingItems()
+    val localScriptList by searchViewModel.appViewModel.localScriptListAll.collectAsState()
     val color = arrayListOf(0xff95e1d3,0xff71c9ce,0xffa6e3e9,0xffcbf1f5,0xffe3fdfd,0xffeaffd0,0xfffce38a,0xfffce38a,0xfff38181,0xfff3f798,0xffeab4f8,0xfffcc8f8,0xffc7f5fe)
-    LaunchedEffect(key1 = loadDataFlagFlow) {
-        searchViewModel.getRemoteScriptList(searchViewModel.appViewModel.localScriptListAll.value)
+    LaunchedEffect(key1 = true) {
+        searchViewModel.getRemoteScriptList(localScriptList)
     }
     Scaffold (
         topBar = {
@@ -57,8 +56,10 @@ fun SearchScreen(
         SwipeRefreshList(
             collectAsLazyPagingItems = netSearScriptList,
             modifier =modifier.padding(it),
+            refreshFun = {
+                searchViewModel.getRemoteScriptList(localScriptList)
+            },
             listContent ={scriptInfo ->
-                val isDownloaded = remember { mutableIntStateOf(scriptInfo.isDownloaded) }
                 val processShow = remember {
                     mutableStateOf(false)
                 }
@@ -86,36 +87,23 @@ fun SearchScreen(
                                 )
                                 .size(Ui.ICON_SIZE_40),
                             content ={
-                                if (isDownloaded.intValue == 1){
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.baseline_download_done_24),
-                                        contentDescription = null
-                                    )
-                                }else if(isDownloaded.intValue == 2){
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.baseline_downloading_24),
-                                        contentDescription = null
-                                    )
-                                }else{
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.baseline_download_24),
-                                        contentDescription = null
-                                    )
+                                when (scriptInfo.downState.intValue) {
+                                    1 -> Icon(painter = painterResource(id = R.drawable.baseline_download_done_24), contentDescription = null)
+                                    2 -> Icon(painter = painterResource(id = R.drawable.baseline_downloading_24), contentDescription = null)
+                                    else -> Icon(painter = painterResource(id = R.drawable.baseline_download_24), contentDescription = null)
                                 }
-
                             },
                             onClick = {
                                 if (scriptInfo.isDownloaded == 0){
                                     searchViewModel.appViewModel.downScriptByScriptId( scriptInfo )
                                     //下载中
-                                    isDownloaded.intValue=2
+                                    scriptInfo.downState.intValue = 2
                                     processShow.value =true
                                 }
                             }
                         )
                     },
-                    processShow = processShow,
-                    downloaded = isDownloaded
+                    processShow = processShow
                 )
             }
         )

@@ -31,8 +31,7 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
     //搜索文本
     private val _searchText = MutableStateFlow("")
     //加载远程数据标志
-    private val _loadDataFlagFlow = MutableStateFlow(false)
-    val loadDataFlagFlow: StateFlow<Boolean> get() = _loadDataFlagFlow
+
     /*
     *处理搜索文本
     * */
@@ -42,7 +41,7 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
     /*
     * 搜索脚本信息，并和数据库比对，更新flow流以更新is_downloaded标志
     * */
-    suspend fun getRemoteScriptList(localList : List<ScriptInfo>) {
+    fun getRemoteScriptList(localList : List<ScriptInfo>) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 try {
@@ -56,6 +55,7 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
         }
     }
     private fun searchScriptByPage(localList : List<ScriptInfo>): Flow<PagingData<ScriptInfo>> {
+        val localIds = localList.map { it.scriptId }
         val netSearchResult = Pager(PagingConfig(pageSize = PageUtil.PAGE_SIZE, initialLoadSize =PageUtil.INITIALOAD_SIZE, prefetchDistance = PageUtil.PREFETCH_DISTANCE)) {
             ScriptNetDataSource(
                 RemoteApi.searchDownRetrofit,
@@ -64,8 +64,11 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
         }
         val updatedNetSearchResult : Flow<PagingData<ScriptInfo>> = netSearchResult.flow.map { pagingData ->
             pagingData.map{ scriptInfo ->
-                if (scriptInfo.scriptId in localList.map { it.scriptId }){
+                if (scriptInfo.scriptId in localIds){
                     scriptInfo.isDownloaded = 1
+                    scriptInfo.downState = mutableIntStateOf(1)
+                }else{
+                    scriptInfo.downState = mutableIntStateOf(0)
                 }
                 scriptInfo.process = mutableIntStateOf(0)
                 scriptInfo

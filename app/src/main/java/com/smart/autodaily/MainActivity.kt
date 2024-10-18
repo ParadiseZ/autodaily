@@ -32,6 +32,8 @@ import com.smart.autodaily.ui.conponent.navSingleTopTo
 import com.smart.autodaily.ui.theme.AutoDailyTheme
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ShizukuUtil
+import com.smart.autodaily.utils.binderScope
+import com.smart.autodaily.utils.cancelJob
 import com.smart.autodaily.utils.toastOnUi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,7 +61,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     }else {
                         this@MainActivity.toastOnUi("拒绝了录屏申请，将无法运行")
                     }
-                    stopService(intent)
+                   // stopService(intent)
                 }
                 val mediaProjectionManager = baseContext.getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
                 ScreenCaptureUtil.mediaProjectionDataMap["mediaProjectionManager"] = mediaProjectionManager
@@ -120,13 +122,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
 
     override fun onDestroy() {
         super.onDestroy()
-        cancel()
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
             ShizukuUtil.removeShizuku()
         }
         if (floatingView != null){
             windowManager.removeView(floatingView)
         }
+        //所有协程
+        cancelJob()
+        //binder协程
+        binderScope.cancel()
+        //main
+        cancel()
     }
 
     fun requestOverlayPermission() {

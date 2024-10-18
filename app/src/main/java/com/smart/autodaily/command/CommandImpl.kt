@@ -9,8 +9,9 @@ import com.smart.autodaily.utils.ShizukuUtil
 const val TAP = "input tap "
 const val START = "am start -n "
 const val CAPTURE = "screencap -p"
+const val BACK = "input keyevent BACK "
 
-class AdbClick(private var point: Point? = null) : Command{
+open class AdbClick(private var point: Point? = null) : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
         var res = true
         this.point?.let {
@@ -26,6 +27,16 @@ class AdbClick(private var point: Point? = null) : Command{
         return res
     }
 }
+class AdbPartClick(var type :String? = null,var part : Int = 0,var idx : Int = 0): AdbClick(){
+}
+
+class AdbBack : Command{
+    override fun exec(sai: ScriptActionInfo): Boolean {
+        ShizukuUtil.iUserService?.execVoidComand(BACK)
+        return true
+    }
+}
+
 private fun exeClick(p: Point) {
     val command = TAP + "${p.x + ActionHandler.randomXRange} ${p.y + ActionHandler.randomYRange}"
     //println(command)
