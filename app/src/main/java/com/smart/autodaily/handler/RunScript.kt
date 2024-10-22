@@ -51,10 +51,14 @@ object  RunScript {
 
     fun initGlobalSet(){
         //map
-        appDb!!.scriptSetInfoDao.getGlobalSet().associateBy {
-            it.setId
-        }.let {
-            this._globalSetMap.value = it
+        _globalSetMap.value.takeIf {
+            it.isEmpty()
+        }?.let {
+            appDb!!.scriptSetInfoDao.getGlobalSet().associateBy {
+                it.setId
+            }.let {
+                this._globalSetMap.value = it
+            }
         }
     }
 
@@ -191,9 +195,10 @@ object  RunScript {
                                 return@scriptAction
                             }
                             if (
-                                (detectLabels.size == sai.onlyLabelSet.size && detectLabels.containsAll(sai.onlyLabelSet)) ||
-                                (detectLabels.containsAll(sai.pageLabelSet) && sai.exceptLabelSet.none { detectLabels.contains(it) })
+                                ( sai.onlyLabelSet.isNotEmpty() && detectLabels.size == sai.onlyLabelSet.size && detectLabels.containsAll(sai.onlyLabelSet)) ||
+                                (sai.pageLabelSet.isNotEmpty() && detectLabels.containsAll(sai.pageLabelSet) && sai.exceptLabelSet.none { detectLabels.contains(it) })
                             ){
+                                debugPrintScriptActionLabels(detectRes,detectLabels,sai)
                                 sai.command.onEach cmdForEach@{ cmd ->
                                     when (cmd) {
                                         is Return -> {
@@ -207,13 +212,13 @@ object  RunScript {
                                                         val scriptStatus = ScriptRunStatus(flowId = sai.flowId, flowIdType = set.flowIdType, curStatus = 2, dateTime = LocalDate.now().toString() )
                                                         appDb!!.scriptRunStatusDao.insert(scriptStatus)
                                                     }
-                                                    println(sai.pageDesc)
+                                                    println("结束：$sai.pageDesc")
                                                     return "setForEach"
                                                 }
 
                                                 ActionString.JUMP -> {
                                                     jumpData[true] = sai.flowId
-                                                    println(sai.pageDesc)
+                                                    println("跳跃：$sai.pageDesc")
                                                     return "setForEach"
                                                 }
                                             }
@@ -247,12 +252,12 @@ object  RunScript {
                                     }
 
                                 }
-                                println(sai.pageDesc)
+                                println("找到${sai.pageDesc}")
                                 return@capLoop
                             }
-                            //有标签内容但未识别到
-                            return "NO_MATCH_LABELS"
                         }
+                        //有标签内容但未识别到
+                        return "NO_MATCH_LABELS"
                     }
                 } else {
                     debug("captureBitmap is null")
@@ -268,6 +273,7 @@ object  RunScript {
     }
 
     private fun setPoints(sai: ScriptActionInfo, detectRes: Array<DetectResult>, multiple: Boolean){
+        println("setPoints")
         if (sai.clickLabelPosition == 5){
             return
         }
@@ -304,12 +310,16 @@ object  RunScript {
                     sai.point = Point(it.xCenter, it.yCenter)
                 }
         }else{
-            val clickRes = detectRes.firstOrNull { it.label == sai.clickLabelIdx }
+            val clickRes = detectRes.firstOrNull {
+                println("label:${it.label}")
+                it.label == sai.clickLabelIdx
+            }
             globalSetMap.value[9]?.setValue?.let {
                 if (clickRes != null){
                     sai.point = Point(clickRes.xCenter + it.toFloat(), clickRes.yCenter + it.toFloat())
                 }
             }
+            println("点击${sai.point}")
         }
     }
 
@@ -395,6 +405,32 @@ object  RunScript {
     //初始化已选择脚本数据，HomeScreen调用
     fun initScriptData(scriptList : List<ScriptInfo>){
         this._scriptCheckedList.value = scriptList
+    }
+
+    private fun debugPrintScriptActionLabels(detectRes : Array<DetectResult>,detectLabels: List<Int>,sai: ScriptActionInfo){
+        println("detectRes.size："+detectRes.size)
+        detectRes.forEach {
+            println(it)
+        }
+        println("detectLabels.size："+detectLabels.size)
+        detectLabels.forEach {
+            println(it)
+        }
+        println("sai.onlyLabelSet.size："+sai.onlyLabelSet.size)
+        sai.onlyLabelSet.forEach {
+            println(it)
+        }
+        println("sai.pageLabelSet.size："+sai.pageLabelSet.size)
+        sai.pageLabelSet.forEach {
+            println(it)
+        }
+        println("sai.exceptLabelSet.size："+sai.exceptLabelSet.size)
+        sai.exceptLabelSet.forEach{
+            println(it)
+        }
+        println(detectLabels.size == sai.onlyLabelSet.size && detectLabels.containsAll(sai.onlyLabelSet))
+        println(detectLabels.containsAll(sai.pageLabelSet))
+        println( sai.exceptLabelSet.none { detectLabels.contains(it) })
     }
 
 /*    fun updateScript(scriptInfo: ScriptInfo){

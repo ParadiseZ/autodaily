@@ -65,7 +65,7 @@ static void matToBitmap(JNIEnv *env, cv::Mat & drawMat, jobject obj_bitmap){
     AndroidBitmapInfo bitmapInfo;
     AndroidBitmap_getInfo(env,obj_bitmap,&bitmapInfo);
     // 将Mat数据复制到Bitmap
-    cv::Mat bitmapMat(bitmapInfo.height, bitmapInfo.width, CV_8UC4, pixels);
+    cv::Mat bitmapMat(static_cast<int>(bitmapInfo.height), static_cast<int>(bitmapInfo.width), CV_8UC4, pixels);
     drawMat.copyTo(bitmapMat);
     AndroidBitmap_unlockPixels(env, obj_bitmap);
 }
@@ -77,7 +77,7 @@ static jobjectArray changeDetectResultToJavaArray(JNIEnv *env, const std::vector
                                                             "(IFLcom/smart/autodaily/data/entity/Rect;FF)V");
 
     // 创建Java对象数组
-    jobjectArray resultArray = env->NewObjectArray(objects.size(), detectionResultClass, NULL);
+    jobjectArray resultArray = env->NewObjectArray(static_cast<jsize>(objects.size()), detectionResultClass, nullptr);
     //RectF
     jclass rectFClass = env->FindClass("com/smart/autodaily/data/entity/Rect");
     jmethodID  rectFClassConstructor = env->GetMethodID(rectFClass, "<init>",
@@ -88,8 +88,8 @@ static jobjectArray changeDetectResultToJavaArray(JNIEnv *env, const std::vector
                                       rectFClassConstructor,
                                       obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height);
         jobject detectionResult = env->NewObject(detectionResultClass, detectionResultConstructor,
-                                                 obj.label, obj.prob, rect ,(obj.rect.x + obj.rect.width/2), obj.rect.x + obj.rect.width/2);
-        env->SetObjectArrayElement(resultArray, i, detectionResult);
+                                                 obj.label, obj.prob, rect ,(obj.rect.x + obj.rect.width/2), obj.rect.y + obj.rect.height/2);
+        env->SetObjectArrayElement(resultArray, static_cast<jsize>(i), detectionResult);
     }
     return resultArray;
 }
@@ -109,7 +109,7 @@ extern "C" {
             ncnn::MutexLockGuard g(lock);
 
             delete g_yolo;
-            g_yolo = 0;
+            g_yolo = nullptr;
         }
     }
 
@@ -118,7 +118,7 @@ extern "C" {
     {
         AAssetManager* mgr = AAssetManager_fromJava(env, assetManager);
         // Get the actual characters of the string
-        const char* c_str = env -> GetStringUTFChars(modelPath,0);
+        const char* c_str = env -> GetStringUTFChars(modelPath,nullptr);
         //const char* modeltypes[] ={"bh3/cn/model.ncnn"};
         const int target_sizes[] = {targetSize};
         /*const float mean_vals[][3] ={

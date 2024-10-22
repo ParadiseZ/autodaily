@@ -11,8 +11,8 @@ object RetrofitCreate {
     //private const val BASE_URL = "https://www.wanandroid.com/"
     //private val  okHttpClient = OkHttpClient.Builder().build()
     private val  okHttpClient = OkHttpClient.Builder()
-        .callTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
-        .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .callTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+        .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
         .build()
 
     //private val request: Request = Request.Builder().url(BASE_URL).build()

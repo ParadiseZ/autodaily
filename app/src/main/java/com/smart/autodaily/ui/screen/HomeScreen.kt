@@ -55,11 +55,11 @@ import com.smart.autodaily.constant.ResponseCode
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.resp.Response
+import com.smart.autodaily.handler.RunScript
 import com.smart.autodaily.ui.conponent.RowScriptInfo
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.ToastUtil
-import com.smart.autodaily.utils.isLogin
 import com.smart.autodaily.utils.runScope
 import com.smart.autodaily.utils.toastOnUi
 import com.smart.autodaily.viewmodel.HomeViewModel
@@ -68,7 +68,6 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import splitties.init.appCtx
-import java.io.InterruptedIOException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("StateFlowValueCalledInComposition", "SuspiciousIndentation")
@@ -127,6 +126,10 @@ fun HomeScreen(
                         onClick = {
                             runScope.launch {
                                 homeViewModel.appViewModel.setIsRunning(2)
+                                RunScript.initGlobalSet()
+                                homeViewModel.appViewModel.runScript()
+
+                                /*homeViewModel.appViewModel.setIsRunning(2)
                                 if(isLogin(homeViewModel.context, user)){
                                     val res : Response<String>
                                     try {
@@ -137,11 +140,14 @@ fun HomeScreen(
                                         return@launch
                                     }
                                     if(scriptCheckResHand(res =res)){
+                                        RunScript.initGlobalSet()
                                         homeViewModel.appViewModel.runScript()
+                                    }else{
+                                        homeViewModel.appViewModel.setIsRunning(0)
                                     }
                                 }else{
                                     homeViewModel.appViewModel.setIsRunning(0)
-                                }
+                                }*/
                             }
                         }
                     ) {
