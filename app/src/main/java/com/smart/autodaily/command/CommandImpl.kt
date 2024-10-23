@@ -5,25 +5,39 @@ import com.smart.autodaily.data.entity.Point
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.handler.ActionHandler
 import com.smart.autodaily.utils.ShizukuUtil
+import kotlinx.coroutines.delay
 
 const val TAP = "input tap "
 const val START = "am start -n "
 const val CAPTURE = "screencap -p"
 const val BACK = "input keyevent BACK "
+const val STOP = "am force-stop "
+
+suspend fun adbRebootApp(packName : String){
+    println("restart app")
+    ShizukuUtil.iUserService?.execVoidComand(STOP +packName.substring(0, packName.indexOf("/")))
+    delay(2000)
+    adbStartApp(packName)
+}
+
+fun adbStartApp(packName : String){
+    ShizukuUtil.iUserService?.execLine(START + packName)
+}
 
 open class AdbClick(private var point: Point? = null) : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
-        var res = true
-        this.point?.let {
-            exeClick(it)
-        } ?: {
-            sai.point?.let {
-                exeClick(it)
-            } ?: {
-                res = false
+        var res = false
+        when{
+            this.point !=null ->{
+                exeClick(this.point!!)
+                res = true
+            }
+            sai.point !=null ->{
+                exeClick(sai.point!!)
+                sai.point = null
+                res = true
             }
         }
-        sai.point = null
         return res
     }
 }

@@ -13,7 +13,7 @@ val updateScope = CoroutineScope(Dispatchers.IO + globalCEHandler + CoroutineNam
 //启动app
 val partScope = CoroutineScope(Dispatchers.IO + globalCEHandler + CoroutineName("partScope") + SupervisorJob())
 //运行
-val runScope = CoroutineScope(Dispatchers.IO +globalCEHandler + CoroutineName("runScope") + SupervisorJob())
+val runScope = CoroutineScope(Dispatchers.Unconfined +globalCEHandler + CoroutineName("runScope") + SupervisorJob())
 //shizuku binder
 val binderScope = CoroutineScope(Dispatchers.IO +globalCEHandler + CoroutineName("binderScope") + SupervisorJob())
 fun cancelChildrenJob(){
