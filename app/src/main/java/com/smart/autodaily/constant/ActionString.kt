@@ -6,7 +6,7 @@ object ActionString {
     const val LONG_CLICK = "longClick"
     const val SLEEP = "sleep"
     const val SKIP = "skip"
-    const val FINISH = "f"
+    const val FINISH = "finish"
     const val JUMP = "jump"
     const val BACK = "back"
     const val CLICK_PART = "clickPart"
