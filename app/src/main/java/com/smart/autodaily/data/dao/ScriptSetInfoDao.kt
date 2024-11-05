@@ -35,7 +35,7 @@ interface ScriptSetInfoDao {
     fun getGlobalSetValueBySetId(setId : Int) : String
 
     //获取全局设置
-    @Query("select * from script_set_info where script_id=0 order by sort")
+    @Query("select * from script_set_info where script_id=0 and is_show=1 order by sort")
     fun getGlobalSet() : List<ScriptSetInfo>
 
     //获取脚本全局设置
@@ -43,8 +43,8 @@ interface ScriptSetInfoDao {
     fun getScriptGlobalSet(scriptId: Int) :List<ScriptSetInfo>
 
     //去掉为0的，全局设置的
-    @Query("select * from script_set_info where script_id=:scriptId and checked_flag=1 and is_max_level = :isMaxLevel and flow_parent_id not like '0%'")
-    fun getScriptSetByScriptId(scriptId: Int, isMaxLevel : Int) :MutableList<ScriptSetInfo>
+    @Query("select * from script_set_info where script_id=:scriptId and checked_flag=1 and is_max_level = :isMaxLevel and flow_id>=:curFlowId and flow_parent_id not like '0%'")
+    fun getScriptSetByScriptId(scriptId: Int,curFlowId : Int, isMaxLevel : Int) :MutableList<ScriptSetInfo>
     //去掉隐藏的，这里提供给用户查看
     @Query("select * from script_set_info where script_id=:scriptId and is_show= 1 order by sort")
     fun getScriptSetByScriptId(scriptId: Int) : Flow<List<ScriptSetInfo>>
@@ -52,9 +52,9 @@ interface ScriptSetInfoDao {
     @Query("select count(1) from script_set_info where script_id=:scriptId and checked_flag=1 and flow_id in (:flowIds)")
     fun countCheckedNumByParentFlowId(scriptId: Int ,flowIds : List<Int>) : Int
 
-    @Query("select count(1) from script_set_info where script_id=:scriptId and checked_flag=1 and flow_parent_id like  :flowParentId||'%'")
-    fun getChildCheckedCount(scriptId: Int ,flowParentId : String) : Int
+    @Query("select count(1) from script_set_info where script_id=:scriptId and checked_flag=1 and flow_id>=:curFlowId and flow_parent_id like  :flowParentId||',%'")
+    fun getChildCheckedCount(scriptId: Int ,curFlowId : Int,flowParentId : String) : Int
 
-    @Query("select a.flow_id  FROM script_set_info a where a.back_flag = 1 and a.script_id = :scriptId")
+    @Query("select a.flow_id  FROM script_set_info a where a.script_id = :scriptId and a.back_flag = 1")
     fun getBackSetByScriptId(scriptId: Int) : List<Int>
 }

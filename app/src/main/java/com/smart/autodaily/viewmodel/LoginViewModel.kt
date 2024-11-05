@@ -17,7 +17,7 @@ class LoginViewModel(app: Application): BaseViewModel(app) {
             if (loginResult.code == 200) {
                 loginResult.data?.let {
                     it.isLogin=true
-                    appDb!!.userInfoDao.insert(it)
+                    appDb.userInfoDao.insert(it)
                     appViewModel.updateUser(it)
                 }
             }

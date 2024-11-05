@@ -23,6 +23,7 @@ import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.cancelChildrenJob
 import com.smart.autodaily.utils.deleteFile
+import com.smart.autodaily.utils.partScope
 import com.smart.autodaily.utils.runScope
 import com.smart.autodaily.utils.toastOnUi
 import kotlinx.coroutines.Dispatchers
@@ -66,7 +67,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                         val req : Request<Int> = Request(data = _user.value!!.userId)
                         val res = RemoteApi.updateRetrofit.updateUserInfo(req)
                         if (res.code == ResponseCode.SUCCESS.code){
-                            res.data?.let { it1 -> appDb?.userInfoDao?.update(it1) }
+                            res.data?.let { it1 -> appDb.userInfoDao.update(it1) }
                             loadUserInfo()
                         }else{
                             appCtx.toastOnUi(res.message.toString())
@@ -80,7 +81,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     }
 
     suspend fun loadUserInfo() {
-        appDb?.userInfoDao?.queryUserInfo()?.collectLatest {
+        appDb.userInfoDao.queryUserInfo().collectLatest {
             _user.value = it
         }
     }
@@ -91,7 +92,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     private fun loadScriptAll(){
         viewModelScope.launch {
             withContext(Dispatchers.IO){
-                appDb!!.scriptInfoDao.getLocalScriptAll().collectLatest {
+                appDb.scriptInfoDao.getLocalScriptAll().collectLatest {
                     _localScriptAll.value = it
                 }
             }
@@ -101,9 +102,9 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     //更新本地数据
     fun updateScript(scriptInfo: ScriptInfo){
         viewModelScope.launch {
-            appDb!!.scriptInfoDao.update(scriptInfo)
+            appDb.scriptInfoDao.update(scriptInfo)
             /*withContext(Dispatchers.IO){
-                appDb!!.scriptInfoDao.update(scriptInfo)
+                appDb.scriptInfoDao.update(scriptInfo)
             }*/
             //RunScript.updateScript(scriptInfo)
         }
@@ -114,6 +115,9 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     }
 
     suspend fun runScript(){
+        partScope.launch {
+            appDb.labelTempDao.deleteData()
+        }
         println("work type："+RunScript.globalSetMap.value[8]?.setValue)
         RunScript.globalSetMap.value[8]?.let {
             when(it.setValue) {
@@ -123,7 +127,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                 WORK_TYPE02 -> {
                     //_isRunning.value = 2//启动服务
                     ServiceUtil.runUserService(appCtx)
-                    RunScript.initScriptData(appDb!!.scriptInfoDao.getAllScriptByChecked())
+                    RunScript.initScriptData(appDb.scriptInfoDao.getAllScriptByChecked())
                     ServiceUtil.waitShizukuService()
                     if(ShizukuUtil.grant && ShizukuUtil.iUserService != null){
                         _isRunning.value = 1//运行中
@@ -204,13 +208,13 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
         val result = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptInfo.scriptId)
         val scriptAction = RemoteApi.searchDownRetrofit.downloadActionInfoByScriptId(scriptInfo.scriptId)
         var globalScriptSetResult = Response<List<ScriptSetInfo>>()
-        val localScriptSetGlobal = appDb?.scriptSetInfoDao?.countScriptSetByScriptId(0)
+        val localScriptSetGlobal = appDb.scriptSetInfoDao.countScriptSetByScriptId(0)
         if (localScriptSetGlobal == 0) {
             globalScriptSetResult = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(0)
         }
 
         //val scriptSetDownload = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptId)
-        appDb?.runInTransaction{
+        appDb.runInTransaction{
             //scriptInfo
             scriptInfo.isDownloaded = 1
             scriptInfo.lastVersion?.let {
@@ -218,10 +222,10 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
             }
             scriptInfo.lastVersion = null //检测更新时使用
             scriptInfo.downloadTime = LocalDateTime.now().toString()
-            appDb?.scriptInfoDao?.insert(scriptInfo)
+            appDb.scriptInfoDao.insert(scriptInfo)
             //ScriptSet 全局设置
             globalScriptSetResult.data?.let {
-                appDb?.scriptSetInfoDao?.insert(it)
+                appDb.scriptSetInfoDao.insert(it)
             }
             //scriptSetDownload.data?.let {
             //appDb?.scriptSetInfoDao?.insert(it)
@@ -230,13 +234,15 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
             result.data?.let {
                 /*it.map{ ssi->
 
-                }*/
-                appDb?.scriptSetInfoDao?.insert(it)
+                    }*/
+                appDb.scriptSetInfoDao.insert(it)
             }
             //picInfo 图片信息
             //actionInfo 动作信息
             scriptAction.data?.let {
-                appDb?.scriptActionInfoDao?.insert(it)
+                appDb.scriptActionInfoDao.insert(it)
+                //fts表
+                appDb.labelFtsDao.insertFrom()
             }
             scriptInfo.process.intValue = -1
         }

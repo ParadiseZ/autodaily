@@ -16,6 +16,7 @@ import com.smart.autodaily.constant.MODEL_BIN
 import com.smart.autodaily.constant.MODEL_PARAM
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.DetectResult
+import com.smart.autodaily.data.entity.LabelTemp
 import com.smart.autodaily.data.entity.Point
 import com.smart.autodaily.data.entity.Rect
 import com.smart.autodaily.data.entity.ScriptActionInfo
@@ -57,7 +58,7 @@ object  RunScript {
         _globalSetMap.value.takeIf {
             it.isEmpty()
         }?.let {
-            appDb!!.scriptSetInfoDao.getGlobalSet().associateBy {
+            appDb.scriptSetInfoDao.getGlobalSet().associateBy {
                 it.setId
             }.let {
                 this._globalSetMap.value = it
@@ -70,7 +71,8 @@ object  RunScript {
         val intervalTime = _globalSetMap.value[3]?.setValue?.toFloat()?.times(1000)?.toLong()?:2000L
         val similarScore =  _globalSetMap.value[5]?.run { this.setValue?.toFloat() }?:0.5f
         val rebootTime =  _globalSetMap.value[4]?.run { this.setValue?.toFloat()?.times(60000)?.toLong() }?: 600000L
-        val useGpu = _globalSetMap.value[10]?.setValue?.toBoolean()?:false
+        val useGpu = _globalSetMap.value[10]?.checkedFlag?:false
+        val tryBackAction = _globalSetMap.value[0]?.checkedFlag?:false
         //println("开始运行${_scriptCheckedList.value.size}")
         println("select num："+_scriptCheckedList.value.size)
         _scriptCheckedList.value.forEach scriptForEach@{ si->
@@ -81,7 +83,7 @@ object  RunScript {
                         println("start APP")
                         adbStartApp(si.packageName)
                     }
-                    println("load model")
+                    println("load model,use gpu:${useGpu}")
                     //ModelUtil.reloadModel(si.modelPath+"/model.ncnn", si.imgSize, useGpu)
                     appCtx.getExternalFilesDir("")?.let {
                         //读取模型
@@ -93,22 +95,39 @@ object  RunScript {
                     }
                 }catch (e: Exception){
                     println("start app failed")
-                    appCtx.toastOnUi("app启动失败！")
+                    appCtx.toastOnUi( "app启动失败！")
                     return
                 }
+                val remRebootTime = mutableLongStateOf(System.currentTimeMillis())
+                println("开始首次识别")
+                var firstDetectResult = getFirstDetectByAdb(si.classesNum)
+                while (firstDetectResult.isEmpty()){
+                    println("首次未识别到内容，等待3秒后继续")
+                    delay(3000)
+                    firstDetectResult = getFirstDetectByAdb(si.classesNum)
+                    println("first detect : ${firstDetectResult}")
+                    isTimeOut(remRebootTime.longValue, rebootTime).takeIf { it }?.let { partScope.launch { adbRebootApp(si.packageName) } }
+                }
+                appDb.labelTempDao.insert(firstDetectResult)
+                val curActionId = appDb.labelFtsDao.getMaxIdFromCurrent()
+                println("curActionId${curActionId}")
+                val curFlowId = appDb.scriptActionInfoDao.getCurFlowIdById(curActionId)
+                println("curFlowId:${curFlowId}")
                 //最小子项
-                val maxSet = appDb!!.scriptSetInfoDao.getScriptSetByScriptId(si.scriptId, 1)
+                val maxSet = appDb.scriptSetInfoDao.getScriptSetByScriptId(si.scriptId, curFlowId, 1)
                 //最小子项的上级or项
-                val orSet = appDb!!.scriptSetInfoDao.getScriptSetByScriptId(si.scriptId, 2)
+                val orSet = appDb.scriptSetInfoDao.getScriptSetByScriptId(si.scriptId, curFlowId, 2)
+                println("orSet")
                 orSet.forEach{
-                    if( appDb!!.scriptSetInfoDao.getChildCheckedCount(it.scriptId, it.flowParentId!!) == 0){
+                    println(it)
+                    if( appDb.scriptSetInfoDao.getChildCheckedCount(it.scriptId, curFlowId, it.flowParentId!!) == 0){
                         maxSet.add(it)
                     }
                 }
                 val scriptSet = maxSet.filter{
                     it.flowParentIdList = it.flowParentId!!.split(",").map { flowId -> flowId.toInt() }
                     //筛选选中的
-                    it.flowParentIdList.size == appDb!!.scriptSetInfoDao.countCheckedNumByParentFlowId(it.scriptId, it.flowParentIdList)
+                    it.flowParentIdList.size == appDb.scriptSetInfoDao.countCheckedNumByParentFlowId(it.scriptId, it.flowParentIdList)
                 }.filter {  item ->
                     //筛选符合当前时间段的
                     when {
@@ -117,16 +136,18 @@ object  RunScript {
                         isBetweenHour(12, 18) -> item.flowIdType == 2 // 时间在 12 点到 18 点之间
                         else -> item.flowIdType == 3 // 其他时间
                     }
+                }.sortedBy {
+                    it.sort
                 }
 
                 //保存的所有的action map
                 val scriptActionMap : HashMap<Int,ScriptActionInfo> = hashMapOf()
                 //“返回”类的flow_id
-                val backSetFlowIds = appDb!!.scriptSetInfoDao.getBackSetByScriptId(si.scriptId)
+                val backSetFlowIds = appDb.scriptSetInfoDao.getBackSetByScriptId(si.scriptId)
                 //遍历的返回操作合集
                 val backActionArrayList = ArrayList<ScriptActionInfo>()
                 //返回类的action，设置返回操作合集
-                appDb!!.scriptActionInfoDao.getBackActionByScriptId(si.scriptId, backSetFlowIds).forEach {
+                appDb.scriptActionInfoDao.getBackActionByScriptId(si.scriptId, backSetFlowIds).forEach {
                     //从所有action中获取，避免重复初始化操作
                     val res = scriptActionMap.getOrPut(it.id) {
                         initActionFun(it)
@@ -151,11 +172,16 @@ object  RunScript {
                 }
                 //跳跃使用
                 val jumpData = hashMapOf(false to -1)
+                println("scriptSet")
+                scriptSet.forEach {
+                    println(it)
+                }
                 scriptSet.forEach setForEach@ { set->
+                    println("当前任务：${set.setName}")
                     val jumpFlowId = jumpData[true]
                     //跳跃或有今天的执行记录，则遍历下一条
                     if((jumpFlowId!=null && set.flowParentIdList.contains(jumpFlowId) )
-                        || appDb!!.scriptRunStatusDao.countByFlowIdAndType(set.flowId!!, set.flowIdType, LocalDate.now().toString()) > 0 ){
+                        || appDb.scriptRunStatusDao.countByFlowIdAndType(set.flowId!!, set.flowIdType, LocalDate.now().toString()) > 0 ){
                         return@setForEach
                     }
                     jumpData[false] = -1
@@ -163,7 +189,7 @@ object  RunScript {
                     //遍历的操作合集
                     val scriptActionArrayList = ArrayList<ScriptActionInfo>()
                     //包含全局设置的action，设置操作合集
-                    appDb!!.scriptActionInfoDao.getCheckedBySetId( set.scriptId, set.flowParentIdList, set.flowIdType ).forEach {
+                    appDb.scriptActionInfoDao.getCheckedBySetId( set.scriptId, set.flowParentIdList, set.flowIdType ).forEach {
                         //从所有action中获取，避免重复初始化操作
                         val res = scriptActionMap.getOrPut(it.id) {
                             initActionFun(it)
@@ -186,15 +212,18 @@ object  RunScript {
                         }
                         scriptActionArrayList.add(res)
                     }
-                    val remRebootTime = mutableLongStateOf(System.currentTimeMillis())
+
                     run LoopDo@{
                         when(loopDo(scriptActionArrayList, set, si.classesNum, jumpData , intervalTime,rebootTime, similarScore,si.packageName,remRebootTime)){
                             "setForEach"->return@setForEach
                             "capException" -> println("capException")
                             //无匹配标签，尝试在返回操作集中寻找
                             "NO_MATCH_LABELS" ->  {
-                                println("使用返回列表")
-                                loopDo(backActionArrayList, set, si.classesNum, jumpData , intervalTime,rebootTime, similarScore,si.packageName,remRebootTime)
+                                println("本次未找到匹配操作")
+                                if (tryBackAction){
+                                    println("尝试使用返回列表")
+                                    loopDo(backActionArrayList, set, si.classesNum, jumpData , intervalTime,rebootTime, similarScore,si.packageName,remRebootTime)
+                                }
                                 return@LoopDo
                             }
                             else->{
@@ -207,7 +236,27 @@ object  RunScript {
                 si.currentRunNum = 0
                 si.nextRunDate = LocalDate.now().toString()
                 println(si.nextRunDate)
-                //appDb!!.scriptInfoDao.update(si)
+                //appDb.scriptInfoDao.update(si)
+            }
+        }
+    }
+
+    private fun getFirstDetectByAdb(classNum: Int) : List<LabelTemp>{
+        when (val captureBitmap = ShizukuUtil.iUserService?.execCap(CAPTURE)) {
+            null -> {
+                println("captureBitmap is null")
+                return emptyList()
+            }
+            else -> {
+                val detectResArray = ModelUtil.model.detect(captureBitmap, classNum)
+                return when {
+                    detectResArray.isEmpty() -> {
+                        emptyList()
+                    }
+                    else -> {
+                        detectResArray.map { it.label }.toSet().sortedBy { it }.map {LabelTemp(label = it.toString()) }
+                    }
+                }
             }
         }
     }
@@ -236,7 +285,6 @@ object  RunScript {
                         debug("captureBitmap is null")
                         return "capException"
                     }
-
                     else -> {
                         val detectResArray = ModelUtil.model.detect(captureBitmap, classNum)
                         when {
@@ -291,25 +339,7 @@ object  RunScript {
                                                 is Return -> {
                                                     when (cmd.type) {
                                                         ActionString.FINISH -> {
-                                                            if (set.backFlag ==0 && appDb!!.scriptRunStatusDao.countByFlowIdAndType(
-                                                                    sai.flowId,
-                                                                    set.flowIdType,
-                                                                    dateTime = LocalDate.now()
-                                                                        .toString()
-                                                                ) == 0
-                                                            ) {
-                                                                val scriptStatus = ScriptRunStatus(
-                                                                    flowId = sai.flowId,
-                                                                    flowIdType = set.flowIdType,
-                                                                    curStatus = 2,
-                                                                    dateTime = LocalDate.now()
-                                                                        .toString()
-                                                                )
-                                                                appDb!!.scriptRunStatusDao.insert(
-                                                                    scriptStatus
-                                                                )
-                                                                println("非返回类，插入数据$scriptStatus")
-                                                            }
+                                                            setScriptStatus(set, sai)
                                                             println("结束：$sai.pageDesc")
                                                             return "setForEach"
                                                         }
@@ -370,6 +400,28 @@ object  RunScript {
         }//WHILE LOOP
     }
 
+    private fun setScriptStatus(set : ScriptSetInfo, sai: ScriptActionInfo){
+        if (set.backFlag ==0 && appDb.scriptRunStatusDao.countByFlowIdAndType(
+                sai.flowId,
+                set.flowIdType,
+                dateTime = LocalDate.now()
+                    .toString()
+            ) == 0
+        ) {
+            val scriptStatus = ScriptRunStatus(
+                flowId = sai.flowId,
+                flowIdType = set.flowIdType,
+                curStatus = 2,
+                dateTime = LocalDate.now()
+                    .toString()
+            )
+            appDb.scriptRunStatusDao.insert(
+                scriptStatus
+            )
+            println("非返回类，插入数据$scriptStatus")
+        }
+    }
+
     private fun isTimeOut(remRebootTime : Long,rebootTime: Long) : Boolean{
         if (System.currentTimeMillis() - remRebootTime > rebootTime){
             return true
@@ -421,7 +473,8 @@ object  RunScript {
                 if (clickRes != null){
                     sai.point = Point(clickRes.xCenter + it.toFloat(), clickRes.yCenter + it.toFloat())
                 }
-            } }
+            }
+        }
     }
 
     private fun setClickPartPoints(sai: ScriptActionInfo,adbPart : AdbPartClick, detectRes: Array<DetectResult>){
@@ -479,6 +532,82 @@ object  RunScript {
                                 val idx = action.substring(action.indexOfLast { it==',' }+1, action.length-1 ).toInt()
                                 scriptActionInfo.command.add(AdbPartClick(type, part, idx))
                             }
+                            action.startsWith( ActionString.VER_SWIPE ) ->{
+                                val type =  action.substring(   ActionString.VER_SWIPE.length ).toInt()
+                                val dm = ScreenCaptureUtil.getDisplayMetrics(appCtx)
+                                when(type){
+                                    1 -> {
+                                        val x =  (dm.widthPixels/4).toFloat()
+                                        scriptActionInfo.swipePoint = Rect( x, (dm.heightPixels/8 * 3).toFloat(), x,  (dm.heightPixels/8 * 5).toFloat()  )
+                                    }
+                                    2 ->{
+                                        val x =  (dm.widthPixels/4).toFloat()
+                                        scriptActionInfo.swipePoint = Rect( x,  (dm.heightPixels/8 * 5).toFloat(), x,  (dm.heightPixels/8 * 3).toFloat()  )
+                                    }
+                                    3 ->{
+                                        val y =  (dm.heightPixels/4).toFloat()
+                                        scriptActionInfo.swipePoint = Rect(  (dm.widthPixels/4).toFloat(), y,  (dm.widthPixels/4 * 3).toFloat(), y  )
+                                    }
+                                    4 ->{
+                                        val y =  (dm.heightPixels/4).toFloat()
+                                        scriptActionInfo.swipePoint = Rect( (dm.widthPixels/4 * 3).toFloat() , y,  (dm.widthPixels/4).toFloat(), y  )
+                                    }
+                                    5->{
+                                        val x =  (dm.widthPixels/4 * 3).toFloat()
+                                        scriptActionInfo.swipePoint = Rect( x, (dm.heightPixels/8 * 3).toFloat(), x,  (dm.heightPixels/8 * 5).toFloat()  )
+                                    }
+                                    6 ->{
+                                        val x =  (dm.widthPixels/4 * 3).toFloat()
+                                        scriptActionInfo.swipePoint = Rect( x, (dm.heightPixels/8 * 5).toFloat(), x,   (dm.heightPixels/8 * 3).toFloat()  )
+                                    }
+                                    7->{
+                                        val y =  (dm.heightPixels/4 * 3).toFloat()
+                                        scriptActionInfo.swipePoint = Rect(  (dm.widthPixels/4).toFloat(), y,  (dm.widthPixels/4 * 3).toFloat(), y  )
+                                    }
+                                    8->{
+                                        val y =  (dm.heightPixels/4 * 3).toFloat()
+                                        scriptActionInfo.swipePoint = Rect(  (dm.widthPixels/4 * 3).toFloat(), y,  (dm.widthPixels/4).toFloat() , y  )
+                                    }
+                                }
+                            }
+                            action.startsWith( ActionString.HOR_SWIPE ) ->{
+                                val type =  action.substring(   ActionString.HOR_SWIPE.length ).toInt()
+                                val dm = ScreenCaptureUtil.getDisplayMetrics(appCtx)
+                                when(type){
+                                    1 -> {
+                                        val x =  (dm.widthPixels/8 ).toFloat()
+                                        scriptActionInfo.swipePoint = Rect( x, (dm.heightPixels/4).toFloat(), x,  (dm.heightPixels/2).toFloat() )
+                                    }
+                                    2 ->{
+                                        val x =  (dm.widthPixels/8 ).toFloat()
+                                        scriptActionInfo.swipePoint = Rect( x,  (dm.heightPixels/2).toFloat() , x, (dm.heightPixels/4 ).toFloat()   )
+                                    }
+                                    3 ->{
+                                        val y =  (dm.heightPixels/4).toFloat()
+                                        scriptActionInfo.swipePoint = Rect(  (dm.widthPixels/8 * 3).toFloat(), y,  (dm.widthPixels/8 * 5).toFloat(), y  )
+                                    }
+                                    4 ->{
+                                        val y =  (dm.heightPixels/4).toFloat()
+                                        scriptActionInfo.swipePoint = Rect( (dm.widthPixels/8 * 5).toFloat() , y,  (dm.widthPixels/8 * 3).toFloat(), y  )
+                                    }
+                                    5->{
+                                        val x =  (dm.widthPixels/8 * 7).toFloat()
+                                        scriptActionInfo.swipePoint = Rect( x, (dm.heightPixels/4 ).toFloat(), x,  (dm.heightPixels/2 ).toFloat()  )
+                                    }
+                                    6 ->{
+                                        val x =  (dm.widthPixels/8 * 7).toFloat()
+                                        scriptActionInfo.swipePoint = Rect( x, (dm.heightPixels/2 ).toFloat(), x,   (dm.heightPixels/4 ).toFloat()  )
+                                    }
+                                    7->{
+                                        val y =  (dm.heightPixels/4 * 3).toFloat()
+                                        scriptActionInfo.swipePoint = Rect(  (dm.widthPixels/8 * 3).toFloat(), y,  (dm.widthPixels/8 * 5).toFloat(), y  )
+                                    }
+                                    8->{
+                                        val y =  (dm.heightPixels/4 * 3).toFloat()
+                                        scriptActionInfo.swipePoint = Rect(  (dm.widthPixels/8 * 5).toFloat(), y,  (dm.widthPixels/8 * 3).toFloat() , y  )
+                                    }
+                                }
+                            }
                         }
                     }
                     /*action.startsWith(ActionString.STEP).toString() -> {
@@ -514,29 +643,19 @@ object  RunScript {
     private fun debugPrintScriptActionLabels(detectRes : Array<DetectResult>?=null,detectLabels: List<Int>?=null,sai: ScriptActionInfo?=null){
         detectRes?.let {
             println("detectRes.size："+detectRes.size)
-            detectRes.forEach { res->
-                println(res)
-            }
+            println(detectRes.toList().toString())
         }
         detectLabels?.let {
             println("detectLabels.size："+detectLabels.size)
-            detectLabels.forEach { res->
-                println(res)
-            }
+            println( detectLabels.toList().toString())
         }
         sai?.let { sai2->
             println("sai.onlyLabelSet.size："+sai2.onlyLabelSet.size)
-            sai2.onlyLabelSet.forEach {
-                println(it)
-            }
+            sai2.onlyLabelSet.toString()
             println("sai.pageLabelSet.size："+sai2.pageLabelSet.size)
-            sai2.pageLabelSet.forEach {
-                println(it)
-            }
+            sai2.pageLabelSet.toString()
             println("sai.exceptLabelSet.size："+sai2.exceptLabelSet.size)
-            sai2.exceptLabelSet.forEach{
-                println(it)
-            }
+            sai2.exceptLabelSet.toString()
         }
         sai?.let {sai2->
             detectRes?.let {
@@ -552,13 +671,13 @@ object  RunScript {
 /*    fun updateScript(scriptInfo: ScriptInfo){
         checkAndRestartScopeState()
         scriptRunCoroutineScope.launch {
-            appDb!!.scriptInfoDao.update(scriptInfo)
+            appDb.scriptInfoDao.update(scriptInfo)
         }
     }
     fun updateScriptSet(scriptSetInfo: ScriptSetInfo){
         checkAndRestartScopeState()
         scriptRunCoroutineScope.launch {
-            appDb!!.scriptSetInfoDao.update(scriptSetInfo)
+            appDb.scriptSetInfoDao.update(scriptSetInfo)
         }
     }*/
 }

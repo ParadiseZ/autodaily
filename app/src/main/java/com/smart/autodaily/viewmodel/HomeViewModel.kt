@@ -27,10 +27,12 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
     fun deleteScript(sc : ScriptInfo){
         viewModelScope.launch {
             try {
-                appDb?.runInTransaction{
-                    appDb!!.scriptInfoDao.delete(sc)
-                    appDb!!.scriptSetInfoDao.deleteScriptSetInfoByScriptId(sc.scriptId)
-                    appDb!!.scriptActionInfoDao.deleteByScriptId(sc.scriptId)
+                appDb.runInTransaction{
+                    appDb.scriptInfoDao.delete(sc)
+                    appDb.scriptSetInfoDao.deleteScriptSetInfoByScriptId(sc.scriptId)
+                    appDb.scriptActionInfoDao.deleteByScriptId(sc.scriptId)
+                    appDb.labelFtsDao.clearFtsTable()
+                    appDb.labelFtsDao.optimizeFtsTable()
                     val externalParamFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_PARAM)
                     val externalBinFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_BIN)
                     deleteFile(externalBinFile)
@@ -48,7 +50,7 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
 
     //检测可运行数量
     suspend fun runScriptCheck() : Response<String>{
-        val checkedScriptNum = appDb!!.scriptInfoDao.getAllCheckedScript().size
+        val checkedScriptNum = appDb.scriptInfoDao.getAllCheckedScript().size
         if(checkedScriptNum==0){
             return Response.error("未选择脚本")
         }

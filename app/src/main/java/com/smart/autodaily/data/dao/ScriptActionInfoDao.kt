@@ -47,13 +47,18 @@ interface ScriptActionInfoDao {
             "where b.checked_flag = 1 and b.set_type not like 'SLIDER%' and a.script_id =:scriptId ")
     fun getCheckedByScriptId(scriptId: Int) : List<ScriptActionInfo>*/
 
-    @Query("select a.*  FROM script_action_info a, script_set_info b where b.checked_flag=1 and b.script_id=:scriptId and " +
+    @Query("select * from (" +
+            "select a.*  FROM script_action_info a, script_set_info b where b.checked_flag=1 and b.script_id=:scriptId and " +
             "(b.flow_id in (:flowIds) or b.flow_parent_id like '0%') and b.flow_id_type = :flowIdType and " +
             "a.flow_id = b.flow_id and a.script_id = b.script_id  and  (a.set_value = b.set_value or a.set_value is null) " +
             "union  " +
-            "select a.*  FROM script_action_info a where a.flow_id=0 and a.script_id = :scriptId ")
+            "select a.*  FROM script_action_info a where a.flow_id=0 and a.script_id = :scriptId" +
+            ") order by sort ")
     fun getCheckedBySetId(scriptId: Int,flowIds: List<Int>, flowIdType: Int) : List<ScriptActionInfo>
 
-    @Query("select *  FROM script_action_info where script_id = :scriptId and flow_id in (:flowIds)")
+    @Query("select *  FROM script_action_info where script_id = :scriptId and (flow_id in (:flowIds) or flow_id<0) order by sort")
     fun getBackActionByScriptId(scriptId: Int, flowIds : List<Int>) : List<ScriptActionInfo>
+
+    @Query("select flow_id from script_action_info where id = :id")
+    fun getCurFlowIdById(id : Int) : Int
 }

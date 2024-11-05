@@ -7,8 +7,7 @@
 #include "layer.h"
 
 #include <opencv2/imgproc/imgproc.hpp>
-#include <float.h>
-#include <stdio.h>
+
 
 constexpr auto MAX_STRIDE = 32;
 
@@ -80,16 +79,16 @@ static void nms_sorted_bboxes(const std::vector<Object> &faceobjects, std::vecto
         const Object& a = faceobjects[i];
 
         int keep = 1;
-        for (int j = 0; j < (int)picked.size(); j++)
+        for (int j : picked)
         {
-            const Object& b = faceobjects[picked[j]];
+            const Object& b = faceobjects[j];
 
             if (a.label != b.label)
                 continue;
 
             // intersection over union
             float inter_area = intersection_area(a, b);
-            float union_area = areas[i] + areas[picked[j]] - inter_area;
+            float union_area = areas[i] + areas[j] - inter_area;
             // float IoU = inter_area / union_area
             if (inter_area / union_area > nms_threshold)
                 keep = 0;

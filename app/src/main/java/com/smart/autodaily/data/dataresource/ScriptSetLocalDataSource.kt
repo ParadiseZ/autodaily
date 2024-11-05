@@ -19,7 +19,7 @@ class ScriptSetLocalDataSource: PagingSource<Int, ScriptSetInfo>()  {
             val page = params.key ?: PageUtil.FIRST_PAGE
             val pageSize = params.loadSize
             val startIndex = PageUtil.dataStartIndex(page, pageSize)
-            val response = appDb!!.scriptSetInfoDao.queryScriptSetInfo(0,pageSize, startIndex)
+            val response = appDb.scriptSetInfoDao.queryScriptSetInfo(0,pageSize, startIndex)
             LoadResult.Page(
                 data = response,
                 prevKey =  PageUtil.prevKey(page),

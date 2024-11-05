@@ -9,13 +9,21 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelChildren
 
 //更新
-val updateScope = CoroutineScope(Dispatchers.IO + globalCEHandler + CoroutineName("updateScope") + SupervisorJob())
+val updateScope  by lazy {
+    CoroutineScope(Dispatchers.IO + globalCEHandler + CoroutineName("updateScope") + SupervisorJob())
+}
 //启动app
-val partScope = CoroutineScope(Dispatchers.IO + globalCEHandler + CoroutineName("partScope") + SupervisorJob())
+val partScope by lazy {
+    CoroutineScope(Dispatchers.IO + globalCEHandler + CoroutineName("partScope") + SupervisorJob())
+}
 //运行
-val runScope = CoroutineScope(Dispatchers.Unconfined +globalCEHandler + CoroutineName("runScope") + SupervisorJob())
+val runScope by lazy {
+    CoroutineScope(Dispatchers.Unconfined +globalCEHandler + CoroutineName("runScope") + SupervisorJob())
+}
 //shizuku binder
-val binderScope = CoroutineScope(Dispatchers.IO +globalCEHandler + CoroutineName("binderScope") + SupervisorJob())
+val binderScope by lazy {
+    CoroutineScope(Dispatchers.IO +globalCEHandler + CoroutineName("binderScope") + SupervisorJob())
+}
 fun cancelChildrenJob(){
     updateScope.coroutineContext.cancelChildren()
     partScope.coroutineContext.cancelChildren()

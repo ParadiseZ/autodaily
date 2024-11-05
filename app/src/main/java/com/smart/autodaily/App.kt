@@ -11,13 +11,10 @@ import android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE
 import com.jakewharton.threetenabp.AndroidThreeTen
 import com.jeremyliao.liveeventbus.LiveEventBus
 import com.smart.autodaily.config.AppConfig.channelIdDownload
-import com.smart.autodaily.data.AppDb
-import com.smart.autodaily.handler.ExceptionHandler
 import com.smart.autodaily.handler.RunScript
 import com.smart.autodaily.utils.UpdateUtil
 import com.smart.autodaily.utils.partScope
 import com.smart.autodaily.utils.updateScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
 import me.weishu.reflection.Reflection
@@ -29,17 +26,16 @@ class App : Application(){
         super.onCreate()
         //初始化时区
         AndroidThreeTen.init(this)
-        Thread.setDefaultUncaughtExceptionHandler(ExceptionHandler(this))
+        //Thread.setDefaultUncaughtExceptionHandler(ExceptionHandler(this))
+        createNotificationChannels()
         LiveEventBus.config()
             .lifecycleObserverAlwaysActive(true)
             .autoClear(false)
             .enableLogger(true)
             //.enableLogger(BuildConfig.DEBUG)
             //.setLogger(EventLogger())
-        AppDb.getInstance(applicationContext)
         Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE)
-
-        partScope.launch(Dispatchers.IO){
+        partScope.launch{
             //初始化全局设置
             RunScript.initGlobalSet()
             try {

@@ -41,7 +41,7 @@ fun CheckBoxSettingItem(
         .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), shape = RoundedCornerShape(5.dp))
         .clickable {
             isChecked = !isChecked
-            setting.setValue = isChecked.toString()
+            setting.checkedFlag = isChecked
             onCheckedChange(setting)
         }
     ){
@@ -51,7 +51,7 @@ fun CheckBoxSettingItem(
         ){
             Checkbox(checked = isChecked, onCheckedChange = {
                 isChecked = it
-                setting.setValue = it.toString()
+                setting.checkedFlag = it
                 onCheckedChange(setting)
             })
             Text(text = setting.setName)

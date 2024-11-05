@@ -40,7 +40,7 @@ class PersonViewModel(app : Application)  : BaseViewModel(application = app) {
 
     fun logout(userInfo : UserInfo){
         viewModelScope.launch {
-            appDb!!.userInfoDao.delete(userInfo)
+            appDb.userInfoDao.delete(userInfo)
             appViewModel.updateUser(null)
         }
     }

@@ -17,7 +17,7 @@ class ScriptSetViewModel  (application: Application) : BaseViewModel(application
 
     fun getScriptSetById(scriptId : Int) {
         viewModelScope.launch {
-            appDb!!.scriptSetInfoDao.getScriptSetByScriptId(scriptId).collectLatest {
+            appDb.scriptSetInfoDao.getScriptSetByScriptId(scriptId).collectLatest {
                 _scriptSetList.value = it
             }
         }
@@ -26,7 +26,7 @@ class ScriptSetViewModel  (application: Application) : BaseViewModel(application
     fun updateScriptSet(scriptSetInfo: ScriptSetInfo){
         viewModelScope.launch {
             try {
-                appDb!!.scriptSetInfoDao.update(scriptSetInfo)
+                appDb.scriptSetInfoDao.update(scriptSetInfo)
             } catch (e: Exception) {
                 e.printStackTrace()
             }

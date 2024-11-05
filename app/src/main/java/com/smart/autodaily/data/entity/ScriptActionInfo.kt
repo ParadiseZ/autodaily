@@ -7,7 +7,7 @@ import androidx.room.Index
 import com.google.gson.annotations.SerializedName
 import com.smart.autodaily.command.Command
 
-@Entity(tableName = "script_action_info", primaryKeys = ["id"], indices = [Index(value = ["script_id", "flow_id"])])
+@Entity(tableName = "script_action_info", primaryKeys = ["id"], indices = [Index(value = ["script_id", "flow_id","page_labels"])])
 data class ScriptActionInfo(
     @ColumnInfo(name = "id") @SerializedName("id") val id: Int,
     @ColumnInfo(name = "script_id") @SerializedName("script_id") val scriptId: Int,
@@ -42,4 +42,6 @@ data class ScriptActionInfo(
     var point:Point?=null
     @Ignore
     var executeCur: Int= 0
+    @Ignore
+    var swipePoint : Rect?=null
 }

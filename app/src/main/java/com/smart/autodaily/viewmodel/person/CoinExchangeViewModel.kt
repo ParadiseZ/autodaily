@@ -39,7 +39,7 @@ class CoinExchangeViewModel (app: Application) : BaseViewModel(application = app
         appViewModel.user.value?.userId?.let {
             res = RemoteApi.virtualCoinApi.exchangeVip(it, keyTypeId)
             if (res!!.code == ResponseCode.SUCCESS.code) {
-                appDb!!.runInTransaction{
+                appDb.runInTransaction{
                     appViewModel.updateUser(res!!.data)
                 }
             }

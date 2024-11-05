@@ -12,6 +12,7 @@ const val START = "am start -n "
 const val CAPTURE = "screencap -p"
 const val BACK = "input keyevent BACK "
 const val STOP = "am force-stop "
+const val SWIPE = "input swipe  "
 
 suspend fun adbRebootApp(packName : String){
     println("restart app")
@@ -68,7 +69,19 @@ class AdbSumClick(private val point: Point) : Command{
         }
         return res
     }
+}
 
+class AdbSwipe : Command{
+    override fun exec(sai: ScriptActionInfo): Boolean {
+        var res = true
+        sai.swipePoint?.let {
+            val command = "$SWIPE ${it.x} ${it.y} ${it.width} ${it.height} 1000"
+            ShizukuUtil.iUserService?.execVoidComand(command)
+        } ?: {
+            res = false
+        }
+        return res
+    }
 }
 
 class Skip : Command{
@@ -91,7 +104,7 @@ class Return(val type : String) : Command{
 }
 class Check(private val setId : Int) : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
-        return appDb!!.scriptSetInfoDao.getResultFlag(setId)
+        return appDb.scriptSetInfoDao.getResultFlag(setId)
     }
 }
 

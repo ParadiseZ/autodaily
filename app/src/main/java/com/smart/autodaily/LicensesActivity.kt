@@ -49,7 +49,7 @@ class LicensesActivity  : ComponentActivity(){
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if(appDb!!.appInfoDao.getPrivacyRes() == 0){
+        if(appDb.appInfoDao.getPrivacyRes() == 0){
             startActivity(Intent("android.intent.action.HOME").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }else{
             setContent {
