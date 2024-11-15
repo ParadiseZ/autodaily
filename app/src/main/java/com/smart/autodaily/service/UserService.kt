@@ -48,7 +48,6 @@ class UserService: IUserService.Stub(){
         val inputStream = process.inputStream
         val bitmap = BitmapFactory.decodeStream(inputStream)
         inputStream.close()
-
         return bitmap
     }
 

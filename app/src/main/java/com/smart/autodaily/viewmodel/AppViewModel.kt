@@ -18,12 +18,12 @@ import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.data.entity.request.Request
 import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.handler.RunScript
+import com.smart.autodaily.handler.isRunning
 import com.smart.autodaily.utils.DownloadManager
 import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.cancelChildrenJob
 import com.smart.autodaily.utils.deleteFile
-import com.smart.autodaily.utils.partScope
 import com.smart.autodaily.utils.runScope
 import com.smart.autodaily.utils.toastOnUi
 import kotlinx.coroutines.Dispatchers
@@ -45,9 +45,6 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     //本地用户
     private val _user  = MutableStateFlow<UserInfo?>(null)
     val user : StateFlow<UserInfo?> get() = _user
-
-    private val _isRunning = MutableStateFlow(0)
-    val isRunning : StateFlow<Int> get() = _isRunning
 
     //加载用户
     init {
@@ -111,18 +108,15 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     }
 
     fun setIsRunning(state : Int){
-        _isRunning.value = state
+        isRunning.intValue = state
     }
 
     suspend fun runScript(){
-        partScope.launch {
-            appDb.labelTempDao.deleteData()
-        }
         println("work type："+RunScript.globalSetMap.value[8]?.setValue)
         RunScript.globalSetMap.value[8]?.let {
             when(it.setValue) {
                 WORK_TYPE01 -> {
-                    _isRunning.value = 1
+                    isRunning.intValue = 1
                 }
                 WORK_TYPE02 -> {
                     //_isRunning.value = 2//启动服务
@@ -130,26 +124,26 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                     RunScript.initScriptData(appDb.scriptInfoDao.getAllScriptByChecked())
                     ServiceUtil.waitShizukuService()
                     if(ShizukuUtil.grant && ShizukuUtil.iUserService != null){
-                        _isRunning.value = 1//运行中
+                        isRunning.intValue = 1//运行中
                         RunScript.runScriptByAdb()
                     }else{
-                        _isRunning.value = 0//启动服务失败
+                        isRunning.intValue = 0//启动服务失败
                         appCtx.toastOnUi("请检查shizuku服务！")
                         return
                     }
                     //(manActivityCtx as MainActivity).requestOverlayPermission()
                 }
                 WORK_TYPE03 -> {
-                    _isRunning.value = 1
+                    isRunning.intValue = 1
                 }
             }
         }
     }
 
     fun stopRunScript(){
-        if (_isRunning.value==1){
+        if (isRunning.intValue == 1){
             runScope.coroutineContext.cancelChildren()
-            _isRunning.value = 0
+            isRunning.intValue = 0
         }
     }
 

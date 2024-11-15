@@ -11,4 +11,6 @@ object ActionString {
     const val CLICK_PART = "clickPart"
     const val VER_SWIPE = "1swipe"
     const val HOR_SWIPE = "2swipe"
+    const val UN_CHECKED = "uc"
+
 }

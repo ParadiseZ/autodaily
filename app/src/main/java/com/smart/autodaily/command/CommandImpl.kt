@@ -25,6 +25,12 @@ fun adbStartApp(packName : String){
     ShizukuUtil.iUserService?.execLine(START + packName)
 }
 
+class Operation(val type: Int, val operation : Command) : Command{
+    override fun exec(sai: ScriptActionInfo): Boolean {
+        return operation.exec(sai)
+    }
+}
+
 open class AdbClick(private var point: Point? = null) : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
         var res = false
@@ -42,8 +48,7 @@ open class AdbClick(private var point: Point? = null) : Command{
         return res
     }
 }
-class AdbPartClick(var type :String? = null,var part : Int = 0,var idx : Int = 0): AdbClick(){
-}
+class AdbPartClick(var type :String? = null,var part : Int = 0,var idx : Int = 0): AdbClick()
 
 class AdbBack : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {

@@ -56,8 +56,10 @@ interface ScriptActionInfoDao {
             ") order by sort ")
     fun getCheckedBySetId(scriptId: Int,flowIds: List<Int>, flowIdType: Int) : List<ScriptActionInfo>
 
-    @Query("select *  FROM script_action_info where script_id = :scriptId and (flow_id in (:flowIds) or flow_id<0) order by sort")
-    fun getBackActionByScriptId(scriptId: Int, flowIds : List<Int>) : List<ScriptActionInfo>
+    @Query("select *  FROM script_action_info where script_id = :scriptId and (flow_id in (" +
+            " select a.flow_id  FROM script_set_info a where a.script_id = :scriptId and a.back_flag = 1 "+
+            ") or flow_id<0) order by sort")
+    fun getBackActions(scriptId: Int) : List<ScriptActionInfo>
 
     @Query("select flow_id from script_action_info where id = :id")
     fun getCurFlowIdById(id : Int) : Int

@@ -44,4 +44,6 @@ data class ScriptActionInfo(
     var executeCur: Int= 0
     @Ignore
     var swipePoint : Rect?=null
+    @Ignore
+    var addFlag : Boolean = true
 }

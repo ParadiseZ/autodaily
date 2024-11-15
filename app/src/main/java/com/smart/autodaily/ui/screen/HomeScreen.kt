@@ -56,6 +56,7 @@ import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.handler.RunScript
+import com.smart.autodaily.handler.isRunning
 import com.smart.autodaily.ui.conponent.RowScriptInfo
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ServiceUtil
@@ -87,7 +88,7 @@ fun HomeScreen(
     val user by homeViewModel.appViewModel.user.collectAsState()
     var currentScriptInfo : ScriptInfo? = null
     //script运行状态
-    val runStatus by homeViewModel.appViewModel.isRunning.collectAsState(initial = 0)
+    val runStatus by isRunning
     //提示信息设置
     val snackbarHostState = remember { SnackbarHostState() }
     //设置详细展开、提示信息设置公用
