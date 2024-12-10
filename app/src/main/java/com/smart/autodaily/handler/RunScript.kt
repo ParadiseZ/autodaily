@@ -61,15 +61,10 @@ object  RunScript {
     //var scriptRunCoroutineScope = CoroutineScope(Dispatchers.IO)
 
     fun initGlobalSet(){
-        //map
-        _globalSetMap.value.takeIf {
-            it.isEmpty()
-        }?.let {
-            appDb.scriptSetInfoDao.getGlobalSet().associateBy {
-                it.setId
-            }.let {
-                this._globalSetMap.value = it
-            }
+        appDb.scriptSetInfoDao.getGlobalSet().associateBy {
+            it.setId
+        }.let {
+            this._globalSetMap.value = it
         }
     }
 
@@ -88,7 +83,8 @@ object  RunScript {
             mutableListOf(),
             2,
             0,
-            0
+            0,
+            Point(0f,0f)
         )
     }
 
@@ -118,11 +114,11 @@ object  RunScript {
                 scriptSet.forEach setForEach@ { forSet->
                     conf.isTryBack = false
                     set = forSet
-                    println("当前任务：${set.setName}")
+                    println("当前任务：${set.setName},flow_id：${set.flowId}")
                     val jumpFlowId = jumpData[true]
                     //跳跃或有今天的执行记录，则遍历下一条
                     if((jumpFlowId!=null && set.flowParentIdList.contains(jumpFlowId) )
-                        || appDb.scriptRunStatusDao.countByFlowIdAndType(set.flowId!!, set.flowIdType, LocalDate.now().toString()) > 0 ){
+                        || appDb.scriptRunStatusDao.countByFlowIdAndType(set.scriptId,set.flowId!!, set.flowIdType, LocalDate.now().toString()) > 0 ){
                         return@setForEach
                     }
                     jumpData[false] = -1
@@ -139,11 +135,14 @@ object  RunScript {
                         if (detectResArray.isEmpty()){
                             continue
                         }
+                        println("before")
+                        debugPrintScriptActionLabels(detectResArray)
                         val detectRes =
                             detectResArray.toList().filter { it.prob > conf.similarScore }
                                 .toTypedArray()
                         val detectLabels =
                             detectRes.map { it.label }.sortedBy { it }
+                        println("after")
                         debugPrintScriptActionLabels(detectRes, detectLabels)
                         if (detectLabels.isEmpty()) {
                             println("满足置信度的标签为空")
@@ -169,11 +168,19 @@ object  RunScript {
                                     println("尝试返回")
                                     //返回类的action，设置返回操作合集
                                     //return@initTask
-                                    isTryBackAction( backActionArrayList, detectLabels, detectRes, si.scriptId, allActionMap)
+                                    if (
+                                        !isTryBackAction( backActionArrayList, detectLabels, detectRes, si.scriptId, allActionMap)
+                                    ){
+                                        println("延迟5000")
+                                    }
+
                                 }
                             }
                             4 ->{
                                 //操作无效/找到未操作（和操作前对比界面无变化）
+                            }
+                            5->{
+                                //点无效
                             }
                         }
                     }
@@ -327,6 +334,7 @@ object  RunScript {
                                 }
 
                                 ActionString.JUMP -> {
+                                    setScriptStatus(set, sai)
                                     jumpData[true] = sai.flowId
                                     println("跳跃：$sai.pageDesc")
                                     return 1
@@ -337,11 +345,22 @@ object  RunScript {
                         is Operation ->{
                             when (cmd.type) {
                                 1 -> {
+                                    setPoints(
+                                        sai,
+                                        detectRes,
+                                        detectLabels.size < detectRes.size
+                                    )
+                                    println(sai)
+                                    if (sai.point == null){
+                                        println("点击位置为空，错误！")
+                                        return 5
+                                    }
                                     //点击操作
-                                    if ((conf.beforeClickIdx == 0 || conf.beforeClickIdx != sai.clickLabelIdx) or (conf.beforeClickIdx == sai.clickLabelIdx && set.backFlag ==1)) {
+                                    if ((conf.beforeClickIdx == 0 || conf.beforeClickIdx != sai.clickLabelIdx) or (conf.beforeClickIdx == sai.clickLabelIdx && (set.backFlag ==1 || conf.beforePoint.x - sai.point!!.x>10 || conf.beforePoint.y-sai.point!!.y > 10)) ) {
                                         conf.beforeClickIdx = sai.clickLabelIdx
                                         conf.curRetryNum = 0
                                         conf.remRetryTime = 0L
+                                        conf.beforePoint = Point(sai.point!!.x, sai.point!!.y)
                                         println("和上次点击位置不一致，执行点击")
                                     } else {
                                         if (conf.remRetryTime == 0L) {
@@ -382,11 +401,6 @@ object  RunScript {
                                         }
 
                                         is AdbClick -> {
-                                            setPoints(
-                                                sai,
-                                                detectRes,
-                                                detectLabels.size < detectRes.size
-                                            )
                                             if (sai.executeMax > 1) {
                                                 sai.executeCur += 1
                                                 if (sai.executeCur >= sai.executeMax) {
@@ -456,6 +470,7 @@ object  RunScript {
                 }
                 3 -> {
                     println("返回列表未找到匹配数据")
+                    return false
                 }
             }
             return true
@@ -473,6 +488,7 @@ object  RunScript {
 
     private fun setScriptStatus(set : ScriptSetInfo, sai: ScriptActionInfo){
         if (set.backFlag ==0 && appDb.scriptRunStatusDao.countByFlowIdAndType(
+                sai.scriptId,
                 sai.flowId,
                 set.flowIdType,
                 dateTime = LocalDate.now()
@@ -480,6 +496,7 @@ object  RunScript {
             ) == 0
         ) {
             val scriptStatus = ScriptRunStatus(
+                scriptId = sai.scriptId,
                 flowId = sai.flowId,
                 flowIdType = set.flowIdType,
                 curStatus = 2,
@@ -514,7 +531,7 @@ object  RunScript {
             val displayMetrics = ScreenCaptureUtil.getDisplayMetrics()
             val xDisCenter = displayMetrics.widthPixels/2
             val yDisCenter = displayMetrics.heightPixels/2
-            var condition : (Rect, Float, Float) -> Boolean ={ _: Rect, _: Float, _: Float -> false}
+            val condition : (Rect, Float, Float) -> Boolean
             when(sai.clickLabelPosition){
                 1 ->{
                     condition = {
@@ -536,6 +553,12 @@ object  RunScript {
                         rect: Rect, x:Float , y:Float -> rect.x > x && rect.y > y
                     }
                 }
+                else ->{
+                    condition= { rect: Rect, x: Float, y: Float ->
+                        val temp = detectRes.filter { it.label == sai.clickLabelPosition }
+                        (temp[0].rect.x + temp[0].rect.width > rect.x) &&  (temp[0].rect.y + temp[0].rect.height > rect.y)
+                    }
+                }
             }
             detectRes.filter {
                     it.label == sai.clickLabelIdx &&  condition(it.rect,xDisCenter.toFloat(),yDisCenter.toFloat())
@@ -546,7 +569,7 @@ object  RunScript {
             val clickRes = detectRes.firstOrNull {
                 it.label == sai.clickLabelIdx
             }
-            println("click label：${clickRes?.label}")
+            println("click label：${clickRes?.label}，${clickRes}")
             globalSetMap.value[9]?.setValue?.let {
                 if (clickRes != null){
                     sai.point = Point(clickRes.xCenter + it.toFloat(), clickRes.yCenter + it.toFloat())
@@ -578,7 +601,9 @@ object  RunScript {
                         if (scriptActionInfo.clickLabelPosition == 5){
                             val displayMetrics = ScreenCaptureUtil.getDisplayMetrics(appCtx)
                             val point =Point((displayMetrics.widthPixels/2).toFloat(),(displayMetrics.heightPixels/2).toFloat())
-                            scriptActionInfo.command.add ( Operation( 1, AdbClick(point)) )
+                            scriptActionInfo.point = point
+                            //scriptActionInfo.command.add ( Operation( 1, AdbClick(point)) )
+                            scriptActionInfo.command.add ( Operation( 1, AdbClick()) )
                         }else{
                             scriptActionInfo.command.add (Operation( 1, AdbClick()) )
                         }

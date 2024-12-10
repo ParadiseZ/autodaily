@@ -65,6 +65,9 @@ fun PersonScreen(modifier: Modifier,
 ) {
     //Text(text = "Hello PersonalScreen！")
     val user by  personViewModel.appViewModel.user.collectAsState()
+    //联系方式
+    val contact by personViewModel.contact.collectAsState()
+    val contactDialog = remember { mutableStateOf(false) }
     //是否开启弹窗
     val openDialog = remember { mutableStateOf(false) }
     //是否显示好友邀请码悬浮窗
@@ -190,8 +193,9 @@ fun PersonScreen(modifier: Modifier,
             isLogin(personViewModel.context, user)
             personViewModel.context.toastOnUi("嗯，还未开发")
         }
-        PersonRowFirst(textLabel = "关于", imageVector = Icons.Outlined.Info){
-            personViewModel.context.toastOnUi("嗯，还未开发")
+        PersonRowFirst(textLabel = "联系方式", imageVector = Icons.Outlined.Info){
+            personViewModel.getContact()
+            contactDialog.value = !contactDialog.value
         }
     }
     if (openDialog.value){
@@ -289,6 +293,33 @@ fun PersonScreen(modifier: Modifier,
                 TextField(value = keyInfo.value, onValueChange ={
                     keyInfo.value = it
                 })
+            },
+        )
+    }
+
+    if (contactDialog.value){
+        AlertDialog(
+            //properties = DialogProperties(),
+            onDismissRequest = {
+                contactDialog.value = false
+            },
+            confirmButton = {
+            },
+            title = {
+                Text(
+                    text = "联系方式",
+                    fontWeight = FontWeight.W700,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            text = {
+                SelectionContainer {
+                    Column {
+                        contact.forEach {
+                            Text(it.configDesc+"："+it.configValue)
+                        }
+                    }
+                }
             },
         )
     }

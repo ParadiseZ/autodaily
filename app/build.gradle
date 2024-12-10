@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace 'com.smart.autodaily'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId "com.smart.autodaily"
         minSdk 25
-        targetSdk 34
+        targetSdk 35
         versionCode 1
         versionName "1.0"
 
@@ -37,11 +37,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
     }
     buildFeatures {
         compose true
@@ -61,7 +61,7 @@ android {
             excludes.add('/META-INF/{AL2.0,LGPL2.1}')
         }
     }
-    ndkVersion '27.0.11718014 rc1'
+    ndkVersion '27.2.12479018'
     externalNativeBuild {
         cmake {
             path file('src/main/cpp/CMakeLists.txt')
@@ -105,7 +105,6 @@ dependencies {
     //opencv
     //implementation(libs.opencv)
     //OCR
-    implementation libs.tesseract4android.openmp
     //eventbus
     implementation libs.liveeventbus
 

@@ -13,10 +13,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -24,6 +27,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -31,6 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -84,7 +89,9 @@ fun SettingScreen(
         ) }
         Column(modifier = Modifier
             .padding(paddingValues)
-            .fillMaxWidth()){
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+        ) {
             //全局脚本设置模块
             CardCustom(firstSettingOpenFlag,SettingTitle.SETTING_GLOBAL,onClick = {
                 sharedPreferences.edit().putBoolean("first_setting_expand", it).apply()
@@ -194,6 +201,39 @@ fun SettingScreen(
                         }
                     }
                 )
+            }
+
+            val scriptId = remember { mutableStateOf(TextFieldValue("")) }
+            val flowId = remember { mutableStateOf(TextFieldValue("")) }
+
+            Row {
+                Text("scriptId")
+                TextField(value = scriptId.value, onValueChange = {
+                    scriptId.value = it
+                })
+            }
+            Row {
+                Text("flowId")
+                TextField(value =flowId.value, onValueChange = {
+                    flowId.value = it
+                })
+            }
+            Row {
+                Button(onClick = {
+                    settingViewModel.insertStatus(scriptId.value.text.toInt(), flowId.value.text.toInt())
+                }) {
+                    Text("完成")
+                }
+                Button(onClick = {
+                    settingViewModel.deleteStatus(scriptId.value.text.toInt(), flowId.value.text.toInt())
+                }) {
+                    Text("删除记录")
+                }
+                Button(onClick = {
+                    settingViewModel.deleteByScriptId(scriptId.value.text.toInt())
+                }) {
+                    Text("清空所有")
+                }
             }
         }
     }

@@ -6,12 +6,18 @@ import com.smart.autodaily.api.RemoteApi
 import com.smart.autodaily.base.BaseViewModel
 import com.smart.autodaily.constant.ResponseCode
 import com.smart.autodaily.data.appDb
+import com.smart.autodaily.data.entity.ServerConfig
 import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.utils.ExceptionUtil
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class PersonViewModel(app : Application)  : BaseViewModel(application = app) {
+    private val _contact = MutableStateFlow<List<ServerConfig>>(emptyList())
+    val contact: StateFlow<List<ServerConfig>> = _contact
+
     suspend fun inputKey(userId : Int, key : String):Response<UserInfo>{
         val res = ExceptionUtil.tryCatch(
             tryFun = {
@@ -42,6 +48,20 @@ class PersonViewModel(app : Application)  : BaseViewModel(application = app) {
         viewModelScope.launch {
             appDb.userInfoDao.delete(userInfo)
             appViewModel.updateUser(null)
+        }
+    }
+
+    fun getContact(){
+        viewModelScope.launch {
+            try {
+                if (_contact.value.isEmpty()){
+                    RemoteApi.concatAndNotice.getContact().data?.let {
+                        _contact.value = it
+                    }
+                }
+            }catch (e : Exception){
+                println("获取联系方式异常")
+            }
         }
     }
 }

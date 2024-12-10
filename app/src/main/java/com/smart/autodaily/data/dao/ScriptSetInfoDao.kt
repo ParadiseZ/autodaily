@@ -57,4 +57,7 @@ interface ScriptSetInfoDao {
 
     @Query("select a.flow_id  FROM script_set_info a where a.script_id = :scriptId and a.back_flag = 1")
     fun getBackSetByScriptId(scriptId: Int) : List<Int>
+
+    @Query("select *  FROM script_set_info a where a.script_id = :scriptId and a.flow_id = :flowId")
+    fun getScriptSetByFlowId(scriptId: Int, flowId : Int) : List<ScriptSetInfo>
 }

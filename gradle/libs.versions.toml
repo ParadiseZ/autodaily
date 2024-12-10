@@ -23,7 +23,6 @@ retrofit = "2.11.0"
 converterGson = "2.11.0"
 lifecycleViewmodelKtx = "2.8.6"
 okhttp = "5.0.0-alpha.14"
-tesseract4androidOpenmp = "4.7.0"
 splitties = "3.0.0"
 shizukuApi  = "13.1.5"
 shizukuProvider = "13.1.5"
@@ -61,7 +60,6 @@ converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", ve
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
 
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
-tesseract4android-openmp = { module = "cz.adaptech.tesseract4android:tesseract4android-openmp", version.ref = "tesseract4androidOpenmp" }
 
 shizuku-api = { group = "dev.rikka.shizuku", name = "api", version.ref = "shizukuApi" }
 shizuku-provider = { module = "dev.rikka.shizuku:provider", version.ref = "shizukuProvider" }

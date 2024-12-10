@@ -9,7 +9,7 @@ import com.smart.autodaily.utils.PageUtil
 import retrofit2.HttpException
 import java.io.IOException
 
-open class ScriptNetDataSource (private val sda: SearchDownloadApi, private val searchKey: String?): PagingSource<Int, ScriptInfo>() {
+open class ScriptNetDataSource (private val sda: SearchDownloadApi, private val searchKey: String?,var userId : Int): PagingSource<Int, ScriptInfo>() {
     override fun getRefreshKey(state: PagingState<Int, ScriptInfo>): Int? {
         //返回null表示刷新时从第一页开始
         return null
@@ -21,9 +21,9 @@ open class ScriptNetDataSource (private val sda: SearchDownloadApi, private val 
             val page = params.key ?: PageUtil.FIRST_PAGE
             val pageSize = params.loadSize
             val response =if (searchKey?.isNotBlank() == true) {
-                sda.getAllScriptByPage("181",searchKey , page, pageSize)
+                sda.getAllScriptByPage(userId ,searchKey , page, pageSize)
             } else{
-                sda.getAllScriptByPage("181" , page, pageSize)
+                sda.getAllScriptByPage(userId , page, pageSize)
             }
             LoadResult.Page(
                 data = response.data!!,

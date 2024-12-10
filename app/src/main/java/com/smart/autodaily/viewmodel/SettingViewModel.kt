@@ -10,9 +10,12 @@ import androidx.paging.cachedIn
 import com.smart.autodaily.base.BaseViewModel
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.dataresource.ScriptSetLocalDataSource
+import com.smart.autodaily.data.entity.ScriptRunStatus
 import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.utils.PageUtil
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
+import org.threeten.bp.LocalDate
 
 var mediaProjectionServiceStartFlag = mutableStateOf(false)// 全局变量，用于控制媒体投影服务是否启动
 class SettingViewModel (app: Application) : BaseViewModel(application = app) {
@@ -33,6 +36,41 @@ class SettingViewModel (app: Application) : BaseViewModel(application = app) {
             appDb.scriptSetInfoDao.update(scriptSetInfo)
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    fun insertStatus(scriptId : Int,flowId : Int){
+        viewModelScope.launch {
+            val sets = appDb.scriptSetInfoDao.getScriptSetByFlowId(scriptId,flowId)
+            for (set in sets) {
+                try {
+                    appDb.scriptRunStatusDao.insert(
+                        ScriptRunStatus(
+                            scriptId = scriptId,
+                            flowId = flowId,
+                            flowIdType = set.flowIdType,
+                            curStatus = 2,
+                            dateTime = LocalDate.now()
+                                .toString()
+                        )
+                    )
+                }catch (e : Exception){
+                    println("错误$set")
+                }
+            }
+        }
+
+    }
+
+    fun deleteStatus(scriptId : Int,flowId : Int){
+        viewModelScope.launch {
+            appDb.scriptRunStatusDao.deleteStatus(scriptId,flowId)
+        }
+    }
+
+    fun deleteByScriptId(scriptId : Int){
+        viewModelScope.launch {
+            appDb.scriptRunStatusDao.deleteStatus(scriptId)
         }
     }
 }

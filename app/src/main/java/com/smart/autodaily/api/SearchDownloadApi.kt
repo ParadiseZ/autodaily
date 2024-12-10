@@ -15,11 +15,11 @@ import retrofit2.http.Streaming
 
 interface SearchDownloadApi {
     @GET("/query/getScriptByPage")
-    suspend fun getAllScriptByPage(@Query("userName") userName : String, @Query("page") page : Int, @Query("pageSize") pageSize : Int) : Response<List<ScriptInfo>>
+    suspend fun getAllScriptByPage(@Query("userId") userId : Int, @Query("page") page : Int, @Query("pageSize") pageSize : Int) : Response<List<ScriptInfo>>
 
     @GET("/query/getScriptByPage")
     suspend fun getAllScriptByPage(
-        @Query("userName") userName : String,
+        @Query("userId") userId : Int,
         @Query("scriptName") scriptName : String,
         @Query("page") page : Int,
         @Query("pageSize") pageSize : Int
@@ -33,9 +33,6 @@ interface SearchDownloadApi {
 
     @GET("/query/downloadActionInfoByScriptId")
     suspend fun downloadActionInfoByScriptId(@Query("scriptId") scriptId : Int) : Response<List<ScriptActionInfo>>
-
-    @GET("/queryByPageTest")
-    suspend fun getScript(@Query("userName") userName : String, @Query("page") page : Int, @Query("pageSize") pageSize : Int) : List<ScriptInfo>
 
     @GET("/query/downloadModel")
     @Streaming

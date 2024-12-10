@@ -13,4 +13,6 @@ object RemoteApi {
     val keyTypeApi : KeyTypeApi = RetrofitCreate.create<KeyTypeApi>()
     val virtualCoinApi : VirtualCoinApi = RetrofitCreate.create<VirtualCoinApi>()
     val userKeyRecordApi : UserKeyRecordApi = RetrofitCreate.create<UserKeyRecordApi>()
+
+    val concatAndNotice : ConcatAndNotice = RetrofitCreate.create<ConcatAndNotice>()
 }

@@ -27,7 +27,9 @@ data class ConfigData(
     val maxRetryNum : Int,
     var curRetryNum : Int,
 
-    var beforeClickIdx : Int
+
+    var beforeClickIdx : Int,
+    var beforePoint : Point
 ){
     var beforeHash : ByteArray = ByteArray(0)
     var curHash : ByteArray = ByteArray(0)

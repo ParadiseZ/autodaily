@@ -1,12 +1,14 @@
 package com.smart.autodaily.viewmodel
 
 import android.app.Application
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.smart.autodaily.api.RemoteApi
 import com.smart.autodaily.constant.MODEL_BIN
 import com.smart.autodaily.constant.MODEL_PARAM
 import com.smart.autodaily.constant.ResponseCode
+import com.smart.autodaily.constant.WORK_TYPE00
 import com.smart.autodaily.constant.WORK_TYPE01
 import com.smart.autodaily.constant.WORK_TYPE02
 import com.smart.autodaily.constant.WORK_TYPE03
@@ -36,6 +38,10 @@ import kotlinx.coroutines.withContext
 import org.threeten.bp.LocalDateTime
 import splitties.init.appCtx
 import java.io.File
+
+val workType by lazy {
+    mutableStateOf("")
+}
 
 class AppViewModel (application: Application) : AndroidViewModel(application){
     //本地脚本列表
@@ -112,9 +118,12 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     }
 
     suspend fun runScript(){
-        println("work type："+RunScript.globalSetMap.value[8]?.setValue)
-        RunScript.globalSetMap.value[8]?.let {
-            when(it.setValue) {
+        workType.value = RunScript.globalSetMap.value[8]?.setValue ?:""
+        workType.value.let {
+            when(it) {
+                WORK_TYPE00 ->{
+                    appCtx.toastOnUi("未设置工作模式！")
+                }
                 WORK_TYPE01 -> {
                     isRunning.intValue = 1
                 }
@@ -126,6 +135,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                     if(ShizukuUtil.grant && ShizukuUtil.iUserService != null){
                         isRunning.intValue = 1//运行中
                         RunScript.runScriptByAdb()
+                        isRunning.intValue = 0
                     }else{
                         isRunning.intValue = 0//启动服务失败
                         appCtx.toastOnUi("请检查shizuku服务！")
@@ -133,8 +143,13 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                     }
                     //(manActivityCtx as MainActivity).requestOverlayPermission()
                 }
+
                 WORK_TYPE03 -> {
                     isRunning.intValue = 1
+                }
+                else ->{
+                    appCtx.toastOnUi("")
+                    isRunning.intValue = 0
                 }
             }
         }

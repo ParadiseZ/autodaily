@@ -55,11 +55,17 @@ class SearchViewModel(application: Application)   : BaseViewModel(application = 
         }
     }
     private fun searchScriptByPage(localList : List<ScriptInfo>): Flow<PagingData<ScriptInfo>> {
+        /*this.appViewModel.user.value?:let {
+            viewModelScope.launch {
+                appViewModel.loadUserInfo()
+            }
+        }*/
         val localIds = localList.map { it.scriptId }
         val netSearchResult = Pager(PagingConfig(pageSize = PageUtil.PAGE_SIZE, initialLoadSize =PageUtil.INITIALOAD_SIZE, prefetchDistance = PageUtil.PREFETCH_DISTANCE)) {
             ScriptNetDataSource(
                 RemoteApi.searchDownRetrofit,
-                _searchText.value
+                _searchText.value,
+                0
             )
         }
         val updatedNetSearchResult : Flow<PagingData<ScriptInfo>> = netSearchResult.flow.map { pagingData ->
