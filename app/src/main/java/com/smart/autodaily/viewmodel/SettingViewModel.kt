@@ -17,8 +17,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalDate
 
-var mediaProjectionServiceStartFlag = mutableStateOf(false)// 全局变量，用于控制媒体投影服务是否启动
+val mediaProjectionServiceStartFlag by lazy {
+    mutableStateOf(false)// 全局变量，用于控制媒体投影服务是否启动
+}
 class SettingViewModel (app: Application) : BaseViewModel(application = app) {
+
+    private val _canUpdate  = mutableStateOf(false)
+
     fun getGlobalSetting(): Flow<PagingData<ScriptSetInfo>> {
         return Pager(
             PagingConfig(

@@ -393,7 +393,6 @@ private fun accessibilityAndMediaProjectionRequest() {
                         )
                         ScreenCaptureUtil.mediaProjectionDataMap["resolver"] =
                             appCtx.contentResolver//用来测试图片保存
-
                         break
                     }
                 }
@@ -407,13 +406,11 @@ private fun accessibilityAndMediaProjectionRequest() {
                 if (mediaProjectionServiceStartFlag.value){
                     //ScreenCaptureUtil.screenCapture()
                     //ScreenCaptureU.getScreenshot(homeViewModel.context)
-
                     //ScreenCaptureUtil.screenCapture()
                     ScreenCaptureUtil.screenCaptureTIRAMISU()
                     break
                 }
                 delay(2000)
-
             }
         }
     }

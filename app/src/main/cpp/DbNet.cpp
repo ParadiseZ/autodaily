@@ -43,8 +43,6 @@ std::vector<TextBox> DbNet::getTextBoxes(const cv::Mat& src, float boxScoreThres
 {
     int width = src.cols;
     int height = src.rows;
-    //int target_size = 640;
-    // pad to multiple of 32
     int w = width;
     int h = height;
     float scale;

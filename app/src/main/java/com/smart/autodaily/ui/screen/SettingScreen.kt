@@ -3,7 +3,6 @@ package com.smart.autodaily.ui.screen
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
-import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,7 +36,6 @@ import com.smart.autodaily.constant.PermissionSettingText
 import com.smart.autodaily.constant.SettingTitle
 import com.smart.autodaily.constant.SettingType
 import com.smart.autodaily.constant.Ui
-import com.smart.autodaily.service.MediaProjectionService
 import com.smart.autodaily.ui.conponent.CheckBoxSettingItem
 import com.smart.autodaily.ui.conponent.RadioButtonSettingItem
 import com.smart.autodaily.ui.conponent.SliderSecondSettingItem
@@ -45,10 +43,7 @@ import com.smart.autodaily.ui.conponent.SliderSettingItem
 import com.smart.autodaily.ui.conponent.SwitchSettingItem
 import com.smart.autodaily.ui.conponent.TextFieldSettingItem
 import com.smart.autodaily.ui.conponent.TitleSettingItem
-import com.smart.autodaily.utils.ScreenCaptureUtil
-import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.viewmodel.SettingViewModel
-import com.smart.autodaily.viewmodel.mediaProjectionServiceStartFlag
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -85,12 +80,12 @@ fun SettingScreen(
                 sharedPreferences.getBoolean("second_setting_expand", false)
             )
         }
-        var accessibilityServiceOpenFlagOld = false
+        /*var accessibilityServiceOpenFlagOld = false
         val accessibilityServiceOpenFlagNew = remember {
             mutableStateOf(
                 ServiceUtil.isAccessibilityServiceEnabled(settingViewModel.context)
             )
-        }
+        }*/
         val floatWindowFlag =
             remember { mutableStateOf(sharedPreferences.getBoolean("float_window", false)) }
         LazyColumn(
@@ -118,7 +113,7 @@ fun SettingScreen(
                                 SettingType.SWITCH -> SwitchSettingItem(
                                     setting,
                                     onSwitchChange = { settingViewModel.updateGlobalSetting(setting) })
-
+                                //slider无step、百分比
                                 SettingType.SLIDER -> SliderSettingItem(
                                     setting,
                                     onSliderValueChange = {
@@ -137,20 +132,17 @@ fun SettingScreen(
                                     setting,
                                     onCheckedChange = { settingViewModel.updateGlobalSetting(setting) })
 
-                                SettingType.SLIDER_SECOND -> SliderSecondSettingItem(
-                                    setting,
-                                    onSliderValueChange = {
-                                        settingViewModel.updateGlobalSetting(setting)
-                                    })
-
                                 SettingType.TITLE -> TitleSettingItem(setting.setName)
-                                SettingType.SLIDER_THIRD -> SliderSettingItem(
-                                    setting,
-                                    onSliderValueChange = {
-                                        settingViewModel.updateGlobalSetting(setting)
-                                    })
 
                                 SettingType.DROPDOWN_MENU -> {}
+                                else ->{
+                                    //slider类型、有step
+                                    SliderSecondSettingItem(
+                                        setting,
+                                        onSliderValueChange = {
+                                            settingViewModel.updateGlobalSetting(setting)
+                                        })
+                                }
                             }
                         }
                     }
@@ -163,6 +155,7 @@ fun SettingScreen(
                 })
             }
             if (secondSettingOpenFlag.value) {
+                /*
                 item {
                     RowSwitchPermission(
                         labelText = PermissionSettingText.ACCESSBILITY_SERVICE_TEXT,
@@ -204,6 +197,7 @@ fun SettingScreen(
                             }
                         })
                 }
+                */
                 item {
                     RowIconButtonPermission(PermissionSettingText.IGNORE_BATTERIES_TEXT,
                         iconButtonOnClick = {

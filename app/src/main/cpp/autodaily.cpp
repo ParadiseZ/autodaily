@@ -71,6 +71,14 @@ static jclass detectResCls = nullptr;
 static jmethodID detectResCon;
 static jclass rectCls = nullptr;
 static jmethodID rectCon;
+//ocr
+static jclass ocrResCls = nullptr;
+static jmethodID ocrResMethod = nullptr;
+static jclass hashSetClass = nullptr;
+static jclass shortClass = nullptr;
+static jmethodID hashSetCon = nullptr;
+static jmethodID shortCon = nullptr;
+static jmethodID addMethod = nullptr;
 static jobjectArray changeDetectResultToJavaArray(JNIEnv *env, const std::vector<Object> &objects)
 {
     // 创建Java对象数组
@@ -99,6 +107,41 @@ extern "C"
     {
         __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "JNI_OnLoad");
         ncnn::create_gpu_instance();
+
+        JNIEnv *env;
+        if (vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) != JNI_OK)
+        {
+            return JNI_ERR;
+        }
+        // detect
+        jclass localDetectResCls = env->FindClass("com/smart/autodaily/data/entity/DetectResult");
+        detectResCls = (jclass)env->NewGlobalRef(localDetectResCls);
+        detectResCon = env->GetMethodID(detectResCls, "<init>", "(SFLcom/smart/autodaily/data/entity/Rect;FF)V");
+        env->DeleteLocalRef(localDetectResCls);
+
+        jclass localRectCls = env->FindClass("com/smart/autodaily/data/entity/Rect");
+        rectCls = (jclass)env->NewGlobalRef(localRectCls);
+        rectCon = env->GetMethodID(rectCls, "<init>", "(FFFF)V");
+        env->DeleteLocalRef(localRectCls);
+
+        //OCR
+        jclass localOcrResCls = env->FindClass("com/smart/autodaily/data/entity/OcrResult");
+        ocrResCls = (jclass)env->NewGlobalRef(localOcrResCls);
+        ocrResMethod = env->GetMethodID(ocrResCls, "<init>", "(Ljava/util/Set;FFFFFF)V");
+        env->DeleteLocalRef(localOcrResCls);
+
+        jclass localHashSetCls = env->FindClass("java/util/HashSet");
+        hashSetClass =  (jclass)env->NewGlobalRef(localHashSetCls);
+        hashSetCon = env->GetMethodID(hashSetClass, "<init>", "()V");
+        env->DeleteLocalRef(localHashSetCls);
+
+        jclass localShortCls = env->FindClass("java/lang/Short");
+        shortClass = (jclass)env->NewGlobalRef(localShortCls);
+        shortCon = env->GetMethodID(shortClass, "<init>", "(S)V");
+        env->DeleteLocalRef(localShortCls);
+
+        addMethod = env->GetMethodID(hashSetClass, "add", "(Ljava/lang/Object;)Z");
+
         return JNI_VERSION_1_6;
     }
 
@@ -106,12 +149,45 @@ extern "C"
     {
         __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "JNI_OnUnload");
 
+        JNIEnv *env;
+        if (vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) != JNI_OK)
+        {
+            return;
+        }
+
         {
             ncnn::MutexLockGuard g(lock);
             ncnn::MutexLockGuard ocr(lock);
             ncnn::destroy_gpu_instance();
             delete g_yolo;
             delete g_ocr;
+
+            // 删除全局引用
+            if (detectResCls != nullptr)
+            {
+                env->DeleteGlobalRef(detectResCls);
+                detectResCls = nullptr;
+            }
+            if (rectCls != nullptr)
+            {
+                env->DeleteGlobalRef(rectCls);
+                rectCls = nullptr;
+            }
+            if (ocrResCls != nullptr)
+            {
+                env->DeleteGlobalRef(ocrResCls);
+                ocrResCls = nullptr;
+            }
+            if (hashSetClass != nullptr)
+            {
+                env->DeleteGlobalRef(hashSetClass);
+                hashSetClass = nullptr;
+            }
+            if (shortClass != nullptr)
+            {
+                env->DeleteGlobalRef(shortClass);
+                shortClass = nullptr;
+            }
         }
     }
 
@@ -196,12 +272,6 @@ extern "C"
         fclose(modelFile);
         env->ReleaseStringUTFChars(paramPath, param_str);
         env->ReleaseStringUTFChars(modelPath, bin_str);
-        // 初始化类与构造方法
-        detectResCls = env->FindClass("com/smart/autodaily/data/entity/DetectResult");
-        detectResCon = env->GetMethodID(detectResCls, "<init>", "(SFLcom/smart/autodaily/data/entity/Rect;FF)V");
-        // RectF
-        rectCls = env->FindClass("com/smart/autodaily/data/entity/Rect");
-        rectCon = env->GetMethodID(rectCls, "<init>", "(FFFF)V");
         return JNI_TRUE;
     }
 
@@ -238,14 +308,7 @@ extern "C"
     }
 
     // OCR
-    static jclass ocrResCls = nullptr;
-    static jmethodID ocrResMethod  = nullptr;
-    static jclass hashSetClass = nullptr;
-    static jclass shortClass = nullptr;
-    static jmethodID hashSetCon =  nullptr;
-    static jmethodID shortCon = nullptr;
-    static jmethodID addCon = nullptr;
-    JNIEXPORT jboolean JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_loadOcr(JNIEnv *env, jobject thiz, jobject assetManager, jint lang, jboolean useGpu)
+    JNIEXPORT jboolean JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_loadOcr(JNIEnv *env, jobject thiz, jobject assetManager, jint lang, jboolean useGpu, jint detectSize)
     {
         AAssetManager *mgr = AAssetManager_fromJava(env, assetManager);
         // Get the actual characters of the string
@@ -255,24 +318,7 @@ extern "C"
             ncnn::MutexLockGuard ocr(lock);
             if (!g_ocr)
                 g_ocr = new Ocr;
-            g_ocr->loadModel(mgr, lang, useGpu);
-            jclass localCls = env->FindClass("com/smart/autodaily/data/entity/OcrResult");
-            ocrResCls = (jclass)env->NewGlobalRef(localCls);
-            env->DeleteLocalRef(localCls); // 释放本地引用
-
-            ocrResMethod = env->GetMethodID(ocrResCls, "<init>", "(Ljava/util/Set;FFFFFF)V");
-            // class find
-            jclass setClass = env->FindClass("java/util/Set");
-            hashSetClass = env->FindClass("java/util/HashSet");
-            shortClass = env->FindClass("java/lang/Short");
-            // method find, hash set
-            hashSetCon = env->GetMethodID(hashSetClass, "<init>", "()V");
-            // 获取 Short 的构造函数
-            shortCon = env->GetMethodID(shortClass, "<init>", "(S)V");
-            // 获取 Set.add 方法
-            addCon = env->GetMethodID(setClass, "add", "(Ljava/lang/Object;)Z");
-
-            env->DeleteLocalRef(setClass); // 释放本地引用
+            g_ocr->loadModel(mgr, lang, useGpu, detectSize);
         }
         return JNI_TRUE;
     }
@@ -283,31 +329,26 @@ extern "C"
         cv::cvtColor(in, rgb, cv::COLOR_BGR2RGB);
         in.release();
         std::vector<TextBox> boxResult = g_ocr->dbNet->getTextBoxes(rgb, 0.2, 0.3, 2);
-        LOGD("start getPartImages");
         std::vector<cv::Mat> partImages = getPartImages(rgb, boxResult);
-        LOGD("start getTextLines");
         std::vector<TextLine> textLines = g_ocr->crnnNet->getTextLines(partImages);
         rgb.release();
-        LOGD("getTextEnd");
         // objects to Obj[]
         jobjectArray jOcrResArray = env->NewObjectArray(static_cast<jsize>(textLines.size()), ocrResCls, nullptr);
-        LOGD("jOcrResArray end");
         short idx = 0;
-        for (const auto & txt : textLines)
+        for (const auto &txt : textLines)
         {
-            // const char * txt =  textLines[i].text.c_str();
             //  创建 HashSet 对象
             jobject hashSet = env->NewObject(hashSetClass, hashSetCon);
             for (short k : txt.label)
             {
                 jobject shortObj = env->NewObject(shortClass, shortCon, static_cast<jshort>(k));
                 // add
-                env->CallBooleanMethod(hashSet, addCon, shortObj);
+                env->CallBooleanMethod(hashSet, addMethod, shortObj);
                 // 释放局部引用
                 env->DeleteLocalRef(shortObj);
             }
-            LOGD("hashset end");
-            // env->SetShortArrayRegion(jLabelArray,0, len,buffer);
+            // 顺时针
+            /*
             float x = boxResult[txt.idx].boxPoint[0].x;
             float y = boxResult[txt.idx].boxPoint[0].y;
             float w = boxResult[txt.idx].boxPoint[1].x;
@@ -316,9 +357,13 @@ extern "C"
             float cy = boxResult[txt.idx].boxPoint[2].y;
             float x3 = boxResult[txt.idx].boxPoint[3].x;
             float y3 = boxResult[txt.idx].boxPoint[3].y;
-            LOGD("x %f,y %f,w %f,h %f,cx %f,cy %f,x3 %f,y3 %f, str %s\n", x, y, w, h, cx, cy, x3, y3, txt.text.c_str());
-            jobject res = env->NewObject(ocrResCls, ocrResMethod, hashSet, x, y, w, h, cx, cy);
-
+             */
+            float x = boxResult[txt.idx].boxPoint[0].x;
+            float y = boxResult[txt.idx].boxPoint[0].y;
+            float w = boxResult[txt.idx].boxPoint[1].x - x;
+            float h = boxResult[txt.idx].boxPoint[3].y - y;
+            LOGD("i%d,%s",idx, txt.text.c_str());
+            jobject res = env->NewObject(ocrResCls, ocrResMethod, hashSet, x, y, w, h, x + w/2, y + h/2);
             env->SetObjectArrayElement(jOcrResArray, idx, res);
             idx++;
             // 释放局部引用

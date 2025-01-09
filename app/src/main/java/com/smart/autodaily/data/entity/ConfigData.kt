@@ -15,6 +15,8 @@ data class ConfigData(
     val tryBackAction : Boolean,
     //随机点击的范围
     val random: Float,
+    //OCR缩放倍数
+    val detectSize : Int,
     //当前记忆的系统时间
     var remRebootTime : Long,
     //循环截图识别标志

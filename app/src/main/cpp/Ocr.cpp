@@ -10,14 +10,14 @@ Ocr::Ocr() {
     dbNet = new DbNet;
     crnnNet = new CrnnNet;
 }
- bool Ocr::loadModel (AAssetManager* mgr,int lang, bool useGpu) {
+ bool Ocr::loadModel (AAssetManager* mgr,int lang, bool useGpu,int detectSize) {
     // init param
     {
         int det,  rec;
         if (lang == 0) {
             const char* det_model = "ch_det";
             const char* rec_model = "ch_rec";
-            det = dbNet->load(mgr, det_model, target_size,detMeanValues,detNormValues,useGpu);
+            det = dbNet->load(mgr, det_model, detectSize,detMeanValues,detNormValues,useGpu);
             rec = crnnNet->load(mgr,rec_model, dstHeight, rec_mean_vals, rec_norm_vals, useGpu);
             /*
             detP = dbNet.load_param(mgr, "ch_det.param");

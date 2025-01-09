@@ -84,6 +84,7 @@ object  RunScript {
             _globalSetMap.value[10]?.checkedFlag?:false,
             _globalSetMap.value[1]?.checkedFlag?:false,
             globalSetMap.value[9]?.setValue?.toFloat()?:0f,
+            _globalSetMap.value[6]?.setValue?.toInt()?:640,
             remRebootTime = System.currentTimeMillis(),
             10000L,
             2,
@@ -93,13 +94,14 @@ object  RunScript {
     fun testOcr(){
         val pic = AssetUtil.getFromAssets("0255.png")
         println("start ocr")
-        ModelUtil.loadOcr(0,false)
+        ModelUtil.loadOcr(0,false, conf.detectSize)
         println("start detect")
         ModelUtil.model.detectOcr(pic)
     }
     //shell运行
     suspend fun runScriptByAdb(){
         initConfData()
+        conf.toString()
         //println("开始运行${_scriptCheckedList.value.size}")
         println("select num："+_scriptCheckedList.value.size)
         _scriptCheckedList.value.forEach scriptForEach@{ si->
@@ -135,7 +137,7 @@ object  RunScript {
                         //超时重启
                         isToReboot(si.packageName)
                         //截图延迟
-                        val capture = if (conf.capture == null) {
+                        val capture = if (conf.capture == null || conf.capture!!.isRecycled) {
                             delay(conf.intervalTime)
                             getPicture()?:continue
                         }else conf.capture!!
@@ -214,7 +216,7 @@ object  RunScript {
                 si.imgSize , conf.useGpu
             )
         }
-        ModelUtil.loadOcr(si.lang,conf.useGpu)
+        ModelUtil.loadOcr(si.lang,conf.useGpu, conf.detectSize)
     }
 
     fun getPicture() : Bitmap?{

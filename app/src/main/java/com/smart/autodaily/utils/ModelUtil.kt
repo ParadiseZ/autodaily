@@ -18,8 +18,8 @@ object ModelUtil{
         }
     }
 
-    fun loadOcr(lang : Int, useGpu: Boolean){
-        if (!model.loadOcr(appCtx.assets, lang, useGpu)){
+    fun loadOcr(lang : Int, useGpu: Boolean, detectSize : Int){
+        if (!model.loadOcr(appCtx.assets, lang, useGpu,detectSize)){
             appCtx.toastOnUi("加载OCR模型失败！")
         }
     }

@@ -13,7 +13,8 @@ interface ScriptSetInfoDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(setInfoListi: List<ScriptSetInfo>)
 
-    @Query("select * from script_set_info where script_id = :scriptId order by sort LIMIT :pageSize OFFSET :starIndex")
+    //展示
+    @Query("select * from script_set_info where script_id = :scriptId and is_show = 1 order by sort LIMIT :pageSize OFFSET :starIndex")
     fun queryScriptSetInfo(scriptId: Int, pageSize: Int, starIndex: Int) : List<ScriptSetInfo>
 
     @Query("select count(script_id) from script_set_info where script_id = :scriptId")

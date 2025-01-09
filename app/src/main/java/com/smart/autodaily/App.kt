@@ -12,7 +12,7 @@ import com.jakewharton.threetenabp.AndroidThreeTen
 import com.jeremyliao.liveeventbus.LiveEventBus
 import com.smart.autodaily.config.AppConfig.channelIdDownload
 import com.smart.autodaily.handler.RunScript
-import com.smart.autodaily.utils.UpdateUtil
+import com.smart.autodaily.utils.checkScriptUpdate
 import com.smart.autodaily.utils.partScope
 import com.smart.autodaily.utils.updateScope
 import kotlinx.coroutines.cancelChildren
@@ -39,7 +39,7 @@ class App : Application(){
             //初始化全局设置
             RunScript.initGlobalSet()
             try {
-                UpdateUtil.checkScriptUpdate()
+                checkScriptUpdate()
             }catch (e : Exception){
                 updateScope.coroutineContext.cancelChildren()
             }

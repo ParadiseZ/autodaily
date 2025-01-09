@@ -17,10 +17,8 @@ fun execClick(sai: ScriptActionInfo, detectRes: Array<DetectResult>, ocrRes : Ar
         println("点击位置为空，错误！")
         return 5
     }
-    
     // Initialize retry counter
     var retryCount = 0
-    
     while (retryCount < conf.maxRetryNum) {
         // Execute click operation
         when (cmd.operation) {
@@ -40,12 +38,11 @@ fun execClick(sai: ScriptActionInfo, detectRes: Array<DetectResult>, ocrRes : Ar
         val startTime = System.currentTimeMillis()
         while (System.currentTimeMillis() - startTime < conf.retryDelay) {
             // Check for response using initial hash
+            Thread.sleep(conf.intervalTime) // Check every 500ms
             if (hasResponse()) {
                 return 2 // Success
             }
-            Thread.sleep(conf.intervalTime) // Check every 500ms
         }
-
         retryCount++
         println("点击未响应，第${retryCount}次重试")
     }

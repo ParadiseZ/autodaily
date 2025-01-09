@@ -45,6 +45,9 @@ fun SliderSecondSettingItem(
             Text(modifier = Modifier.padding(start = Ui.SPACE_4),text = setting.setName+"：")
             when(setting.setType){
                 SettingType.SLIDER_SECOND -> Text(text = "${"%.1f".format(sliderValue )}秒")
+                SettingType.SLIDER_THIRD -> Text(text = "${"%.1f".format(sliderValue )}px")
+                SettingType.SLIDER_FOURTH -> Text(text = "${"%.1f".format(sliderValue )}分")
+                SettingType.SLIDER_FIFETH -> Text(text = "${"%.1f".format(sliderValue )}倍")
                 else -> Text(text = "${"%.0f".format(sliderValue * 100)}px")
             }
             Slider(

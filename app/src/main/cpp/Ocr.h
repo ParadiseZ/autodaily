@@ -12,11 +12,10 @@ public:
         Ocr();
         DbNet* dbNet;
         CrnnNet* crnnNet;
-        bool loadModel(AAssetManager* mgr,int lang, bool useGpu);
+        bool loadModel(AAssetManager* mgr,int lang, bool useGpu, int detectSize);
 private:
-    const int dstHeight = 48;//when use PP-OCRv3 it should be 48
+    const int dstHeight = 48;
     std::vector<std::string> keys;
-    int target_size = 640;
     const float detMeanValues[3] = { 0.485 * 255, 0.456 * 255, 0.406 * 255 };
     const float detNormValues[3] = { 1.0 / 0.229 / 255.0, 1.0 / 0.224 / 255.0, 1.0 / 0.225 / 255.0 };
     const float rec_mean_vals[3] = { 127.5, 127.5, 127.5 };

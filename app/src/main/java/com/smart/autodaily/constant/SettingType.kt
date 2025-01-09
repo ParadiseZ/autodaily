@@ -7,6 +7,8 @@ enum class SettingType {
     CHECK_BOX,
     RADIO_BUTTON,
     SLIDER_SECOND,
+    SLIDER_FOURTH,
+    SLIDER_FIFETH,
     TITLE,
     SLIDER_THIRD,
     DROPDOWN_MENU

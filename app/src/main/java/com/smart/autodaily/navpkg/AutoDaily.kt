@@ -11,7 +11,7 @@ class AutoDaily{
     external fun detectYolo(capture: Bitmap,numClasses:Int, threshold: Float = 0.25f, nmsThreshold: Float = 0.45f) : Array<DetectResult>
     external fun detectAndDraw(capture: Bitmap,numClasses:Int, threshold: Float=0.25f, nmsThreshold: Float=0.5f, drawMap: Bitmap) : Array<DetectResult>
 
-    external fun loadOcr(mgr : AssetManager, lang : Int, useGpu: Boolean) :Boolean
+    external fun loadOcr(mgr : AssetManager, lang : Int, useGpu: Boolean, detectSize: Int) :Boolean
     external fun detectOcr(capture: Bitmap) : Array<OcrResult>
 
     companion object{
