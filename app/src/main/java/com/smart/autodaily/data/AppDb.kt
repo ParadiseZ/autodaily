@@ -6,16 +6,12 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.smart.autodaily.data.AppDb.Companion.DATABASE_NAME
 import com.smart.autodaily.data.dao.AppInfoDao
-import com.smart.autodaily.data.dao.LabelFtsDao
-import com.smart.autodaily.data.dao.LabelTempDao
 import com.smart.autodaily.data.dao.ScriptActionInfoDao
 import com.smart.autodaily.data.dao.ScriptInfoDao
 import com.smart.autodaily.data.dao.ScriptRunStatusDao
 import com.smart.autodaily.data.dao.ScriptSetInfoDao
 import com.smart.autodaily.data.dao.UserInfoDao
 import com.smart.autodaily.data.entity.AppInfo
-import com.smart.autodaily.data.entity.LabelFts
-import com.smart.autodaily.data.entity.LabelTemp
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptRunStatus
@@ -42,9 +38,7 @@ val appDb by lazy {
         UserInfo::class,
         ScriptActionInfo::class,
         ScriptRunStatus::class,
-        AppInfo::class,
-        LabelFts::class,
-        LabelTemp::class],
+        AppInfo::class],
 /*    autoMigrations = [
         AutoMigration(from = 2, to = 3)
     ]*/
@@ -56,8 +50,7 @@ abstract class AppDb  :  RoomDatabase(){
     abstract val scriptActionInfoDao : ScriptActionInfoDao
     abstract val appInfoDao : AppInfoDao
     abstract val scriptRunStatusDao : ScriptRunStatusDao
-    abstract val labelFtsDao : LabelFtsDao
-    abstract val labelTempDao : LabelTempDao
+
     companion object {
         // For Singleton instantiation
 
