@@ -251,7 +251,6 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
             scriptAction.data?.let {
                 appDb.scriptActionInfoDao.insert(it)
                 //fts表
-                appDb.labelFtsDao.insertFrom()
             }
             scriptInfo.process.intValue = -1
         }
