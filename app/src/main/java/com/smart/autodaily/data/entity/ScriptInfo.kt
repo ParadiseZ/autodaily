@@ -18,8 +18,8 @@ data class ScriptInfo(
     @ColumnInfo(name = "add_time") @SerializedName("add_time") var addTime: String, // 添加日期
     @ColumnInfo(name = "update_time") @SerializedName("update_time") var updateTime: String?,  //更新日期
     @ColumnInfo(name = "model_path") @SerializedName("model_path") val modelPath: String, // 模型路径
-    @ColumnInfo(name = "classes_num") @SerializedName("classes_num") val classesNum: Int, // 类别数量
-    @ColumnInfo(name = "img_size") @SerializedName("img_size") val imgSize: Int = 576, // 类别数量
+    @ColumnInfo(name = "classes_num") @SerializedName("classes_num") var classesNum: Int, // 类别数量
+    @ColumnInfo(name = "img_size") @SerializedName("img_size") var imgSize: Int = 640, // 类别数量
 
     @ColumnInfo(name = "checked_flag") var checkedFlag: Boolean = true,     // 是否选中
     @ColumnInfo(name = "script_version") var scriptVersion: Int = 0, // 脚本版本号
@@ -28,6 +28,7 @@ data class ScriptInfo(
     @ColumnInfo(name = "is_downloaded") var isDownloaded: Int = 0, // 是否已下载
     @ColumnInfo(name = "current_run_num") var currentRunNum: Int = 0, // 当前运行次数
     @ColumnInfo(name = "need_app_update") var needAppUpdate: Int = 0, // 当前运行次数
+    @ColumnInfo(name = "lang") var lang: Int = 0, // 语言
 ){
     @Ignore
     var process = mutableIntStateOf(0)  //下载进度条

@@ -27,7 +27,7 @@ public:
 private:
     ncnn::Net yolo;
     int target_size;
-    float norm_vals[3];
+    float norm_vals[3]{};
     ncnn::UnlockedPoolAllocator blob_pool_allocator;
     ncnn::PoolAllocator workspace_pool_allocator;
 };

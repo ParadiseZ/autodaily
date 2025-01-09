@@ -7,24 +7,23 @@ import androidx.room.Index
 import com.google.gson.annotations.SerializedName
 import com.smart.autodaily.command.Command
 
-@Entity(tableName = "script_action_info", primaryKeys = ["id"], indices = [Index(value = ["script_id", "flow_id","page_labels"])])
+@Entity(tableName = "script_action_info", primaryKeys = ["id"], indices = [Index(value = ["script_id", "flow_id"])])
 data class ScriptActionInfo(
     @ColumnInfo(name = "id") @SerializedName("id") val id: Int,
-    @ColumnInfo(name = "script_id") @SerializedName("script_id") val scriptId: Int,
-    @ColumnInfo(name = "flow_id") @SerializedName("flow_id") val flowId: Int,
-    @ColumnInfo(name = "set_value") @SerializedName("set_value") val setValue: String?,
-    @ColumnInfo(name = "page_labels") @SerializedName("page_labels") val pageLabels : String?,
-    @ColumnInfo(name = "except_labels") @SerializedName("except_labels") val exceptLabels : String?,
-    @ColumnInfo(name = "click_label_idx") @SerializedName("click_label_idx") val clickLabelIdx : Int =-1,
-    @ColumnInfo(name = "click_label_position") @SerializedName("click_label_position") val clickLabelPosition : Int = -1,//-1为第一个
-    @ColumnInfo(name = "action_string") @SerializedName("action_string") val actionString : String,
-    @ColumnInfo(name = "execute_max") @SerializedName("execute_max") val executeMax : Int = 1,
-    @ColumnInfo(name = "page_desc") @SerializedName("page_desc") val pageDesc : String?,
-    //action_string
-    @ColumnInfo(name = "add_time") @SerializedName("add_time") val addTime : String,
-    @ColumnInfo(name = "update_time") @SerializedName("update_time") val updateTime : String?,
+    @ColumnInfo(name = "script_id") @SerializedName("scriptId") val scriptId: Int,
+    @ColumnInfo(name = "flow_id") @SerializedName("flowId") val flowId: Int,
+    @ColumnInfo(name = "set_value") @SerializedName("setValue") val setValue: String?,
+    @ColumnInfo(name = "action_string") @SerializedName("actionString") val actionString : String,
+    @ColumnInfo(name = "execute_max") @SerializedName("executeMax") val executeMax : Int = 1,
+    @ColumnInfo(name = "page_desc") @SerializedName("pageDesc") val pageDesc : String?,
+    @ColumnInfo(name = "add_time") @SerializedName("addTime") val addTime : String,
+    @ColumnInfo(name = "update_time") @SerializedName("updateTime") val updateTime : String?,
+    @ColumnInfo(name = "oper_txt") @SerializedName("operTxt") val operTxt : Boolean,
+    @ColumnInfo(name = "int_label") @SerializedName("intLabel") val intLabel : String?,
+    @ColumnInfo(name = "int_exc_label") @SerializedName("intExcLabel") val intExcLabel : String?,
+    @ColumnInfo(name = "txt_label") @SerializedName("txtLabel") val txtLabel : String?,
+    @ColumnInfo(name = "txt_exc_label") @SerializedName("txtExcLabel") val txtExcLabel : String?,
 
-    @ColumnInfo(name = "only_labels") @SerializedName("only_labels") val onlyLabels : String?,
     @ColumnInfo(name = "sort") @SerializedName("sort") val sort : Int
     //@ColumnInfo(name = "command") val command : ArrayList<Command> = arrayListOf(),
 ){
@@ -33,11 +32,17 @@ data class ScriptActionInfo(
     @Ignore
     val command : ArrayList<Command> = arrayListOf()
     @Ignore
-    var pageLabelSet : Set<Int> = hashSetOf()
+    var intLabelSet : Set<Short> = setOf()
     @Ignore
-    var exceptLabelSet : Set<Int> = hashSetOf()
+    var intExcLabelSet : Set<Short> = setOf()
     @Ignore
-    var onlyLabelSet : Set<Int> = hashSetOf()
+    var intFirstLab : Short = 0
+    @Ignore
+    var txtLabelSet : List<Set<Short>> = listOf()
+    @Ignore
+    var txtExcLabelSet : List<Set<Short>> = listOf()
+    @Ignore
+    var txtFirstLab : Set<Short> = setOf()
     @Ignore
     var point:Point?=null
     @Ignore

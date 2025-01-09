@@ -157,9 +157,6 @@ Yolo::Yolo()
     blob_pool_allocator.set_size_compare_ratio(0.f);
     workspace_pool_allocator.set_size_compare_ratio(0.f);
     target_size = 640;
-    norm_vals[0] = 1 / 255.f;
-    norm_vals[1] = 1 / 255.f;
-    norm_vals[2] = 1 / 255.f;
 }
 int Yolo::load(AAssetManager* mgr,const char* modeltype, int _target_size, const float* _norm_vals, bool use_gpu)
 {
@@ -168,9 +165,13 @@ int Yolo::load(AAssetManager* mgr,const char* modeltype, int _target_size, const
     ncnn::set_omp_num_threads(ncnn::get_big_cpu_count());
 
     yolo.opt = ncnn::Option();
-#if NCNN_VULKAN
+    if (ncnn::get_gpu_count() != 0)
+        yolo.opt.use_vulkan_compute = use_gpu;
+/*
+ #if NCNN_VULKAN
     yolo.opt.use_vulkan_compute = use_gpu;
 #endif
+ */
     yolo.opt.num_threads = ncnn::get_big_cpu_count();
     yolo.opt.blob_allocator = &blob_pool_allocator;
     yolo.opt.workspace_allocator = &workspace_pool_allocator;
