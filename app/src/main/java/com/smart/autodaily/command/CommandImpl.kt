@@ -1,9 +1,9 @@
 package com.smart.autodaily.command
 
-import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.Point
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.handler.ActionHandler
+import com.smart.autodaily.handler.skipFlowIds
 import com.smart.autodaily.utils.ShizukuUtil
 import kotlinx.coroutines.delay
 
@@ -28,6 +28,13 @@ fun adbStartApp(packName : String){
 class Operation(val type: Int, val operation : Command) : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
         return operation.exec(sai)
+    }
+}
+
+class SkipFlowId( val skipFlowId :Int): Command{
+    override fun exec(sai: ScriptActionInfo): Boolean {
+        skipFlowIds.add(skipFlowId)
+        return true
     }
 }
 
@@ -107,9 +114,9 @@ class Return(val type : String) : Command{
         return true
     }
 }
-class Check(private val setId : Int) : Command{
+/*class Check(private val setId : Int) : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
         return appDb.scriptSetInfoDao.getResultFlag(setId)
     }
-}
+}*/
 

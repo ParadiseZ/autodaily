@@ -1,23 +1,17 @@
-
-# For more information about using CMake with Android Studio, read the
-# documentation: https://d.android.com/studio/projects/add-native-code.html.
-# For more examples on how to use CMake, see https://github.com/android/ndk-samples.
-
-# Sets the minimum CMake version required for this project.
 cmake_minimum_required(VERSION 3.22.1)
-
-# Declares the project name. The project name can be accessed via ${ PROJECT_NAME},
-# Since this is the top level CMakeLists.txt, the project name is also accessible
-# with ${CMAKE_PROJECT_NAME} (both CMake variables are in-sync within the top level
-# build script scope).
 project("autodaily")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -lc++ -lc++abi")
 #设置ncnn
 set(ncnn_DIR ${CMAKE_SOURCE_DIR}/ncnn-20240410-android-vulkan/${ANDROID_ABI}/lib/cmake/ncnn)
 find_package(ncnn REQUIRED)
 #设置opencv
 set(OpenCV_DIR ${CMAKE_SOURCE_DIR}/opencv-mobile-4.10.0-android/sdk/native/jni)
 find_package(OpenCV REQUIRED core imgproc)
+#关闭exception
+#target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -fexceptions)
+# 为库单独设置编译选项
+set_source_files_properties(clipper.cpp PROPERTIES COMPILE_FLAGS "-fexceptions")
+#为源文件单独设置编译
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions")
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -34,7 +28,7 @@ find_package(OpenCV REQUIRED core imgproc)
 # used in the AndroidManifest.xml file.
 add_library(${CMAKE_PROJECT_NAME} SHARED
     # List C/C++ source files with relative paths to this CMakeLists.txt.
-    autodaily.cpp yolo.cpp
+    autodaily.cpp yolo.cpp common.cpp clipper.cpp Ocr.cpp DbNet.cpp CrnnNet.cpp
 )
 
 # Specifies libraries CMake should link to your target library. You
@@ -45,4 +39,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     android
     ncnn
     ${OpenCV_LIBS}
-    log)
+    log
+        jnigraphics
+)
