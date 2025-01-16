@@ -25,20 +25,18 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
     }
     //删除数据
     fun deleteScript(sc : ScriptInfo){
-        viewModelScope.launch {
-            try {
-                appDb.runInTransaction{
-                    appDb.scriptInfoDao.delete(sc)
-                    appDb.scriptSetInfoDao.deleteScriptSetInfoByScriptId(sc.scriptId)
-                    appDb.scriptActionInfoDao.deleteByScriptId(sc.scriptId)
-                    val externalParamFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_PARAM)
-                    val externalBinFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_BIN)
-                    deleteFile(externalBinFile)
-                    deleteFile(externalParamFile)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
+        try {
+            appDb.runInTransaction{
+                appDb.scriptInfoDao.deleteByScriptId(sc.scriptId)
+                appDb.scriptSetInfoDao.deleteScriptSetInfoByScriptId(sc.scriptId)
+                appDb.scriptActionInfoDao.deleteByScriptId(sc.scriptId)
+                val externalParamFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_PARAM)
+                val externalBinFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_BIN)
+                deleteFile(externalBinFile)
+                deleteFile(externalParamFile)
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 

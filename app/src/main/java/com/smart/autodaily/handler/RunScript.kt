@@ -84,7 +84,7 @@ object  RunScript {
             _globalSetMap.value[10]?.checkedFlag?:false,
             _globalSetMap.value[1]?.checkedFlag?:false,
             globalSetMap.value[9]?.setValue?.toFloat()?:0f,
-            _globalSetMap.value[6]?.setValue?.toInt()?:640,
+            _globalSetMap.value[6]?.setValue?.toInt()?.let { it * 32 }?:640,
             remRebootTime = System.currentTimeMillis(),
             10000L,
             2,
@@ -101,7 +101,7 @@ object  RunScript {
     //shell运行
     suspend fun runScriptByAdb(){
         initConfData()
-        conf.toString()
+        println(conf.toString())
         //println("开始运行${_scriptCheckedList.value.size}")
         println("select num："+_scriptCheckedList.value.size)
         _scriptCheckedList.value.forEach scriptForEach@{ si->
@@ -112,8 +112,6 @@ object  RunScript {
             if(si.currentRunNum < si.runsMaxNum){
                 startApp( conf.pkgName )
                 loadModel(si)
-                println("load model,use gpu:${conf.useGpu}")
-                println("初始化任务")
                 //insertFirstDetect(si.classesNum, si.packageName)
                 //所有选择的set
                 val scriptSet = getScriptSets(si.scriptId)
@@ -121,6 +119,12 @@ object  RunScript {
                 scriptSet.forEach {
                     println(it)
                 }*/
+                val backActionArrayList : ArrayList<ScriptActionInfo> = arrayListOf()
+                if (conf.tryBackAction){
+                    backActionArrayList.addAll(
+                        actionsInit(appDb.scriptActionInfoDao.getBackActions(si.scriptId), allActionMap)
+                    )
+                }
                 scriptSet.forEach setForEach@ { forSet->
                     set = forSet
                     println("当前任务：${set.setName},flow_id：${set.flowId}")
@@ -132,7 +136,7 @@ object  RunScript {
                     val scriptAction = appDb.scriptActionInfoDao.getCheckedBySetId( set.scriptId, set.flowParentIdList, set.flowIdType )
                     val scriptActionArrayList = actionsInit(scriptAction,allActionMap)
                     //遍历的返回操作合集
-                    val backActionArrayList : ArrayList<ScriptActionInfo> = arrayListOf()
+
                     while (true){
                         //超时重启
                         isToReboot(si.packageName)
@@ -151,7 +155,6 @@ object  RunScript {
                         val ocrRes =ModelUtil.model.detectOcr(capture)
                         //释放截图
                         conf.capture?.recycle()
-                        println("回收后的 conf.capture${ conf.capture}")
                         val txtLabels = ocrRes.flatMap { it.label.toList() }.toSet()
                         //debugPrintScriptActionLabels(detectRes, detectLabels)
                         if (detectLabels.isEmpty() && txtLabels.isEmpty()) {
@@ -169,9 +172,8 @@ object  RunScript {
                                 //整个操作执行结束
                             }
                             3 ->{
-                                println("--------------------------------------")
+                                println("NOT MATCH")
                                 if (conf.tryBackAction){
-                                    println("尝试返回")
                                     tryBackAction( backActionArrayList, detectLabels,detectRes, txtLabels,ocrRes)
                                 }
                             }
@@ -301,7 +303,7 @@ object  RunScript {
                 return@scriptAction
             }
             if (isMatch(sai, detectLabels,txtLabels)) {
-
+                println("执行$sai")
                 sai.command.onEach cmdForEach@{ cmd ->
                     when (cmd) {
                         is Return -> {
@@ -348,11 +350,12 @@ object  RunScript {
             if (
                 isMatch(sai,detectLabels, txtLabels)
             ) {
+                println("返回：$sai")
                 sai.command.onEach cmdForEach@{ cmd ->
                     when (cmd) {
                         is Operation ->{
-                            when(cmd.operation){
-                                is AdbClick -> {
+                            when(cmd.type){
+                                1 -> {
                                     execClick(sai,detectRes,ocrRes,cmd)
                                 }
                             }
@@ -379,7 +382,7 @@ object  RunScript {
         // 检查 txtExcLabelSet 条件
         val txtExc = sai.txtExcLabelSet.none { txtLabels.containsAll(it) }
 
-        println("match: int${int}, intExc${intExc}, txt${txt}, txtExc${txtExc}")
+        //println("match: int${int}, intExc${intExc}, txt${txt}, txtExc${txtExc}")
         // 如果所有条件都满足
         return  int && intExc && txt && txtExc
 
@@ -603,7 +606,7 @@ object  RunScript {
         this._scriptCheckedList.value = scriptList
     }
 
-    private fun debugPrintScriptActionLabels(detectRes : Array<DetectResult>?=null,detectLabels: List<Int>?=null,sai: ScriptActionInfo?=null){
+    private fun debugPrintScriptActionLabels(detectRes : Array<DetectResult>?=null,detectLabels: Set<Short>?=null,sai: ScriptActionInfo?=null){
         detectRes?.let {
             println("detectRes.size："+detectRes.size)
             println(detectRes.toList().toString())
@@ -611,6 +614,12 @@ object  RunScript {
         detectLabels?.let {
             println("detectLabels.size："+detectLabels.size)
             println( detectLabels.toList().toString())
+        }
+        sai?.let {
+            println("intLabelSet："+it.intLabelSet.toString())
+            println("intExcLabelSet："+it.intExcLabelSet.toString())
+            println("txtLabelSet："+it.txtLabelSet.toString())
+            println("txtExcLabelSet："+it.txtExcLabelSet.toString())
         }
     }
 

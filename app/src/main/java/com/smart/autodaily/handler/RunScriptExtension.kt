@@ -12,11 +12,11 @@ import com.smart.autodaily.utils.getMd5Hash
 
 fun execClick(sai: ScriptActionInfo, detectRes: Array<DetectResult>, ocrRes : Array<OcrResult>, cmd : Operation) : Int {
     setPoints(sai, detectRes, ocrRes)
-    println("执行$sai")
     if (sai.point == null) {
         println("点击位置为空，错误！")
         return 5
     }
+    println(sai.point)
     // Initialize retry counter
     var retryCount = 0
     while (retryCount < conf.maxRetryNum) {

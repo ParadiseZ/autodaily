@@ -322,8 +322,22 @@ extern "C"
         }
         return JNI_TRUE;
     }
+
+    void printLabels(const std::vector<short>& labels,const std::string& txt) {
+        std::string res;
+        res = txt + "  [";
+        for (size_t i = 0; i < labels.size(); ++i) {
+            res += std::to_string(labels[i]); // 格式化 short 类型
+            if (i < labels.size() - 1) {
+                res += ",";
+            }
+        }
+        res +="]";
+        LOGD("%s", res.c_str());
+    }
     JNIEXPORT jobjectArray JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_detectOcr(JNIEnv *env, jobject thiz, jobject bitmap)
     {
+        jobjectArray jOcrResArray;
         cv::Mat in = bitmapToMat(env, bitmap);
         cv::Mat rgb;
         cv::cvtColor(in, rgb, cv::COLOR_BGR2RGB);
@@ -333,7 +347,7 @@ extern "C"
         std::vector<TextLine> textLines = g_ocr->crnnNet->getTextLines(partImages);
         rgb.release();
         // objects to Obj[]
-        jobjectArray jOcrResArray = env->NewObjectArray(static_cast<jsize>(textLines.size()), ocrResCls, nullptr);
+        jOcrResArray = env->NewObjectArray(static_cast<jsize>(textLines.size()), ocrResCls, nullptr);
         short idx = 0;
         for (const auto &txt : textLines)
         {
@@ -341,6 +355,7 @@ extern "C"
             jobject hashSet = env->NewObject(hashSetClass, hashSetCon);
             for (short k : txt.label)
             {
+                //LOGD("%d",k);
                 jobject shortObj = env->NewObject(shortClass, shortCon, static_cast<jshort>(k));
                 // add
                 env->CallBooleanMethod(hashSet, addMethod, shortObj);
@@ -348,21 +363,11 @@ extern "C"
                 env->DeleteLocalRef(shortObj);
             }
             // 顺时针
-            /*
-            float x = boxResult[txt.idx].boxPoint[0].x;
-            float y = boxResult[txt.idx].boxPoint[0].y;
-            float w = boxResult[txt.idx].boxPoint[1].x;
-            float h = boxResult[txt.idx].boxPoint[1].y;
-            float cx = boxResult[txt.idx].boxPoint[2].x;
-            float cy = boxResult[txt.idx].boxPoint[2].y;
-            float x3 = boxResult[txt.idx].boxPoint[3].x;
-            float y3 = boxResult[txt.idx].boxPoint[3].y;
-             */
             float x = boxResult[txt.idx].boxPoint[0].x;
             float y = boxResult[txt.idx].boxPoint[0].y;
             float w = boxResult[txt.idx].boxPoint[1].x - x;
             float h = boxResult[txt.idx].boxPoint[3].y - y;
-            LOGD("i%d,%s",idx, txt.text.c_str());
+            printLabels(txt.label, txt.text);
             jobject res = env->NewObject(ocrResCls, ocrResMethod, hashSet, x, y, w, h, x + w/2, y + h/2);
             env->SetObjectArrayElement(jOcrResArray, idx, res);
             idx++;
@@ -373,3 +378,4 @@ extern "C"
         return jOcrResArray;
     }
 }
+

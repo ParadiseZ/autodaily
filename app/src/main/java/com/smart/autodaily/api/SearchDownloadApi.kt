@@ -28,6 +28,9 @@ interface SearchDownloadApi {
     @POST("/query/checkUpdateByIdAndVer")
     suspend fun checkUpdateByIdAndVer(@Body scriptInfoList : Map<Int, String>) : Response<Map<Int, VersionInfo>>
 
+    @GET("/query/dlScriptInfoByScriptId")
+    suspend fun dlScriptInfo(@Query("scriptId") scriptId : Int) : Response<ScriptInfo>
+
     @GET("/query/downloadScriptSetByScriptId")
     suspend fun downScriptSetByScriptId(@Query("scriptId") scriptId : Int) : Response<List<ScriptSetInfo>>
 

@@ -18,7 +18,7 @@ val partScope by lazy {
 }
 //运行
 val runScope by lazy {
-    CoroutineScope(Dispatchers.Unconfined +globalCEHandler + CoroutineName("runScope") + SupervisorJob())
+    CoroutineScope(Dispatchers.IO +globalCEHandler + CoroutineName("runScope") + SupervisorJob())
 }
 //shizuku binder
 val binderScope by lazy {

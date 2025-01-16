@@ -126,10 +126,10 @@ fun HomeScreen(
                         shape = MaterialTheme.shapes.medium.copy(CornerSize(percent = 50)),
                         onClick = {
                             runScope.launch {
-                                /*homeViewModel.appViewModel.setIsRunning(2)
+                                homeViewModel.appViewModel.setIsRunning(2)
                                 RunScript.initGlobalSet()
-                                homeViewModel.appViewModel.runScript()*/
-                                RunScript.testOcr()
+                                homeViewModel.appViewModel.runScript()
+                                //RunScript.testOcr()
                                 /*homeViewModel.appViewModel.setIsRunning(2)
                                 if(isLogin(homeViewModel.context, user)){
                                     val res : Response<String>
@@ -325,8 +325,15 @@ fun HomeScreen(
                         enabled = newDialog.value,
                         onClick = {
                             currentScriptInfo?.let { scriptInfo->
-                                homeViewModel.deleteScript(scriptInfo)
-                                homeViewModel.appViewModel.downScriptByScriptId(scriptInfo)
+                                homeViewModel.viewModelScope.launch {
+                                    try {
+                                        homeViewModel.deleteScript(scriptInfo)
+                                        homeViewModel.appViewModel.downScriptByScriptId(scriptInfo)
+                                    }catch (e:Exception){
+                                        homeViewModel.context.toastOnUi("更新失败！请重新下载")
+                                    }
+
+                                }
                             }
                             newDialog.value = false
                         }

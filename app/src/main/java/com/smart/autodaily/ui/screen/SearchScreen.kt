@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.smart.autodaily.R
@@ -32,6 +33,7 @@ import com.smart.autodaily.ui.conponent.RowScriptInfo
 import com.smart.autodaily.ui.conponent.SearchTopAppBar
 import com.smart.autodaily.ui.conponent.SwipeRefreshList
 import com.smart.autodaily.viewmodel.SearchViewModel
+import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 
@@ -95,10 +97,12 @@ fun SearchScreen(
                             },
                             onClick = {
                                 if (scriptInfo.isDownloaded == 0){
-                                    searchViewModel.appViewModel.downScriptByScriptId( scriptInfo )
-                                    //下载中
-                                    scriptInfo.downState.intValue = 2
-                                    processShow.value =true
+                                    searchViewModel.viewModelScope.launch {
+                                        searchViewModel.appViewModel.downScriptByScriptId( scriptInfo )
+                                        //下载中
+                                        scriptInfo.downState.intValue = 2
+                                        processShow.value =true
+                                    }
                                 }
                             }
                         )

@@ -83,10 +83,11 @@ fun ScriptSetScreen(
                         SettingType.TEXT_FIELD -> {}
                         SettingType.CHECK_BOX -> SetCheckBox(set, onClick = {viewModel.updateScriptSet(set)})
                         SettingType.RADIO_BUTTON -> {}
-                        SettingType.SLIDER_SECOND -> {}
                         SettingType.TITLE -> SetTitle(set)
-                        SettingType.SLIDER_THIRD  -> {}
                         SettingType.DROPDOWN_MENU -> SetExposedDropdownMenu(set = set, onClick = {  viewModel.updateScriptSet(set)  })
+                        else->{
+
+                        }
                     }
                 }
             }

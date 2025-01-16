@@ -157,19 +157,16 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
 
     fun stopRunScript(){
         if (isRunning.intValue == 1){
-            runScope.coroutineContext.cancelChildren()
-            isRunning.intValue = 0
+            runScope.coroutineContext.cancelChildren().run {
+                isRunning.intValue = 0
+            }
         }
     }
 
     //下载
-    fun downScriptByScriptId(scriptInfo : ScriptInfo) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO){
-                downloadModel(scriptInfo)
-                downByScriptId(scriptInfo)
-            }
-        }
+    suspend fun downScriptByScriptId(scriptInfo : ScriptInfo) {
+        downloadModel(scriptInfo)
+        downByScriptId(scriptInfo)
     }
 
     //下载模型
@@ -214,6 +211,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
 
     //下载脚本数据
     private suspend fun downByScriptId(scriptInfo: ScriptInfo) {
+        val siNew = RemoteApi.searchDownRetrofit.dlScriptInfo(scriptInfo.scriptId)
         val result = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptInfo.scriptId)
         val scriptAction = RemoteApi.searchDownRetrofit.downloadActionInfoByScriptId(scriptInfo.scriptId)
         var globalScriptSetResult = Response<List<ScriptSetInfo>>()
@@ -224,14 +222,17 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
 
         //val scriptSetDownload = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptId)
         appDb.runInTransaction{
-            //scriptInfo
-            scriptInfo.isDownloaded = 1
-            scriptInfo.lastVersion?.let {
-                scriptInfo.scriptVersion = it   //更新（即重新下载）时使用
+            siNew.data?.let { si->
+                //scriptInfo
+                si.isDownloaded = 1
+                si.lastVersion?.let {
+                    si.scriptVersion = it   //更新（即重新下载）时使用
+                }
+                si.lastVersion = null //检测更新时使用
+                si.downloadTime = LocalDateTime.now().toString()
+                appDb.scriptInfoDao.insert(si)
             }
-            scriptInfo.lastVersion = null //检测更新时使用
-            scriptInfo.downloadTime = LocalDateTime.now().toString()
-            appDb.scriptInfoDao.insert(scriptInfo)
+
             //ScriptSet 全局设置
             globalScriptSetResult.data?.let {
                 appDb.scriptSetInfoDao.insert(it)
