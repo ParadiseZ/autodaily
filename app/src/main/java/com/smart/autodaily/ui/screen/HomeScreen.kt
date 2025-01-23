@@ -1,6 +1,5 @@
 package com.smart.autodaily.ui.screen
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
@@ -71,8 +70,6 @@ import kotlinx.coroutines.launch
 import splitties.init.appCtx
 
 @OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint("StateFlowValueCalledInComposition", "SuspiciousIndentation")
-
 @Composable
 fun HomeScreen(
     modifier: Modifier,

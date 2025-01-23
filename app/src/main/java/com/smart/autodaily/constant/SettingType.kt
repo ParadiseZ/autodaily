@@ -8,7 +8,7 @@ enum class SettingType {
     RADIO_BUTTON,
     SLIDER_SECOND,
     SLIDER_FOURTH,
-    SLIDER_FIVETH,
+    SLIDER_FIFTH,
     TITLE,
     SLIDER_THIRD,
     DROPDOWN_MENU

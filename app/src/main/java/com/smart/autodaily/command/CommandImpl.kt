@@ -3,7 +3,10 @@ package com.smart.autodaily.command
 import com.smart.autodaily.data.entity.Point
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.handler.ActionHandler
+import com.smart.autodaily.handler.INFO
+import com.smart.autodaily.handler.conf
 import com.smart.autodaily.handler.skipFlowIds
+import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.ShizukuUtil
 import kotlinx.coroutines.delay
 
@@ -15,7 +18,6 @@ const val STOP = "am force-stop "
 const val SWIPE = "input swipe  "
 
 suspend fun adbRebootApp(packName : String){
-    println("restart app")
     ShizukuUtil.iUserService?.execVoidComand(STOP +packName.substring(0, packName.indexOf("/")))
     delay(2000)
     adbStartApp(packName)
@@ -31,8 +33,9 @@ class Operation(val type: Int, val operation : Command) : Command{
     }
 }
 
-class SkipFlowId( val skipFlowId :Int): Command{
+class SkipFlowId(private val skipFlowId :Int): Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
+        Lom.d(INFO , "跳过Add${sai.flowId} ${sai.pageDesc}")
         skipFlowIds.add(skipFlowId)
         return true
     }
@@ -98,6 +101,7 @@ class AdbSwipe : Command{
 
 class Skip : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
+        Lom.d(INFO , "跳过${sai.flowId} ${sai.pageDesc}")
         sai.skipFlag = true
         return false
     }
@@ -105,6 +109,10 @@ class Skip : Command{
 
 class Sleep(private var time : Long = 1000) : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
+        Lom.d(INFO , "等待${if (time>60000) (time/60000).toString()+"分钟" else( time/1000).toString()+"秒"}")
+        if (conf.capture?.isRecycled== false){
+            conf.capture?.recycle()
+        }
         Thread.sleep(time)
         return true
     }

@@ -16,6 +16,10 @@ val updateScope  by lazy {
 val partScope by lazy {
     CoroutineScope(Dispatchers.IO + globalCEHandler + CoroutineName("partScope") + SupervisorJob())
 }
+//日志相关
+val logScope by lazy {
+    CoroutineScope(Dispatchers.IO + globalCEHandler + CoroutineName("logScope") + SupervisorJob())
+}
 //运行
 val runScope by lazy {
     CoroutineScope(Dispatchers.IO +globalCEHandler + CoroutineName("runScope") + SupervisorJob())
@@ -29,6 +33,7 @@ fun cancelChildrenJob(){
     partScope.coroutineContext.cancelChildren()
     runScope.coroutineContext.cancelChildren()
     binderScope.coroutineContext.cancelChildren()
+    logScope.coroutineContext.cancelChildren()
 }
 
 fun cancelJob(){
@@ -36,4 +41,5 @@ fun cancelJob(){
     partScope.cancel()
     runScope.cancel()
     binderScope.cancel()
+    logScope.cancel()
 }

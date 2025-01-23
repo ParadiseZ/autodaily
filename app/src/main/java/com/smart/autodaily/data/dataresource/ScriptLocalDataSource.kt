@@ -16,9 +16,8 @@ class ScriptLocalDataSource : PagingSource<Int, ScriptInfo>() {
      override suspend fun load(params: LoadParams<Int>): LoadResult<Int, ScriptInfo> {
          return try {
              val page = params.key ?: PageUtil.FIRST_PAGE
-             val pageSize = params.loadSize
-             val startIndex = PageUtil.dataStartIndex(page, pageSize)
-             val response = appDb.scriptInfoDao.getScriptInfoByPage(pageSize, startIndex)
+             val startIndex = PageUtil.dataStartIndex(page, params.loadSize)
+             val response = appDb.scriptInfoDao.getScriptInfoByPage(params.loadSize, startIndex)
              LoadResult.Page(
                  data = response,
                  prevKey =  PageUtil.prevKey(page),

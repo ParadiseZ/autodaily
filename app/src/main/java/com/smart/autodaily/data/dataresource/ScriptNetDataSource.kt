@@ -19,11 +19,10 @@ open class ScriptNetDataSource (private val sda: SearchDownloadApi, private val 
 
         return try {
             val page = params.key ?: PageUtil.FIRST_PAGE
-            val pageSize = params.loadSize
             val response =if (searchKey?.isNotBlank() == true) {
-                sda.getAllScriptByPage(userId ,searchKey , page, pageSize)
+                sda.getAllScriptByPage(userId ,searchKey , page, params.loadSize)
             } else{
-                sda.getAllScriptByPage(userId , page, pageSize)
+                sda.getAllScriptByPage(userId , page, params.loadSize)
             }
             LoadResult.Page(
                 data = response.data!!,

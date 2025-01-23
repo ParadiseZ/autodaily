@@ -19,8 +19,7 @@ open class CoinRecordDataSource (private val vca: VirtualCoinApi, private val us
 
         return try {
             val page = params.key ?: PageUtil.FIRST_PAGE
-            val pageSize = params.loadSize
-            val response = vca.getCoinRecord(userId, page, pageSize)
+            val response = vca.getCoinRecord(userId, page, params.loadSize)
             LoadResult.Page(
                 data = response.data!!,
                 prevKey =  PageUtil.prevKey(page),

@@ -7,16 +7,16 @@ import com.smart.autodaily.data.entity.OcrResult
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.handler.RunScript.getPicture
 import com.smart.autodaily.handler.RunScript.setPoints
-import com.smart.autodaily.utils.cancelChildrenJob
+import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.getMd5Hash
+import com.smart.autodaily.utils.runScope
+import kotlinx.coroutines.cancelChildren
 
 fun execClick(sai: ScriptActionInfo, detectRes: Array<DetectResult>, ocrRes : Array<OcrResult>, cmd : Operation) : Int {
     setPoints(sai, detectRes, ocrRes)
     if (sai.point == null) {
-        println("点击位置为空，错误！")
         return 5
     }
-    println(sai.point)
     // Initialize retry counter
     var retryCount = 0
     while (retryCount < conf.maxRetryNum) {
@@ -25,11 +25,14 @@ fun execClick(sai: ScriptActionInfo, detectRes: Array<DetectResult>, ocrRes : Ar
             is AdbClick -> {
                 if (sai.executeMax > 1) {
                     sai.executeCur += 1
+                    Lom.d(INFO, "准备第${sai.executeCur}次点击")
                     if (sai.executeCur >= sai.executeMax) {
+                        Lom.d(INFO, "已达到最大点击次数，设置跳过")
                         sai.executeCur = 0
                         sai.skipFlag = true
                     }
                 }
+                Lom.d(INFO, "点击${sai.point}")
                 cmd.exec(sai)
             }
         }
@@ -44,12 +47,10 @@ fun execClick(sai: ScriptActionInfo, detectRes: Array<DetectResult>, ocrRes : Ar
             }
         }
         retryCount++
-        println("点击未响应，第${retryCount}次重试")
+        Lom.n(INFO, "点击未响应，第${retryCount}次重试")
     }
 
     // If we get here, all retries failed
-    println("点击操作失败，已达到最大重试次数")
-    
     return 4 // Operation failed
 }
 
@@ -66,7 +67,8 @@ private fun hasResponse(): Boolean {
         conf.capture = newCapture
         return true
     } catch (e: Exception) {
-        cancelChildrenJob()
+        runScope.coroutineContext.cancelChildren()
+        Lom.n(ERROR, "截图失败，停止运行")
         return false
     }
 }

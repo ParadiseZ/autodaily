@@ -19,8 +19,7 @@ class UserKeyRecordDataSource (private val ukr: UserKeyRecordApi, private val us
 
         return try {
             val page = params.key ?: PageUtil.FIRST_PAGE
-            val pageSize = params.loadSize
-            val response = ukr.getInputKeyRecord(userId, page, pageSize)
+            val response = ukr.getInputKeyRecord(userId, page, params.loadSize)
             LoadResult.Page(
                 data = response.data!!,
                 prevKey =  PageUtil.prevKey(page),

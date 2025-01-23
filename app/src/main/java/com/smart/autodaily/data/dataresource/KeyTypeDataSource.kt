@@ -19,8 +19,7 @@ class KeyTypeDataSource (private val kta: KeyTypeApi): PagingSource<Int, KeyType
 
         return try {
             val page = params.key ?: PageUtil.FIRST_PAGE
-            val pageSize = params.loadSize
-            val response =  kta.getKeyTypeList(page, pageSize)
+            val response =  kta.getKeyTypeList(page, params.loadSize)
             LoadResult.Page(
                 data = response.data!!,
                 prevKey =  PageUtil.prevKey(page),

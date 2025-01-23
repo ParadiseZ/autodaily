@@ -60,8 +60,8 @@ fun <T : Any> SwipeRefreshList(
         //下拉刷新
         scope.launch{
             //collectAsLazyPagingItems.refresh()
-            refreshFun()
             refreshFlag = true
+            refreshFun()
             delay(Ui.DELAY_TIME)
             refreshFlag = isLoading
         }
@@ -171,13 +171,13 @@ fun ErrorContent(retry: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 100.dp),
+            .padding(top = 60.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
             modifier = Modifier.padding(top = Ui.SPACE_80),
-            painter = painterResource(id = R.drawable.ic_launcher_background),
+            painter = painterResource(id = R.drawable.baseline_cloud_off_24),
             contentDescription = null
         )
         Text(text = "请求失败，请检查网络或稍后重试", modifier = Modifier.padding(top = 8.dp, bottom = 6.dp))

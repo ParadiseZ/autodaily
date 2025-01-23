@@ -23,7 +23,7 @@ static ncnn::Mutex lock;
 static FILE *paramFile = nullptr;
 static FILE *modelFile = nullptr;
 
-#define LOGD(...) ((void)__android_log_print(ANDROID_LOG_DEBUG, "ncnn", __VA_ARGS__))
+#define LOGD(...) ((void)__android_log_print(ANDROID_LOG_DEBUG, "NCNN", __VA_ARGS__))
 
 static cv::Mat bitmapToMat(JNIEnv *env, jobject j_argb8888_bitmap)
 {

@@ -26,6 +26,7 @@ import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.cancelChildrenJob
 import com.smart.autodaily.utils.deleteFile
+import com.smart.autodaily.utils.logScope
 import com.smart.autodaily.utils.runScope
 import com.smart.autodaily.utils.toastOnUi
 import kotlinx.coroutines.Dispatchers
@@ -157,9 +158,9 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
 
     fun stopRunScript(){
         if (isRunning.intValue == 1){
-            runScope.coroutineContext.cancelChildren().run {
-                isRunning.intValue = 0
-            }
+            runScope.coroutineContext.cancelChildren()
+            logScope.coroutineContext.cancelChildren()
+            isRunning.intValue = 0
         }
     }
 
@@ -170,7 +171,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     }
 
     //下载模型
-    private suspend fun downloadModel(scriptInfo : ScriptInfo){
+    private suspend fun downloadModel(scriptInfo : ScriptInfo) {
         val modelFilePath = File(appCtx.getExternalFilesDir(""), scriptInfo.modelPath)
         val externalParamFile = File(modelFilePath, MODEL_PARAM)
         //删除旧文件

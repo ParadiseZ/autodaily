@@ -28,6 +28,7 @@ import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptRunStatus
 import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.utils.AssetUtil
+import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.ModelUtil
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ShizukuUtil
@@ -55,8 +56,9 @@ val skipFlowIds  by lazy {
     mutableIntSetOf()
 }
 
+const val INFO = "info"
+const val ERROR = "error"
 object  RunScript {
-
     private val _scriptCheckedList = MutableStateFlow<List<ScriptInfo>>(emptyList())
 
     private val _globalSetMap = MutableStateFlow<Map<Int, ScriptSetInfo>>(emptyMap())
@@ -100,20 +102,23 @@ object  RunScript {
     }
     //shell运行
     suspend fun runScriptByAdb(){
+        Lom.waitWriteLog()
+        Lom.n( INFO, "初始化全局设置" )
         initConfData()
-        println(conf.toString())
-        //println("开始运行${_scriptCheckedList.value.size}")
-        println("select num："+_scriptCheckedList.value.size)
+        Lom.n("config", conf.toString())
         _scriptCheckedList.value.forEach scriptForEach@{ si->
+            Lom.n( INFO, si.scriptName )
             skipFlowIds.clear()
             conf.pkgName = si.packageName
             //保存的所有的action map
             val allActionMap : HashMap<Int,ScriptActionInfo> = hashMapOf()
             if(si.currentRunNum < si.runsMaxNum){
+                Lom.d( INFO, "启动${si.scriptName}" )
                 startApp( conf.pkgName )
                 loadModel(si)
                 //insertFirstDetect(si.classesNum, si.packageName)
                 //所有选择的set
+
                 val scriptSet = getScriptSets(si.scriptId)
                 /*println("scriptSet")
                 scriptSet.forEach {
@@ -124,19 +129,22 @@ object  RunScript {
                     backActionArrayList.addAll(
                         actionsInit(appDb.scriptActionInfoDao.getBackActions(si.scriptId), allActionMap)
                     )
+                    Lom.d(INFO, "返回操作数量${backActionArrayList.size}")
                 }
+                Lom.d( INFO, "详细设置初始化完毕" )
                 scriptSet.forEach setForEach@ { forSet->
                     set = forSet
-                    println("当前任务：${set.setName},flow_id：${set.flowId}")
                     //跳跃或有今天的执行记录，则遍历下一条
                     if(appDb.scriptRunStatusDao.countByFlowIdAndType(set.scriptId,set.flowId!!, set.flowIdType, LocalDate.now().toString()) > 0 ){
+                        Lom.n(INFO, "当前时间段已执行，跳过：${set.setName}")
                         return@setForEach
                     }
+                    Lom.n(INFO, "本次任务：${set.setName}")
                     //遍历的操作合集
                     val scriptAction = appDb.scriptActionInfoDao.getCheckedBySetId( set.scriptId, set.flowParentIdList, set.flowIdType )
                     val scriptActionArrayList = actionsInit(scriptAction,allActionMap)
+                    Lom.d( INFO, "操作初始化完毕，准备截图识别" )
                     //遍历的返回操作合集
-
                     while (true){
                         //超时重启
                         isToReboot(si.packageName)
@@ -150,7 +158,6 @@ object  RunScript {
                         val detectRes = ModelUtil.model.detectYolo(capture, si.classesNum).toList().filter { it.prob > conf.similarScore }
                             .toTypedArray()
                         val detectLabels = detectRes.map { it.label }.toSet()
-
                         //OCR
                         val ocrRes =ModelUtil.model.detectOcr(capture)
                         //释放截图
@@ -158,30 +165,35 @@ object  RunScript {
                         val txtLabels = ocrRes.flatMap { it.label.toList() }.toSet()
                         //debugPrintScriptActionLabels(detectRes, detectLabels)
                         if (detectLabels.isEmpty() && txtLabels.isEmpty()) {
-                            println("未识别到内容")
+                            Lom.d(INFO,"本次未识别到内容")
                             continue
                         }
+                        Lom.d(INFO, "检测标签$detectLabels")
+                        Lom.d(INFO, "OCR标签$txtLabels")
                         //conf.curHash = getMd5Hash(capture)
                         when(tryAction(scriptActionArrayList, detectLabels, detectRes, txtLabels, ocrRes)){
                             1 ->{
-                                //finish、jump类
-                                println("setForEach")
+                                //finish类
+                                Lom.n(INFO, "结束:${set.setName}")
                                 return@setForEach
                             }
                             2 ->{
                                 //整个操作执行结束
                             }
                             3 ->{
-                                println("NOT MATCH")
+                                Lom.d(INFO,"本次未匹配到对应操作")
                                 if (conf.tryBackAction){
+                                    Lom.d(INFO,"尝试匹配返回相关操作")
                                     tryBackAction( backActionArrayList, detectLabels,detectRes, txtLabels,ocrRes)
                                 }
                             }
                             4 ->{
                                 //操作无效/找到未操作（和操作前对比界面无变化）
+                                Lom.n(INFO, "点击操作失败，已达到最大重试次数")
                             }
                             5->{
                                 //点无效
+                                Lom.n(ERROR, "设置点击位置失败！")
                             }
                         }
                     }
@@ -190,7 +202,6 @@ object  RunScript {
             }else{
                 si.currentRunNum = 0
                 si.nextRunDate = LocalDate.now().toString()
-                println(si.nextRunDate)
                 //appDb.scriptInfoDao.update(si)
             }
         }
@@ -199,25 +210,25 @@ object  RunScript {
     private fun startApp(pkgName : String){
         try {
             partScope.launch {
-                println("start APP")
                 adbStartApp(pkgName)
             }
         }catch (e : Exception){
-            println("start app failed")
+            Lom.n( ERROR, "app启动失败！")
             appCtx.toastOnUi( "app启动失败！")
             return
         }
     }
 
     private fun loadModel(si  : ScriptInfo){
+        Lom.d(INFO,"加载模型")
         appCtx.getExternalFilesDir("")?.let {
-            //读取模型
             ModelUtil.reloadModelSec(
                 it.path+"/"+si.modelPath+"/"+ MODEL_PARAM,
                 it.path+"/"+si.modelPath+"/"+ MODEL_BIN,
                 si.imgSize , conf.useGpu
             )
         }
+        Lom.d(INFO,"加载OCR模型")
         ModelUtil.loadOcr(si.lang,conf.useGpu, conf.detectSize)
     }
 
@@ -300,17 +311,18 @@ object  RunScript {
         ocrRes: Array<OcrResult>) : Int{
         actionList.forEach scriptAction@{ sai ->
             if (sai.skipFlag || sai.flowId in skipFlowIds) {
+                Lom.n(INFO, "跳过${sai.pageDesc}")
                 return@scriptAction
             }
             if (isMatch(sai, detectLabels,txtLabels)) {
-                println("执行$sai")
+                conf.remRebootTime = System.currentTimeMillis()
+                sai.pageDesc?.let { Lom.n(INFO, it) }
                 sai.command.onEach cmdForEach@{ cmd ->
                     when (cmd) {
                         is Return -> {
                             when (cmd.type) {
                                 ActionString.FINISH -> {
                                     setScriptStatus(set, sai)
-                                    println("结束：$sai.pageDesc")
                                     return 1
                                 }
                             }
@@ -332,7 +344,6 @@ object  RunScript {
                         }
                     }
                 }
-                println("找到${sai.pageDesc} || ${sai.flowId} || ${set.flowParentId}")
                 return 2
             }
         }
@@ -350,7 +361,8 @@ object  RunScript {
             if (
                 isMatch(sai,detectLabels, txtLabels)
             ) {
-                println("返回：$sai")
+                conf.remRebootTime = System.currentTimeMillis()
+                sai.pageDesc?.let { Lom.n(INFO, "尝试:$it") }
                 sai.command.onEach cmdForEach@{ cmd ->
                     when (cmd) {
                         is Operation ->{
@@ -421,6 +433,8 @@ object  RunScript {
      * */
     private fun isToReboot(pkgName: String){
         if (isTimeOut(conf.remRebootTime , conf.rebootDelay)){
+            Lom.n( INFO, "识别超时，准备重启")
+            conf.remRebootTime = System.currentTimeMillis()
             partScope.launch { adbRebootApp(pkgName) }
         }
     }
