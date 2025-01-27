@@ -107,9 +107,9 @@ class Skip : Command{
     }
 }
 
-class Sleep(private var time : Long = 1000) : Command{
+class Sleep(private var time : Long = 1000L) : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
-        Lom.d(INFO , "等待${if (time>60000) (time/60000).toString()+"分钟" else( time/1000).toString()+"秒"}")
+        Lom.d(INFO , "等待${if (time>60000L) (time/60000L).toString()+"分钟" else( time/1000L).toString()+"秒"}")
         if (conf.capture?.isRecycled== false){
             conf.capture?.recycle()
         }

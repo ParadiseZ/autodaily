@@ -43,7 +43,12 @@ object Lom {
     }
 
     private fun logPrint(category: String, message: String){
-        Log.d(category, message)
+        if (category== ERROR){
+            Log.e(category, message)
+        }else{
+            Log.d(category, message)
+        }
+
     }
 
     fun waitWriteLog(){
@@ -81,6 +86,7 @@ object Lom {
             fileWriter.close()
             // 创建临时文件
             val tempFile = File("${appCtx.getExternalFilesDir("")}/temp.log")
+            deleteFile(tempFile)
             // 截取文件的后半部分
             RandomAccessFile(file, "r").use { raf ->
                 val channel = raf.channel

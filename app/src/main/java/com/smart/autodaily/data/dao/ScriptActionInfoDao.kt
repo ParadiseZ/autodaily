@@ -12,7 +12,7 @@ interface ScriptActionInfoDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(saiList: List<ScriptActionInfo>)
 
-    @Query("SELECT * FROM script_action_info where flow_id = :setId and script_id = :scriptId and set_value = :setValue")
+    @Query("SELECT * FROM script_action_info where flow_id = :setId and script_id = :scriptId and is_valid=1 and set_value = :setValue")
     fun getSingle(setId: Int, scriptId: Int, setValue: String): ScriptActionInfo
 
     @Query("DELETE FROM script_action_info where script_id = :scriptId")
@@ -50,7 +50,7 @@ interface ScriptActionInfoDao {
     @Query("select * from (" +
             "select a.*  FROM script_action_info a, script_set_info b where b.checked_flag=1 and b.script_id=:scriptId and " +
             "(b.flow_id in (:flowIds) or b.flow_parent_id like '0%') and b.flow_id_type = :flowIdType and " +
-            "a.flow_id = b.flow_id and a.script_id = b.script_id  and  (a.set_value = b.set_value or a.set_value is null) " +
+            "a.flow_id = b.flow_id and a.script_id = b.script_id  and  (a.set_value = b.set_value or a.set_value is null) and a.is_valid=1 " +
             "union  " +
             "select a.*  FROM script_action_info a where a.flow_id=0 and a.script_id = :scriptId" +
             ") order by sort ")
@@ -58,9 +58,9 @@ interface ScriptActionInfoDao {
 
     @Query("select *  FROM script_action_info where script_id = :scriptId and (flow_id in (" +
             " select a.flow_id  FROM script_set_info a where a.script_id = :scriptId and a.back_flag = 1 "+
-            ") or flow_id<0) order by sort")
+            ") or flow_id<0)  and is_valid=1 order by sort")
     fun getBackActions(scriptId: Int) : List<ScriptActionInfo>
 
-    @Query("select flow_id from script_action_info where id = :id")
+    @Query("select flow_id from script_action_info where id = :id and is_valid=1")
     fun getCurFlowIdById(id : Int) : Int
 }

@@ -116,6 +116,7 @@ fun LogScreen(
                     enabled = dialog.value,
                     onClick = {
                         viewModel.deleteLogs()
+                        viewModel.loadLogs()
                         dialog.value = false
                     }
                 ){

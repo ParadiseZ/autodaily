@@ -12,19 +12,20 @@ data class ScriptActionInfo(
     @ColumnInfo(name = "id") @SerializedName("id") val id: Int,
     @ColumnInfo(name = "script_id") @SerializedName("scriptId") val scriptId: Int,
     @ColumnInfo(name = "flow_id") @SerializedName("flowId") val flowId: Int,
-    @ColumnInfo(name = "set_value") @SerializedName("setValue") val setValue: String?,
-    @ColumnInfo(name = "action_string") @SerializedName("actionString") val actionString : String,
-    @ColumnInfo(name = "execute_max") @SerializedName("executeMax") val executeMax : Int = 1,
-    @ColumnInfo(name = "page_desc") @SerializedName("pageDesc") val pageDesc : String?,
+    @ColumnInfo(name = "set_value") @SerializedName("setValue") var setValue: String?,
+    @ColumnInfo(name = "action_string") @SerializedName("actionString") var actionString : String,
+    @ColumnInfo(name = "execute_max") @SerializedName("executeMax") var executeMax : Int = 1,
+    @ColumnInfo(name = "page_desc") @SerializedName("pageDesc") var pageDesc : String?,
     @ColumnInfo(name = "add_time") @SerializedName("addTime") val addTime : String,
     @ColumnInfo(name = "update_time") @SerializedName("updateTime") val updateTime : String?,
-    @ColumnInfo(name = "oper_txt") @SerializedName("operTxt") val operTxt : Boolean,
+    @ColumnInfo(name = "oper_txt") @SerializedName("operTxt") var operTxt : Boolean,
     @ColumnInfo(name = "int_label") @SerializedName("intLabel") val intLabel : String?,
-    @ColumnInfo(name = "int_exc_label") @SerializedName("intExcLabel") val intExcLabel : String?,
+    @ColumnInfo(name = "int_exc_label") @SerializedName("intExcLabel") var intExcLabel : String?,
     @ColumnInfo(name = "txt_label") @SerializedName("txtLabel") val txtLabel : String?,
     @ColumnInfo(name = "txt_exc_label") @SerializedName("txtExcLabel") val txtExcLabel : String?,
-
-    @ColumnInfo(name = "sort") @SerializedName("sort") val sort : Int
+    @ColumnInfo(name = "label_pos") @SerializedName("labelPos") var labelPos : Int = 0,
+    @ColumnInfo(name = "is_valid") @SerializedName("isValid") var isValid : Boolean = true,
+    @ColumnInfo(name = "sort") @SerializedName("sort") var sort : Int
     //@ColumnInfo(name = "command") val command : ArrayList<Command> = arrayListOf(),
 ){
     @Ignore

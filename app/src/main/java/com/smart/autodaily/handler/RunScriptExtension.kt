@@ -4,9 +4,9 @@ import com.smart.autodaily.command.AdbClick
 import com.smart.autodaily.command.Operation
 import com.smart.autodaily.data.entity.DetectResult
 import com.smart.autodaily.data.entity.OcrResult
+import com.smart.autodaily.data.entity.Point
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.handler.RunScript.getPicture
-import com.smart.autodaily.handler.RunScript.setPoints
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.getMd5Hash
 import com.smart.autodaily.utils.runScope
@@ -71,4 +71,60 @@ private fun hasResponse(): Boolean {
         Lom.n(ERROR, "截图失败，停止运行")
         return false
     }
+}
+
+fun setPoints(sai: ScriptActionInfo, detectRes: Array<DetectResult>,ocrRes : Array<OcrResult>){
+    if (sai.operTxt){
+        val firFilter = ocrRes.filter { it.label.containsAll(sai.txtFirstLab) }
+        if (firFilter.isEmpty()) {
+            Lom.d(ERROR, "OCR点设置异常！${sai.id} ${sai.txtLabel}")
+            return
+        }
+        //非第一个，排序
+        if (sai.labelPos>0){
+            val minSize = firFilter.minOf { it.label.size }
+            val secFilter = firFilter.filter {
+                it.label.size == minSize
+            }.sortedWith(
+                compareBy(
+                    {it.yCenter} ,{ it.xCenter}
+                )
+            )
+            val idx = sai.labelPos.coerceAtMost(secFilter.size-1)
+            secFilter[idx].let {
+                sai.point = getPoint(it)
+            }
+        }else{
+            //默认第一个
+            sai.point = getPoint(firFilter.get(0))
+        }
+    }else{
+        val firFilter = detectRes.filter {
+            it.label == sai.intFirstLab
+        }
+        if (firFilter.isEmpty()){
+            Lom.d(ERROR, "检测点设置异常！${sai.id} ${sai.intLabel}")
+            return
+        }
+        if (sai.labelPos>0){
+            firFilter.sortedWith(
+                compareBy(
+                    {it.yCenter} ,{ it.xCenter}
+                )
+            )
+            val idx = sai.labelPos.coerceAtMost(firFilter.size-1)
+            firFilter[idx].let {
+                sai.point = getPoint(it)
+            }
+        }else{
+            sai.point = getPoint(firFilter[0])
+        }
+    }
+}
+
+fun getPoint(detect : DetectResult) : Point{
+    return Point(detect.xCenter + conf.random, detect.yCenter + conf.random)
+}
+fun getPoint(ocr : OcrResult) : Point{
+    return Point(ocr.xCenter + conf.random, ocr.yCenter + conf.random)
 }

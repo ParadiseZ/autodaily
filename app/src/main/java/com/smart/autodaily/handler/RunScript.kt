@@ -21,7 +21,6 @@ import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.ConfigData
 import com.smart.autodaily.data.entity.DetectResult
 import com.smart.autodaily.data.entity.OcrResult
-import com.smart.autodaily.data.entity.Point
 import com.smart.autodaily.data.entity.Rect
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
@@ -145,7 +144,7 @@ object  RunScript {
                     val scriptActionArrayList = actionsInit(scriptAction,allActionMap)
                     Lom.d( INFO, "操作初始化完毕，准备截图识别" )
                     //遍历的返回操作合集
-                    while (true){
+                    while (isRunning.intValue == 1){
                         //超时重启
                         isToReboot(si.packageName)
                         //截图延迟
@@ -162,7 +161,7 @@ object  RunScript {
                         val ocrRes =ModelUtil.model.detectOcr(capture)
                         //释放截图
                         conf.capture?.recycle()
-                        val txtLabels = ocrRes.flatMap { it.label.toList() }.toSet()
+                        val txtLabels = ocrRes.map { it.label }.toTypedArray()
                         //debugPrintScriptActionLabels(detectRes, detectLabels)
                         if (detectLabels.isEmpty() && txtLabels.isEmpty()) {
                             Lom.d(INFO,"本次未识别到内容")
@@ -182,6 +181,7 @@ object  RunScript {
                             }
                             3 ->{
                                 Lom.d(INFO,"本次未匹配到对应操作")
+                                println(set.setName)
                                 if (conf.tryBackAction){
                                     Lom.d(INFO,"尝试匹配返回相关操作")
                                     tryBackAction( backActionArrayList, detectLabels,detectRes, txtLabels,ocrRes)
@@ -193,7 +193,6 @@ object  RunScript {
                             }
                             5->{
                                 //点无效
-                                Lom.n(ERROR, "设置点击位置失败！")
                             }
                         }
                     }
@@ -239,14 +238,11 @@ object  RunScript {
     private fun getScriptSets(scriptId : Int) : List<ScriptSetInfo>{
         //val curFlowId = appDb.scriptActionInfoDao.getCurFlowIdById(appDb.labelFtsDao.getMaxIdFromCurrent())
         val curFlowId = 0
-        println("curFlowId:${curFlowId}")
         //最小子项
         val maxSet = appDb.scriptSetInfoDao.getScriptSetByScriptId(scriptId, curFlowId, 1)
         //最小子项的上级or项
         val orSet = appDb.scriptSetInfoDao.getScriptSetByScriptId(scriptId, curFlowId, 2)
-        println("orSet")
         orSet.forEach{
-            println(it)
             if( appDb.scriptSetInfoDao.getChildCheckedCount(it.scriptId, curFlowId, it.flowParentId!!) == 0){
                 maxSet.add(it)
             }
@@ -307,7 +303,7 @@ object  RunScript {
         actionList: ArrayList<ScriptActionInfo>,
         detectLabels: Set<Short>,
         detectRes: Array<DetectResult>,
-        txtLabels: Set<Short>,
+        txtLabels: Array<Set<Short>>,
         ocrRes: Array<OcrResult>) : Int{
         actionList.forEach scriptAction@{ sai ->
             if (sai.skipFlag || sai.flowId in skipFlowIds) {
@@ -316,7 +312,7 @@ object  RunScript {
             }
             if (isMatch(sai, detectLabels,txtLabels)) {
                 conf.remRebootTime = System.currentTimeMillis()
-                sai.pageDesc?.let { Lom.n(INFO, it) }
+                sai.pageDesc?.let { Lom.n(INFO, "匹配到${it}") }
                 sai.command.onEach cmdForEach@{ cmd ->
                     when (cmd) {
                         is Return -> {
@@ -354,7 +350,7 @@ object  RunScript {
         actionList: ArrayList<ScriptActionInfo>,
         detectLabels: Set<Short>,
         detectRes: Array<DetectResult>,
-        txtLabels: Set<Short>,
+        txtLabels: Array<Set<Short>>,
         ocrRes: Array<OcrResult>
     ) : Int{
         actionList.forEach scriptAction@{ sai ->
@@ -381,7 +377,7 @@ object  RunScript {
     }
 
 
-    private fun isMatch(sai: ScriptActionInfo, detectLabels: Set<Short>,txtLabels : Set<Short>) : Boolean{
+    private fun isMatch(sai: ScriptActionInfo, detectLabels: Set<Short>,txtLabels : Array<Set<Short>>) : Boolean{
         // 检查 intLabelSet 条件
         val int = sai.intLabelSet.isEmpty() || detectLabels.containsAll(sai.intLabelSet)
 
@@ -389,12 +385,15 @@ object  RunScript {
         val intExc = sai.intExcLabelSet.none { detectLabels.contains(it) }
 
         // 检查 txtLabelSet 条件
-        val txt = sai.txtLabelSet.all { txtLabels.containsAll(it) }
+        val txt = sai.txtLabelSet.all { expect ->
+            txtLabels.any { it.containsAll(expect) }
+        }
 
         // 检查 txtExcLabelSet 条件
-        val txtExc = sai.txtExcLabelSet.none { txtLabels.containsAll(it) }
+        val txtExc = sai.txtExcLabelSet.all { except->
+            txtLabels.none { it.containsAll(except) }
+        }
 
-        //println("match: int${int}, intExc${intExc}, txt${txt}, txtExc${txtExc}")
         // 如果所有条件都满足
         return  int && intExc && txt && txtExc
 
@@ -420,7 +419,7 @@ object  RunScript {
             appDb.scriptRunStatusDao.insert(
                 scriptStatus
             )
-            println("非返回类，插入数据$scriptStatus")
+            Lom.d(INFO, "完成${sai.flowId}")
         }
     }
 
@@ -437,31 +436,6 @@ object  RunScript {
             conf.remRebootTime = System.currentTimeMillis()
             partScope.launch { adbRebootApp(pkgName) }
         }
-    }
-
-    fun setPoints(sai: ScriptActionInfo, detectRes: Array<DetectResult>,ocrRes : Array<OcrResult>){
-        if (sai.operTxt){
-            val matchRes = ocrRes.filter {
-                it.label.containsAll(sai.txtFirstLab)
-            }.minByOrNull {
-                it.label.size
-            }
-            globalSetMap.value[9]?.setValue?.let {
-                if (matchRes != null){
-                    sai.point = Point(matchRes.xCenter + it.toFloat(), matchRes.yCenter + it.toFloat())
-                }
-            }
-        }else{
-            val one = detectRes.firstOrNull {
-                it.label == sai.intFirstLab
-            }
-            globalSetMap.value[9]?.setValue?.let {
-                if (one != null){
-                    sai.point = Point(one.xCenter + it.toFloat(), one.yCenter + it.toFloat())
-                }
-            }
-        }
-
     }
     //操作映射为函数
     private fun initActionFun(scriptActionInfo: ScriptActionInfo){
@@ -602,8 +576,7 @@ object  RunScript {
                 }
             }
         }catch (e : Exception){
-            println(scriptActionInfo)
-            println(e.message)
+            Lom.d(ERROR, "initActionFun error")
             runScope.coroutineContext.cancelChildren()
             appCtx.toastOnUi("初始化action失败，请联系管理员！")
         }

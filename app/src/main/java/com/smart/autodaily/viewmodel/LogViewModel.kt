@@ -51,28 +51,7 @@ class LogViewModel : ViewModel() {
         }
     }
 
-    fun loadExistingLogs() {
-        RunScript.initGlobalSet()
-        val tempEnable = RunScript.globalSetMap.value[7]?.setValue?:"关闭"
-        if (tempEnable == "关闭"){
-            _enableLog.value = false
-        }
-       // _logStateFlow.value = emptyList()
-        val logs = synchronized(logFile) {
-            if (logFile.exists()) {
-                logFile.readLines().reversed()
-            } else {
-                emptyList()
-            }
-        }
-        //_logStateFlow.tryEmit(logs)
-    }
-
     fun deleteLogs(){
-        viewModelScope.launch {
-            deleteFile(logFile)
-            loadLogs()
-            //loadExistingLogs()
-        }
+        deleteFile(logFile)
     }
 }

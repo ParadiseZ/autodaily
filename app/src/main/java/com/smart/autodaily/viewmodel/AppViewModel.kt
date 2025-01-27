@@ -19,9 +19,11 @@ import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.data.entity.request.Request
 import com.smart.autodaily.data.entity.resp.Response
+import com.smart.autodaily.handler.ERROR
 import com.smart.autodaily.handler.RunScript
 import com.smart.autodaily.handler.isRunning
 import com.smart.autodaily.utils.DownloadManager
+import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.cancelChildrenJob
@@ -157,11 +159,9 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     }
 
     fun stopRunScript(){
-        if (isRunning.intValue == 1){
-            runScope.coroutineContext.cancelChildren()
-            logScope.coroutineContext.cancelChildren()
-            isRunning.intValue = 0
-        }
+        runScope.coroutineContext.cancelChildren()
+        logScope.coroutineContext.cancelChildren()
+        isRunning.intValue = 0
     }
 
     //下载
@@ -187,6 +187,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                 }
                 is DownloadState.Error -> {
                     deleteFile(externalParamFile)
+                    Lom.n(ERROR, "下载${scriptInfo.scriptName}模型参数失败")
                     return@collect
                 }
             }
@@ -204,6 +205,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                 }
                 is DownloadState.Error -> {
                     deleteFile(externalBinFile)
+                    Lom.n(ERROR, "下载${scriptInfo.scriptName}模型文件失败")
                     scriptInfo.process.intValue = -1
                 }
             }
