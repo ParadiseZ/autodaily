@@ -2,7 +2,7 @@
 #ifndef YOLO_H
 #define YOLO_H
 
-#include <opencv2/core/core.hpp>
+#include <opencv2/core.hpp>
 #include <net.h>
 struct Object
 {
@@ -21,7 +21,7 @@ public:
 
     void detect(const cv::Mat& rgb, std::vector<Object>& objects, int num_classes, float prob_threshold = 0.25f, float nms_threshold = 0.45f);
 
-    int draw(cv::Mat& bgr,cv::Mat& image, const std::vector<Object>& objects);
+    static int draw(cv::Mat& bgr,cv::Mat& image, const std::vector<Object>& objects);
 
 
 private:

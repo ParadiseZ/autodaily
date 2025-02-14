@@ -1,8 +1,9 @@
 pluginManagement {
     repositories {
-        maven { url 'https://maven.aliyun.com/repository/public/' }
-        maven { url 'https://maven.aliyun.com/repository/google/' }
-        maven { url 'https://www.jitpack.io' }
+        // 阿里云镜像
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        // 保留 Gradle 官方插件仓库
         google {
             content {
                 includeGroupByRegex("com\\.android.*")
@@ -10,7 +11,6 @@ pluginManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
-        mavenCentral()
         gradlePluginPortal()
     }
 }
@@ -19,6 +19,7 @@ dependencyResolutionManagement {
     repositories {
         maven { url 'https://maven.aliyun.com/repository/public/' }
         maven { url 'https://maven.aliyun.com/repository/google/' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
         maven { url 'https://www.jitpack.io' }
         google()
         mavenCentral()

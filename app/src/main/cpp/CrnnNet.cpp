@@ -1,6 +1,8 @@
 
 #include "CrnnNet.h"
 #include <android/asset_manager_jni.h>
+#include <unordered_map>
+#include <mutex>
 
 CrnnNet::CrnnNet() {
     blob_pool_allocator.set_size_compare_ratio(0.f);
@@ -13,7 +15,7 @@ inline static size_t argmax(ForwardIterator first, ForwardIterator last) {
     return std::distance(first, std::max_element(first, last));
 }
 
-int CrnnNet::load(AAssetManager* mgr,const char* modelPath, int _target_size, const float* _mean_vals, const float* _norm_vals, bool use_gpu) {
+int CrnnNet::load(AAssetManager* mgr,const char* modelPath, short _target_size,short _color_num,short _colorStep, const float* _mean_vals, const float* _norm_vals, bool use_gpu) {
     ncnn::set_cpu_powersave(2);
     ncnn::set_omp_num_threads(ncnn::get_big_cpu_count());
 
@@ -33,6 +35,8 @@ int CrnnNet::load(AAssetManager* mgr,const char* modelPath, int _target_size, co
     net.load_param(mgr,parampath);
     net.load_model(mgr,modelpath);
     target_size = _target_size;
+    color_num = _color_num;
+    colorStep = _colorStep;
     norm_vals[0] = _norm_vals[0];
     norm_vals[1] = _norm_vals[1];
     norm_vals[2] = _norm_vals[2];
@@ -82,16 +86,16 @@ void CrnnNet::readKeysFromAssets(AAssetManager *mgr,const char *filename)
     AAsset_close(asset);
 }
 
-TextLine CrnnNet::getTextLine(const cv::Mat& src, int idx)
+TextLine CrnnNet::getTextLine(cv::Mat& src, int idx)
 {
     float scale = (float)target_size / (float)src.rows;
-    int dstWidth = int((float)src.cols * scale);
-    cv::Mat srcResize;
-    cv::resize(src, srcResize, cv::Size(dstWidth, target_size));
+    auto dstWidth = short((float)src.cols * scale);
+    //cv::Mat srcResize;
+    cv::resize(src, src, cv::Size(dstWidth, target_size));
     //if you use PP-OCRv3 you should change PIXEL_RGB to PIXEL_RGB2BGR
-    ncnn::Mat input = ncnn::Mat::from_pixels(srcResize.data, ncnn::Mat::PIXEL_RGB, srcResize.cols, srcResize.rows);
+    ncnn::Mat input = ncnn::Mat::from_pixels(src.data, ncnn::Mat::PIXEL_RGB, src.cols, src.rows);
     //ncnn::Mat input = ncnn::Mat::from_pixels(srcResize.data, ncnn::Mat::PIXEL_RGB2BGR, srcResize.cols, srcResize.rows);
-    
+
     input.substract_mean_normalize(mean_vals, norm_vals);
 
     ncnn::Extractor extractor = net.create_extractor();
@@ -108,33 +112,32 @@ TextLine CrnnNet::getTextLine(const cv::Mat& src, int idx)
 }
 
 std::vector<TextLine> CrnnNet::getTextLines(std::vector<cv::Mat>& partImg) {
-    int size = partImg.size();
+    auto size = static_cast<jshort>(partImg.size());
+    //int size = static_cast<jsize>(partImg.size());
     std::vector<TextLine> textLines;
-    for (int i = 0; i < size; ++i)
+    for (short i = 0; i < size; ++i)
     {
         TextLine textLine = getTextLine(partImg[i], i);
         if (!textLine.text.empty()){
+            textLine = getColors(textLine, partImg[i]);
             textLines.emplace_back(textLine);
         }
-
     }
     return textLines;
 }
 
 TextLine CrnnNet::scoreToTextLine(const std::vector<float>& outputData, int h, int w,int idx)
 {
-    int keySize = keys.size();
+    int keySize = static_cast<jsize>(keys.size());
     std::string strRes;
     std::vector<float> scores;
     std::vector<short> label;
     int lastIndex = 0;
-    int maxIndex;
+    int maxIndex=0;
     float maxValue;
 
     for (int i = 0; i < h; i++)
     {
-        maxIndex = 0;
-        maxValue = -1000.f;
         maxIndex = int(argmax(outputData.begin() + i * w, outputData.begin() + i * w + w));
         maxValue = float(*std::max_element(outputData.begin() + i * w, outputData.begin() + i * w + w));// / partition;
         if (maxIndex > 0 && maxIndex < keySize && (!(i > 0 && maxIndex == lastIndex))) {
@@ -152,3 +155,74 @@ TextLine CrnnNet::scoreToTextLine(const std::vector<float>& outputData, int h, i
     }
     return { label, idx,strRes, scores };
 }
+
+TextLine  CrnnNet::getColors(TextLine textLine, cv::Mat & src) const{
+    cv::cvtColor(src, src, cv::COLOR_RGB2HSV);
+    std::mutex mutex;
+    // 统计颜色频率，并应用颜色合并
+    std::unordered_map<short, int> colorFrequency;
+    int row = src.rows/2 + 3;
+    int col = src.rows/2 + 3;
+    cv::parallel_for_(cv::Range(0, row), [&](const cv::Range& range) {
+        std::unordered_map<short, int> localFreq;
+        for (int r = range.start; r < range.end; ++r) {
+            for (int c = 0; c < col; ++c) {
+                //auto h = (short)((pixel[0] / colorStep) * colorStep);
+                cv::Vec3b pixel = src.at<cv::Vec3b>(r, c);
+                localFreq[colorMapping(pixel[0], pixel[1], pixel[2])]++;
+            }
+        }
+        // 合并到全局统计
+        std::lock_guard<std::mutex> lock(mutex);
+        for (auto map : localFreq) {
+            colorFrequency[ map.first ]  += map.second;
+        }
+    },2); // 使用多线程
+    std::priority_queue<
+            std::pair<int, short>,
+            std::vector<std::pair<int,short>>,
+            std::greater<>> pq;// 保留频率最高的 color_num 种颜色
+    for (const auto& pair : colorFrequency) {
+        pq.emplace(pair.second, pair.first); // 按频率降序排序
+        if (pq.size() > color_num) {
+            pq.pop();
+        }
+    }
+    // 构建结果字符串
+    while (!pq.empty()) {
+        textLine.color.emplace_back(pq.top().second);
+        pq.pop();
+    }
+    return textLine;
+}
+
+static const unsigned char h_category[181] = {
+        // 0-10: 3 (Red)11
+        3,3,3,3,3,3,3,3,3,3,3,
+        // 11-25:4 (Orange)15
+        4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+        // 26-34:5 (Yellow)9
+        5,5,5,5,5,5,5,5,5,
+        // 35-77:6 (Green)43
+        6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+        // 78-99:7 (Cyan)22
+        7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+        // 100-124:8 (Blue)25
+        8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+        // 125-155:9 (Purple)31
+        9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+        // 156-180:3 (Red)25
+        3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3
+};
+unsigned char CrnnNet::colorMapping(short h, short s, short v) {
+    if (v <= 46) {
+        return 0;//Black;
+    } else if ( s <= 43 && v <= 220 ) {
+        return 1;//Gray;
+    } else if( s <= 30) {
+        return 2; //White
+    } else {
+        return h_category[h];
+    }
+}
+

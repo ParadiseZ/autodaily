@@ -2,7 +2,6 @@
 #include <android/asset_manager_jni.h>
 #include <android/bitmap.h>
 #include <android/log.h>
-
 // 项目依赖头文件
 #include <platform.h>
 #include <benchmark.h>
@@ -78,7 +77,8 @@ static jclass hashSetClass = nullptr;
 static jclass shortClass = nullptr;
 static jmethodID hashSetCon = nullptr;
 static jmethodID shortCon = nullptr;
-static jmethodID addMethod = nullptr;
+static jmethodID hashAddMethod = nullptr;
+// OCR END
 static jobjectArray changeDetectResultToJavaArray(JNIEnv *env, const std::vector<Object> &objects)
 {
     // 创建Java对象数组
@@ -98,8 +98,6 @@ static jobjectArray changeDetectResultToJavaArray(JNIEnv *env, const std::vector
     return resultArray;
 }
 
-// OCR BEGIN
-// OCR END
 extern "C"
 {
 
@@ -127,21 +125,21 @@ extern "C"
         //OCR
         jclass localOcrResCls = env->FindClass("com/smart/autodaily/data/entity/OcrResult");
         ocrResCls = (jclass)env->NewGlobalRef(localOcrResCls);
-        ocrResMethod = env->GetMethodID(ocrResCls, "<init>", "(Ljava/util/Set;FFFFFF)V");
+        ocrResMethod = env->GetMethodID(ocrResCls, "<init>", "(Ljava/util/Set;FFFFFFLjava/util/Set;[S)V");
         env->DeleteLocalRef(localOcrResCls);
 
         jclass localHashSetCls = env->FindClass("java/util/HashSet");
         hashSetClass =  (jclass)env->NewGlobalRef(localHashSetCls);
         hashSetCon = env->GetMethodID(hashSetClass, "<init>", "()V");
+        hashAddMethod = env->GetMethodID(hashSetClass, "add", "(Ljava/lang/Object;)Z");
         env->DeleteLocalRef(localHashSetCls);
 
         jclass localShortCls = env->FindClass("java/lang/Short");
         shortClass = (jclass)env->NewGlobalRef(localShortCls);
         shortCon = env->GetMethodID(shortClass, "<init>", "(S)V");
         env->DeleteLocalRef(localShortCls);
-
-        addMethod = env->GetMethodID(hashSetClass, "add", "(Ljava/lang/Object;)Z");
-
+        
+        //list
         return JNI_VERSION_1_6;
     }
 
@@ -192,6 +190,7 @@ extern "C"
     }
 
     // public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
+    /*
     JNIEXPORT jboolean JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_loadModel(JNIEnv *env, jobject thiz, jobject assetManager, jstring modelPath, jint targetSize, jboolean use_gpu)
     {
         // delete g_yolo;
@@ -200,9 +199,7 @@ extern "C"
         const char *c_str = env->GetStringUTFChars(modelPath, nullptr);
         // const char* modeltypes[] ={"bh3/cn/model.ncnn"};
         const int target_sizes[] = {targetSize};
-        /*const float mean_vals[][3] ={
-                {103.53f, 116.28f, 123.675f},
-        };*/
+        //const float mean_vals[][3] ={ {103.53f, 116.28f, 123.675f},};
         const float norm_vals[][3] = {
             {1 / 255.f, 1 / 255.f, 1 / 255.f},
         };
@@ -227,7 +224,7 @@ extern "C"
         env->ReleaseStringUTFChars(modelPath, c_str);
         return JNI_TRUE;
     }
-
+    */
     JNIEXPORT jboolean JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_loadModelSec(JNIEnv *env, jobject thiz,
                                                                                       jstring paramPath, jstring modelPath, jint targetSize, jboolean use_gpu)
     {
@@ -292,7 +289,7 @@ extern "C"
         image.release();
         return changeDetectResultToJavaArray(env, objects);
     }
-
+/*
     JNIEXPORT jobjectArray JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_detectAndDraw(JNIEnv *env, jobject thiz, jobject imageData, jint numClasses,
                                                                                            jfloat threshold, jfloat nmsThreshold, jobject drawBitMap)
     {
@@ -306,9 +303,10 @@ extern "C"
         matToBitmap(env, drawMat, drawBitMap);
         return changeDetectResultToJavaArray(env, objects);
     }
+    */
 
     // OCR
-    JNIEXPORT jboolean JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_loadOcr(JNIEnv *env, jobject thiz, jobject assetManager, jint lang, jboolean useGpu, jint detectSize)
+    JNIEXPORT jboolean JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_loadOcr(JNIEnv *env, jobject thiz, jobject assetManager, jint lang, jboolean useGpu, jint detectSize,jshort colorNum,jshort colorStep)
     {
         AAssetManager *mgr = AAssetManager_fromJava(env, assetManager);
         // Get the actual characters of the string
@@ -318,17 +316,24 @@ extern "C"
             ncnn::MutexLockGuard ocr(lock);
             if (!g_ocr)
                 g_ocr = new Ocr;
-            g_ocr->loadModel(mgr, lang, useGpu, detectSize);
+            g_ocr->loadModel(mgr, lang, useGpu, detectSize,colorNum,colorStep);
         }
         return JNI_TRUE;
     }
 
-    void printLabels(const std::vector<short>& labels,const std::string& txt) {
+    void printLabels(const std::vector<short>& labels,const std::string& txt, const std::vector<short>& color) {
         std::string res;
-        res = txt + "  [";
+        res = txt + "[";
         for (size_t i = 0; i < labels.size(); ++i) {
             res += std::to_string(labels[i]); // 格式化 short 类型
             if (i < labels.size() - 1) {
+                res += ",";
+            }
+        }
+        res +="], [";
+        for (size_t i = 0; i < color.size(); ++i) {
+            res += std::to_string(color[i]); // 格式化 short 类型
+            if (i < color.size() - 1) {
                 res += ",";
             }
         }
@@ -340,7 +345,7 @@ extern "C"
         jobjectArray jOcrResArray;
         cv::Mat in = bitmapToMat(env, bitmap);
         cv::Mat rgb;
-        cv::cvtColor(in, rgb, cv::COLOR_BGR2RGB);
+        cv::cvtColor(in, rgb, cv::COLOR_RGBA2RGB);
         in.release();
         std::vector<TextBox> boxResult = g_ocr->dbNet->getTextBoxes(rgb, 0.2, 0.3, 2);
         std::vector<cv::Mat> partImages = getPartImages(rgb, boxResult);
@@ -358,24 +363,38 @@ extern "C"
                 //LOGD("%d",k);
                 jobject shortObj = env->NewObject(shortClass, shortCon, static_cast<jshort>(k));
                 // add
-                env->CallBooleanMethod(hashSet, addMethod, shortObj);
+                env->CallBooleanMethod(hashSet, hashAddMethod, shortObj);
                 // 释放局部引用
                 env->DeleteLocalRef(shortObj);
             }
+
             // 顺时针
             float x = boxResult[txt.idx].boxPoint[0].x;
             float y = boxResult[txt.idx].boxPoint[0].y;
             float w = boxResult[txt.idx].boxPoint[1].x - x;
             float h = boxResult[txt.idx].boxPoint[3].y - y;
-            printLabels(txt.label, txt.text);
-            jobject res = env->NewObject(ocrResCls, ocrResMethod, hashSet, x, y, w, h, x + w/2, y + h/2);
+            printLabels(txt.label, txt.text, txt.color);
+            //颜色处理begin
+            jobject colorSet = env->NewObject(hashSetClass, hashSetCon);
+            auto colorSize = static_cast<jshort>(txt.color.size());
+            jshortArray colorArr = env->NewShortArray(colorSize);
+            env->SetShortArrayRegion(colorArr, 0, colorSize, txt.color.data());
+            //颜色处理end
+            jobject res = env->NewObject(ocrResCls, ocrResMethod, hashSet, x, y, w, h, x + w/2, y + h/2, colorSet, colorArr);
             env->SetObjectArrayElement(jOcrResArray, idx, res);
             idx++;
             // 释放局部引用
+            env->DeleteLocalRef(colorSet);
+            env->DeleteLocalRef(colorArr);
             env->DeleteLocalRef(res);
             env->DeleteLocalRef(hashSet);
         }
         return jOcrResArray;
+    }
+
+    JNIEXPORT jint JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_hsvToColor(JNIEnv *env, jobject thiz, jshort h1, jshort s1, jshort v1)
+    {
+        return  CrnnNet::colorMapping(h1, s1, v1);
     }
 }
 

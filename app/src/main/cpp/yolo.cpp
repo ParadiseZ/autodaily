@@ -95,7 +95,7 @@ static void nms_sorted_bboxes(const std::vector<Object> &faceobjects, std::vecto
         }
 
         if (keep)
-            picked.push_back(i);
+            picked.emplace_back(i);
     }
 }
 
@@ -146,7 +146,7 @@ static void parse_yolov8_detections(
             object.label = max_s_ptr - scores_ptr;
             object.prob = score;
             object.rect = bbox;
-            detections.push_back(object);
+            detections.emplace_back(object);
         }
     }
     objects = detections;
@@ -314,10 +314,8 @@ int Yolo::draw(cv::Mat& bgr, cv::Mat& image,const std::vector<Object>& objects)
 
     image = bgr.clone();
 
-    for (size_t i = 0; i < objects.size(); i++)
+    for (const auto & obj : objects)
     {
-        const Object& obj = objects[i];
-
         const unsigned char* color = colors[color_index % 19];
         color_index++;
 

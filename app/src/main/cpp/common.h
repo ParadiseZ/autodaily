@@ -16,6 +16,7 @@ struct TextLine {
     int idx;
     std::string text;
     std::vector<float> charScores;
+    std::vector<short> color;
 };
 
 std::vector<cv::Point> getMinBoxes(const std::vector<cv::Point>& inVec, float& minSideLen, float& allEdgeSize);
@@ -28,4 +29,4 @@ cv::Mat makePadding(cv::Mat& src, int padding);
 
 std::vector<TextBox> findRsBoxes(const cv::Mat& fMapMat, const cv::Mat& norfMapMat,
                                  float boxScoreThresh, float unClipRatio);
-#endif //__COMMON_H_
+#endif //COMMON_H_

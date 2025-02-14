@@ -12,9 +12,9 @@ public:
         Ocr();
         DbNet* dbNet;
         CrnnNet* crnnNet;
-        bool loadModel(AAssetManager* mgr,int lang, bool useGpu, int detectSize);
+        bool loadModel(AAssetManager* mgr,int lang, bool useGpu, int detectSize,short colorNum,short colorStep);
 private:
-    const int dstHeight = 48;
+    const short dstHeight = 48;
     std::vector<std::string> keys;
     const float detMeanValues[3] = { 0.485 * 255, 0.456 * 255, 0.406 * 255 };
     const float detNormValues[3] = { 1.0 / 0.229 / 255.0, 1.0 / 0.224 / 255.0, 1.0 / 0.225 / 255.0 };

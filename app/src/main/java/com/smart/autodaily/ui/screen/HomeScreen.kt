@@ -123,10 +123,10 @@ fun HomeScreen(
                         shape = MaterialTheme.shapes.medium.copy(CornerSize(percent = 50)),
                         onClick = {
                             runScope.launch {
-                                homeViewModel.appViewModel.setIsRunning(2)
+                                /*homeViewModel.appViewModel.setIsRunning(2)
                                 RunScript.initGlobalSet()
-                                homeViewModel.appViewModel.runScript()
-                                //RunScript.testOcr()
+                                homeViewModel.appViewModel.runScript()*/
+                                RunScript.testOcr()
                                 /*homeViewModel.appViewModel.setIsRunning(2)
                                 if(isLogin(homeViewModel.context, user)){
                                     val res : Response<String>

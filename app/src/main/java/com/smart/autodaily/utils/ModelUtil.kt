@@ -5,12 +5,12 @@ import splitties.init.appCtx
 
 object ModelUtil{
     val model = AutoDaily()
-    fun reloadModel(modelPath:String, targetSize : Int, useGpu : Boolean){
+    /*fun reloadModel(modelPath:String, targetSize : Int, useGpu : Boolean){
         val modelLoaded = model.loadModel(appCtx.assets,modelPath,targetSize,useGpu)
         if (!modelLoaded){
             appCtx.toastOnUi("加载模型失败！")
         }
-    }
+    }*/
 
     fun reloadModelSec(paramPath: String, modelPath:String, targetSize : Int, useGpu : Boolean){
         if (!model.loadModelSec(paramPath,modelPath,targetSize,useGpu)){
@@ -18,8 +18,8 @@ object ModelUtil{
         }
     }
 
-    fun loadOcr(lang : Int, useGpu: Boolean, detectSize : Int){
-        if (!model.loadOcr(appCtx.assets, lang, useGpu,detectSize)){
+    fun loadOcr(lang : Int, useGpu: Boolean, detectSize : Int, colorNum: Short, colorStep : Short){
+        if (!model.loadOcr(appCtx.assets, lang, useGpu,detectSize,colorNum,colorStep)){
             appCtx.toastOnUi("加载OCR模型失败！")
         }
     }

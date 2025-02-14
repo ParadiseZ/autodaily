@@ -15,6 +15,7 @@ import com.smart.autodaily.command.Sleep
 import com.smart.autodaily.command.adbRebootApp
 import com.smart.autodaily.command.adbStartApp
 import com.smart.autodaily.constant.ActionString
+import com.smart.autodaily.constant.Color
 import com.smart.autodaily.constant.MODEL_BIN
 import com.smart.autodaily.constant.MODEL_PARAM
 import com.smart.autodaily.data.appDb
@@ -34,6 +35,7 @@ import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.getMd5Hash
 import com.smart.autodaily.utils.isBetweenHour
 import com.smart.autodaily.utils.partScope
+import com.smart.autodaily.utils.rgbToHsv
 import com.smart.autodaily.utils.runScope
 import com.smart.autodaily.utils.toastOnUi
 import kotlinx.coroutines.cancelChildren
@@ -93,11 +95,25 @@ object  RunScript {
     }
 
     fun testOcr(){
-        val pic = AssetUtil.getFromAssets("0255.png")
+        val pic = AssetUtil.getFromAssets("0009.png")
         println("start ocr")
-        ModelUtil.loadOcr(0,false, conf.detectSize)
+        ModelUtil.loadOcr(0,false, 960, 5,16)
         println("start detect")
-        ModelUtil.model.detectOcr(pic)
+        val res =  ModelUtil.model.detectOcr(pic)
+        //val target : List<Short> = listOf(233,199,73)
+        val target : List<Short> = listOf(9,121,172)
+        val hsv = rgbToHsv(target)
+        println("hsv:${hsv}")
+        val color = ModelUtil.model.hsvToColor(hsv[0], hsv[1], hsv[2])
+        println("targetColor:${Color.entries[color]}")
+        res.map { ocr->
+            print("size:${ocr.colorArr.size},")
+            ocr.colorArr.forEach {
+                print("${Color.entries[it.toInt()]},")
+            }
+            ocr.colorSet = ocr.colorArr.toSet()
+            println()
+        }
     }
     //shell运行
     suspend fun runScriptByAdb(){
@@ -161,7 +177,12 @@ object  RunScript {
                         val ocrRes =ModelUtil.model.detectOcr(capture)
                         //释放截图
                         conf.capture?.recycle()
-                        val txtLabels = ocrRes.map { it.label }.toTypedArray()
+                        val txtLabels = ocrRes.map {
+                            if(it.colorSet.isEmpty()){
+                                it.colorSet = it.colorArr.toSet()
+                            }
+                            it.label
+                        }.toTypedArray()
                         //debugPrintScriptActionLabels(detectRes, detectLabels)
                         if (detectLabels.isEmpty() && txtLabels.isEmpty()) {
                             Lom.d(INFO,"本次未识别到内容")
@@ -228,7 +249,7 @@ object  RunScript {
             )
         }
         Lom.d(INFO,"加载OCR模型")
-        ModelUtil.loadOcr(si.lang,conf.useGpu, conf.detectSize)
+        ModelUtil.loadOcr(si.lang,conf.useGpu, conf.detectSize, 5, 16)
     }
 
     fun getPicture() : Bitmap?{
