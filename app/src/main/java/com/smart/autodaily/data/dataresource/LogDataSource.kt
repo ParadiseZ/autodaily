@@ -12,6 +12,14 @@ class LogDataSource(private var oldFileLen :Long): PagingSource<Long, String>() 
     override suspend fun load(params: LoadParams<Long>): LoadResult<Long, String> {
         return try {
             // 初始位置：文件末尾
+            // 确保文件存在且可读
+            if (!logFile.exists() || !logFile.canRead()) {
+                return LoadResult.Page(
+                    data = emptyList(),
+                    prevKey = null,
+                    nextKey = null
+                )
+            }
             var pos = params.key ?: logFile.length()
             if (oldFileLen > logFile.length()){
                 pos = logFile.length()

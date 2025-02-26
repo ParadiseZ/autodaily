@@ -194,13 +194,13 @@ cv::Mat matRotateClockWise180(cv::Mat src) {
     return src;
 }
 
-cv::Mat makePadding(cv::Mat& src, int padding) {
+/*cv::Mat makePadding(cv::Mat& src, int padding) {
     if (padding <= 0) return src;
     cv::Scalar paddingScalar = { 255, 255, 255 };
     cv::Mat paddingSrc;
     cv::copyMakeBorder(src, paddingSrc, padding, padding, padding, padding, cv::BORDER_ISOLATED, paddingScalar);
     return paddingSrc;
-}
+}*/
 
 std::vector<TextBox> findRsBoxes(const cv::Mat& fMapMat, const cv::Mat& norfMapMat,float boxScoreThresh, float unClipRatio)
 {
@@ -240,4 +240,25 @@ std::vector<TextBox> findRsBoxes(const cv::Mat& fMapMat, const cv::Mat& norfMapM
     reverse(rsBoxes.begin(), rsBoxes.end());
 
     return rsBoxes;
+}
+
+
+void resize(cv::Mat& input, int targetSize){
+    // letterbox pad to multiple of MAX_STRIDE
+    int w =  input.cols;
+    int h =  input.rows;
+    float scale;
+    if (w > h)
+    {
+        scale = (float)targetSize / w;
+        w = targetSize;
+        h = h * scale;
+    }
+    else
+    {
+        scale = (float)targetSize / h;
+        h = targetSize;
+        w = w * scale;
+    }
+    cv::resize(input, input, cv::Size(w,h));
 }

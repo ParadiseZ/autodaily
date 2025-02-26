@@ -1,6 +1,6 @@
 #include "DbNet.h"
 
-#define LOGD(...) ((void)__android_log_print(ANDROID_LOG_DEBUG, "DBNET", __VA_ARGS__))
+//#define LOGD(...) ((void)__android_log_print(ANDROID_LOG_DEBUG, "DBNET", __VA_ARGS__))
 
 DbNet::DbNet() {
     blob_pool_allocator.set_size_compare_ratio(0.f);
@@ -16,7 +16,7 @@ int DbNet::load(AAssetManager* mgr,const char* modelPath, int _target_size, cons
     net.opt = ncnn::Option();
     net.opt.lightmode = true;
 #if NCNN_VULKAN
-    LOGD("gpu count %d",ncnn::get_gpu_count());
+    //LOGD("gpu count %d",ncnn::get_gpu_count());
     if (ncnn::get_gpu_count() != 0)
         net.opt.use_vulkan_compute = use_gpu;
 #endif

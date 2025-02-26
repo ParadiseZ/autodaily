@@ -396,5 +396,20 @@ extern "C"
     {
         return  CrnnNet::colorMapping(h1, s1, v1);
     }
+
+    JNIEXPORT jfloat JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_frameDiff(JNIEnv *env, jobject thiz, jobject beforeBitmap, jobject afterBitmap, jint targetSize, jint range)
+    {
+        static cv::Mat before;
+        static cv::Mat curr;
+        static cv::Mat diff;
+        before = bitmapToMat(env, beforeBitmap);
+        curr =  bitmapToMat(env, afterBitmap);
+        resize(before,targetSize);
+        resize(curr,targetSize);
+        cv::cvtColor(before, before, cv::COLOR_RGBA2GRAY);
+        cv::cvtColor(curr, curr, cv::COLOR_RGBA2GRAY);
+        cv::absdiff(before, curr, diff);
+        return  (float)cv::countNonZero(diff > range) / (float)diff.total();
+    }
 }
 

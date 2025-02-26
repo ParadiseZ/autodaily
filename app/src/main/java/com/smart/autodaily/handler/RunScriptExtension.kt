@@ -6,14 +6,17 @@ import com.smart.autodaily.data.entity.DetectResult
 import com.smart.autodaily.data.entity.OcrResult
 import com.smart.autodaily.data.entity.Point
 import com.smart.autodaily.data.entity.ScriptActionInfo
-import com.smart.autodaily.handler.RunScript.getPicture
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.getMd5Hash
-import com.smart.autodaily.utils.runScope
-import kotlinx.coroutines.cancelChildren
+import com.smart.autodaily.utils.getPicture
 
 fun execClick(sai: ScriptActionInfo, detectRes: Array<DetectResult>, ocrRes : Array<OcrResult>, cmd : Operation) : Int {
-    setPoints(sai, detectRes, ocrRes)
+    if (!sai.operTxt){
+        sai.point=null
+        setPointsByLabel(sai, detectRes)
+    }else if(sai.hsv.isEmpty()){
+        matchColorAndSetPoints(sai,ocrRes)
+    }
     if (sai.point == null) {
         return 5
     }
@@ -56,69 +59,112 @@ fun execClick(sai: ScriptActionInfo, detectRes: Array<DetectResult>, ocrRes : Ar
 
 // Helper function to check for response after click
 private fun hasResponse(): Boolean {
-    try {
-        val newCapture = getPicture() ?: return false
-        // Compare with initial screenshot
-        val newMd5 = getMd5Hash(newCapture)
-        if(newMd5.contentEquals(conf.beforeHash)){
-            return false
-        }
-        conf.beforeHash = newMd5
-        conf.capture = newCapture
-        return true
-    } catch (e: Exception) {
-        runScope.coroutineContext.cancelChildren()
-        Lom.n(ERROR, "截图失败，停止运行")
+    val newCapture = getPicture() ?: return false
+    // Compare with initial screenshot
+    val newMd5 = getMd5Hash(newCapture)
+    if(newMd5.contentEquals(conf.beforeHash)){
         return false
     }
+    conf.beforeHash = newMd5
+    conf.capture = newCapture
+    return true
 }
 
-fun setPoints(sai: ScriptActionInfo, detectRes: Array<DetectResult>,ocrRes : Array<OcrResult>){
-    if (sai.operTxt){
-        val firFilter = ocrRes.filter { it.label.containsAll(sai.txtFirstLab) }
-        if (firFilter.isEmpty()) {
-            Lom.d(ERROR, "OCR点设置异常！${sai.id} ${sai.txtLabel}")
-            return
+fun checkColor(sai: ScriptActionInfo,ocrRes : Array<OcrResult>) : Boolean{
+    if (sai.hsv.isEmpty()){
+        return true
+    }
+    return matchColorAndSetPoints(sai, ocrRes)
+/*    when {
+        sai.hsv.isEmpty() -> {
+            sai.hsvExc.isEmpty() || notMatchExcHsv(sai, ocrRes)
         }
-        //非第一个，排序
-        if (sai.labelPos>0){
-            val minSize = firFilter.minOf { it.label.size }
-            val secFilter = firFilter.filter {
-                it.label.size == minSize
-            }.sortedWith(
-                compareBy(
-                    {it.yCenter} ,{ it.xCenter}
-                )
-            )
-            val idx = sai.labelPos.coerceAtMost(secFilter.size-1)
-            secFilter[idx].let {
-                sai.point = getPoint(it)
-            }
-        }else{
-            //默认第一个
-            sai.point = getPoint(firFilter.get(0))
+        else -> {
+            Lom.d(INFO, "目标色" ,sai.hsv)
+            matchColorAndSetPoints(sai, ocrRes) && (sai.hsvExc.isEmpty() || notMatchExcHsv(sai, ocrRes))
+        }
+    }
+    return false*/
+}
+
+/*private fun notMatchExcHsv(sai: ScriptActionInfo,ocrRes : Array<OcrResult>) : Boolean{
+    if (sai.txtExcLabelSet.isEmpty()){
+        return true
+    }
+    val firstExc = sai.txtExcLabelSet[0]
+    val firFilter = ocrRes.filter { it.label.containsAll(firstExc) }
+    if (firFilter.isEmpty()) {
+        Lom.d(INFO, "排除颜色成功${sai.id} ${sai.txtLabel}")
+        return true
+    }
+    return sai.hsvExc.none { firFilter[0].colorSet.contains(it) }
+}*/
+
+private fun matchColorAndSetPoints(sai: ScriptActionInfo,ocrRes : Array<OcrResult>) : Boolean{
+    val firFilter = ocrRes.filter { it.label.containsAll(sai.txtFirstLab) }
+    if (firFilter.isEmpty()) {
+        Lom.d(ERROR, "颜色匹配失败${sai.id} ${sai.txtLabel}")
+        return false
+    }
+    val secFilter: List<OcrResult>
+    if(firFilter.size>1){
+        val minSize = firFilter.minOf { it.label.size }
+        secFilter = firFilter.filter {
+            it.label.size == minSize
         }
     }else{
-        val firFilter = detectRes.filter {
-            it.label == sai.intFirstLab
-        }
-        if (firFilter.isEmpty()){
-            Lom.d(ERROR, "检测点设置异常！${sai.id} ${sai.intLabel}")
-            return
-        }
-        if (sai.labelPos>0){
-            firFilter.sortedWith(
-                compareBy(
-                    {it.yCenter} ,{ it.xCenter}
-                )
+        secFilter = firFilter
+    }
+    //非第一个，排序
+    if (sai.labelPos>0){
+        secFilter.sortedWith(
+            compareBy(
+                {it.yCenter} ,{ it.xCenter}
             )
-            val idx = sai.labelPos.coerceAtMost(firFilter.size-1)
-            firFilter[idx].let {
+        )
+        val idx = sai.labelPos.coerceAtMost(secFilter.size-1)
+        secFilter[idx].let {
+            Lom.d(INFO, "目标色" ,sai.hsv)
+            Lom.d(INFO, "图像色" ,it.colorSet)
+            if (it.colorSet.containsAll(sai.hsv)){
                 sai.point = getPoint(it)
+                return true
             }
-        }else{
-            sai.point = getPoint(firFilter[0])
         }
+    }else{
+        //默认第一个
+        secFilter[0].let {
+            Lom.d(INFO, "目标色" ,sai.hsv)
+            Lom.d(INFO, "图像色" ,it.colorSet)
+            if (it.colorSet.containsAll(sai.hsv)){
+                sai.point = getPoint(it)
+                return true
+            }
+        }
+    }
+    return false
+}
+
+fun setPointsByLabel(sai: ScriptActionInfo, detectRes: Array<DetectResult>){
+    val firFilter = detectRes.filter {
+        it.label == sai.intFirstLab
+    }
+    if (firFilter.isEmpty()){
+        Lom.d(ERROR, "检测点设置异常！${sai.id} ${sai.intLabel}")
+        return
+    }
+    if (sai.labelPos>0){
+        firFilter.sortedWith(
+            compareBy(
+                {it.yCenter} ,{ it.xCenter}
+            )
+        )
+        val idx = sai.labelPos.coerceAtMost(firFilter.size-1)
+        firFilter[idx].let {
+            sai.point = getPoint(it)
+        }
+    }else{
+        sai.point = getPoint(firFilter[0])
     }
 }
 

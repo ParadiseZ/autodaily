@@ -25,6 +25,8 @@ data class ScriptActionInfo(
     @ColumnInfo(name = "txt_exc_label") @SerializedName("txtExcLabel") val txtExcLabel : String?,
     @ColumnInfo(name = "label_pos") @SerializedName("labelPos") var labelPos : Int = 0,
     @ColumnInfo(name = "is_valid") @SerializedName("isValid") var isValid : Boolean = true,
+    @ColumnInfo(name = "rgb") @SerializedName("rgb") var rgb : String?,
+    //@ColumnInfo(name = "rgb_exc") @SerializedName("rgbExc") var rgbExc : String?,
     @ColumnInfo(name = "sort") @SerializedName("sort") var sort : Int
     //@ColumnInfo(name = "command") val command : ArrayList<Command> = arrayListOf(),
 ){
@@ -44,6 +46,10 @@ data class ScriptActionInfo(
     var txtExcLabelSet : List<Set<Short>> = listOf()
     @Ignore
     var txtFirstLab : Set<Short> = setOf()
+    @Ignore
+    var hsv : Set<Short> = setOf()
+    //@Ignore
+    //var hsvExc : Set<Short> = setOf()
     @Ignore
     var point:Point?=null
     @Ignore

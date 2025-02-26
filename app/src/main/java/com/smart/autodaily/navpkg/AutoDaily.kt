@@ -15,6 +15,8 @@ class AutoDaily{
     external fun detectOcr(capture: Bitmap) : Array<OcrResult>
 
     external fun hsvToColor(h : Short, s : Short, v : Short) : Int
+
+    external fun frameDiff(beforeBitmap: Bitmap, afterBitmap: Bitmap, targetSize: Int, range: Int) : Float
     companion object{
         init {
             System.loadLibrary("autodaily")

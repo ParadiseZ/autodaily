@@ -25,8 +25,10 @@ std::vector<cv::Point> unClip(const std::vector<cv::Point>& inBox, float perimet
 cv::Mat getRotateCropImage(const cv::Mat& src, std::vector<cv::Point> box);
 std::vector<cv::Mat> getPartImages(const cv::Mat& src, std::vector<TextBox>& textBoxes);
 //cv::Mat matRotateClockWise180(cv::Mat src);
-cv::Mat makePadding(cv::Mat& src, int padding);
+//cv::Mat makePadding(cv::Mat& src, int padding);
 
 std::vector<TextBox> findRsBoxes(const cv::Mat& fMapMat, const cv::Mat& norfMapMat,
                                  float boxScoreThresh, float unClipRatio);
+
+void resize(cv::Mat& input, int targetSize);
 #endif //COMMON_H_

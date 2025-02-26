@@ -3,6 +3,7 @@ package com.smart.autodaily.utils
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import com.smart.autodaily.handler.ERROR
+import com.smart.autodaily.handler.INFO
 import com.smart.autodaily.handler.RunScript
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
@@ -22,7 +23,7 @@ val logSet by lazy {
     mutableStateOf("关闭")
 }
 object Lom {
-    private const val MAX_LOG_SIZE = 512L// 2MB2 * 1024 * 1024L
+    private const val MAX_LOG_SIZE = 512 * 1024L// 2MB 2 * 1024 * 1024L
     private val dateFormat = DateTimeFormatter.ofPattern("yy-MM-dd HH:mm:ss")
     private val logChannel = Channel<String>(256)
     private var enableLog = false
@@ -34,6 +35,20 @@ object Lom {
             logChannel.trySend(msg)
         }
     }
+    fun d(category: String, message: String, data: Set<Short>) {
+        if (data.isNotEmpty()){
+            val msg = StringBuilder()
+            msg.append(message)
+            msg.append(" ")
+            data.forEach {
+                msg.append("${it},")
+            }
+            d(category,msg.toString())
+        }else{
+            d(category, message)
+        }
+    }
+
     fun n(category: String, message: String) {
         logPrint(category,message)
         if (enableLog){
@@ -48,13 +63,13 @@ object Lom {
         }else{
             Log.d(category, message)
         }
-
     }
 
     fun waitWriteLog(){
         logScope.coroutineContext.cancelChildren()
         enableLog = false
         logSet.value =  RunScript.globalSetMap.value[7]?.setValue?:"关闭"
+        n(INFO , "日志设置：${logSet.value}")
         if ("关闭" == logSet.value){
             enableLog = true
             writeLogToFile()
@@ -81,7 +96,7 @@ object Lom {
         }
     }
 
-    private fun limitFileSize(fileWriter : FileWriter,file: File) : FileWriter? {
+    private fun limitFileSize(fileWriter : FileWriter,file: File) : FileWriter?{
         if (file.length() > MAX_LOG_SIZE) {
             fileWriter.close()
             // 创建临时文件
@@ -100,13 +115,13 @@ object Lom {
             }
             deleteFile(file)
             // 删除旧文件并重命名临时文件
-            if (file.delete() && tempFile.renameTo(file)) {
-                // 返回一个新的 FileWriter
-                return FileWriter(file, true)
-            } else {
-                n( ERROR,"delete temp log file failed")
-                return FileWriter(file, true)
+            if (!file.delete()){
+                n( ERROR,"删除原日志文件失败！")
             }
+            if(!tempFile.renameTo(file)){
+                n( ERROR,"重命名临时日志文件失败！")
+            }
+            return FileWriter(file, true)
         }
         // 如果文件大小未超过限制，返回当前的 FileWriter
         return null

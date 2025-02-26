@@ -1,5 +1,6 @@
 package com.smart.autodaily.command
 
+import android.annotation.SuppressLint
 import com.smart.autodaily.data.entity.Point
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.handler.ActionHandler
@@ -35,7 +36,7 @@ class Operation(val type: Int, val operation : Command) : Command{
 
 class SkipFlowId(private val skipFlowId :Int): Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
-        Lom.d(INFO , "跳过Add${sai.flowId} ${sai.pageDesc}")
+        Lom.d(INFO , "＋跳过流程 ${sai.flowId} ${sai.pageDesc}")
         skipFlowIds.add(skipFlowId)
         return true
     }
@@ -108,8 +109,16 @@ class Skip : Command{
 }
 
 class Sleep(private var time : Long = 1000L) : Command{
+    @SuppressLint("DefaultLocale")
     override fun exec(sai: ScriptActionInfo): Boolean {
-        Lom.d(INFO , "等待${if (time>60000L) (time/60000L).toString()+"分钟" else( time/1000L).toString()+"秒"}")
+        Lom.d(
+            INFO,
+            "⏳${if (time > 60000) {
+                String.format("%.1f分钟", time.toDouble() / 60000.0)
+            } else {
+                String.format("%.1f秒", time.toDouble() / 1000.0)
+            }}"
+        )
         if (conf.capture?.isRecycled== false){
             conf.capture?.recycle()
         }
