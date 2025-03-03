@@ -60,7 +60,10 @@ fun SliderSecondSettingItem(
                 ),
                 onValueChange = {
                 sliderValue = it
-                setting.setValue = it.toString()
+                when(setting.setType){
+                    SettingType.SLIDER_FIFTH -> setting.setValue = "%.0f".format(it)
+                    else->setting.setValue = it.toString()
+                }
                 onSliderValueChange(setting)
             })
 
