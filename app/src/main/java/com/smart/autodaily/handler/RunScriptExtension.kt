@@ -75,30 +75,7 @@ fun checkColor(sai: ScriptActionInfo,ocrRes : Array<OcrResult>) : Boolean{
         return true
     }
     return matchColorAndSetPoints(sai, ocrRes)
-/*    when {
-        sai.hsv.isEmpty() -> {
-            sai.hsvExc.isEmpty() || notMatchExcHsv(sai, ocrRes)
-        }
-        else -> {
-            Lom.d(INFO, "目标色" ,sai.hsv)
-            matchColorAndSetPoints(sai, ocrRes) && (sai.hsvExc.isEmpty() || notMatchExcHsv(sai, ocrRes))
-        }
-    }
-    return false*/
 }
-
-/*private fun notMatchExcHsv(sai: ScriptActionInfo,ocrRes : Array<OcrResult>) : Boolean{
-    if (sai.txtExcLabelSet.isEmpty()){
-        return true
-    }
-    val firstExc = sai.txtExcLabelSet[0]
-    val firFilter = ocrRes.filter { it.label.containsAll(firstExc) }
-    if (firFilter.isEmpty()) {
-        Lom.d(INFO, "排除颜色成功${sai.id} ${sai.txtLabel}")
-        return true
-    }
-    return sai.hsvExc.none { firFilter[0].colorSet.contains(it) }
-}*/
 
 private fun matchColorAndSetPoints(sai: ScriptActionInfo,ocrRes : Array<OcrResult>) : Boolean{
     val firFilter = ocrRes.filter { it.label.containsAll(sai.txtFirstLab) }
@@ -124,8 +101,8 @@ private fun matchColorAndSetPoints(sai: ScriptActionInfo,ocrRes : Array<OcrResul
         )
         val idx = sai.labelPos.coerceAtMost(secFilter.size-1)
         secFilter[idx].let {
-            Lom.d(INFO, "目标色" ,sai.hsv)
-            Lom.d(INFO, "图像色" ,it.colorSet)
+            Lom.d(INFO, "目标色  ${sai.id}" ,sai.hsv)
+            Lom.d(INFO, "图像色  ${sai.id}" ,it.colorSet)
             if (it.colorSet.containsAll(sai.hsv)){
                 sai.point = getPoint(it)
                 return true
@@ -134,8 +111,8 @@ private fun matchColorAndSetPoints(sai: ScriptActionInfo,ocrRes : Array<OcrResul
     }else{
         //默认第一个
         secFilter[0].let {
-            Lom.d(INFO, "目标色" ,sai.hsv)
-            Lom.d(INFO, "图像色" ,it.colorSet)
+            Lom.d(INFO, "目标色 ${sai.id}" ,sai.hsv)
+            Lom.d(INFO, "图像色  ${sai.id}" ,it.colorSet)
             if (it.colorSet.containsAll(sai.hsv)){
                 sai.point = getPoint(it)
                 return true

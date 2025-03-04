@@ -164,7 +164,6 @@ object  RunScript {
                         isToReboot(si.packageName)
                         //截图延迟
                         val capture = if (conf.capture == null || conf.capture!!.isRecycled) {
-                            delay(conf.intervalTime)
                             getPicture()?:continue
                         }else conf.capture!!
                         val detectRes = ModelUtil.model.detectYolo(capture, si.classesNum).toList().filter { it.prob > conf.similarScore }
@@ -215,6 +214,7 @@ object  RunScript {
                                 //点无效
                             }
                         }
+                        delay(conf.intervalTime)
                     }
                 }//set for each
                 conf.capture?.recycle()
