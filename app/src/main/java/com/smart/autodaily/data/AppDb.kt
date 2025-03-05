@@ -10,12 +10,14 @@ import com.smart.autodaily.data.dao.ScriptActionInfoDao
 import com.smart.autodaily.data.dao.ScriptInfoDao
 import com.smart.autodaily.data.dao.ScriptRunStatusDao
 import com.smart.autodaily.data.dao.ScriptSetInfoDao
+import com.smart.autodaily.data.dao.ScriptSetRunStatusDao
 import com.smart.autodaily.data.dao.UserInfoDao
 import com.smart.autodaily.data.entity.AppInfo
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptRunStatus
 import com.smart.autodaily.data.entity.ScriptSetInfo
+import com.smart.autodaily.data.entity.ScriptSetRunStatus
 import com.smart.autodaily.data.entity.UserInfo
 import org.intellij.lang.annotations.Language
 import splitties.init.appCtx
@@ -37,6 +39,7 @@ val appDb by lazy {
         ScriptSetInfo::class,
         UserInfo::class,
         ScriptActionInfo::class,
+        ScriptSetRunStatus::class,
         ScriptRunStatus::class,
         AppInfo::class],
 /*    autoMigrations = [
@@ -49,6 +52,7 @@ abstract class AppDb  :  RoomDatabase(){
     abstract val userInfoDao : UserInfoDao
     abstract val scriptActionInfoDao : ScriptActionInfoDao
     abstract val appInfoDao : AppInfoDao
+    abstract val scriptSetRunStatusDao : ScriptSetRunStatusDao
     abstract val scriptRunStatusDao : ScriptRunStatusDao
 
     companion object {

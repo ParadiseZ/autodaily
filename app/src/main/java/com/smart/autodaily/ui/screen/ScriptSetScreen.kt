@@ -106,12 +106,14 @@ fun SetCheckBox(set: ScriptSetInfo, onClick : ()->Unit){
     Checkbox(checked = isChecked, onCheckedChange = {
         isChecked = it
         set.checkedFlag = it
+        set.setValue = if(isChecked) "true" else "false"
         onClick()
     })
     Text(modifier = Modifier
         .clickable {
             isChecked = !isChecked
             set.checkedFlag = isChecked
+            set.setValue = if(isChecked) "true" else "false"
             onClick()
         },
         text = set.setName)

@@ -44,6 +44,11 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
         //dataList[index] =  sc.copy(checked_flag = !sc.checked_flag)
     }
 
+    fun deleteRunStatus(si : ScriptInfo){
+        appDb.scriptRunStatusDao.deleteStatus(si.scriptId)
+        appDb.scriptSetRunStatusDao.deleteStatus(si.scriptId)
+    }
+
     //检测可运行数量
     suspend fun runScriptCheck() : Response<String>{
         val checkedScriptNum = appDb.scriptInfoDao.getAllCheckedScript().size

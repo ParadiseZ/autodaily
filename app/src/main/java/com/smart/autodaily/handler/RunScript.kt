@@ -25,6 +25,7 @@ import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptRunStatus
 import com.smart.autodaily.data.entity.ScriptSetInfo
+import com.smart.autodaily.data.entity.ScriptSetRunStatus
 import com.smart.autodaily.utils.AssetUtil
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.ModelUtil
@@ -81,6 +82,7 @@ object  RunScript {
     private fun initConfData(){
         conf = ConfigData(
             _globalSetMap.value[3]?.setValue?.toFloat()?.times(1000)?.toLong()?:1500L,
+            _globalSetMap.value[59]?.checkedFlag?:false,
             _globalSetMap.value[5]?.run { this.setValue?.toFloat() }?:0.5f,
             _globalSetMap.value[4]?.run { this.setValue?.toFloat()?.times(60000)?.toLong() }?: 600000L,
             _globalSetMap.value[10]?.checkedFlag?:false,
@@ -120,6 +122,7 @@ object  RunScript {
         Lom.n( INFO, "初始化全局设置" )
         initConfData()
         Lom.n("config", conf.toString())
+        deleteRunStatus()
         _scriptCheckedList.value.forEach scriptForEach@{ si->
             Lom.n( INFO, si.scriptName )
             skipFlowIds.clear()
@@ -132,8 +135,13 @@ object  RunScript {
                 loadModel(si)
                 //insertFirstDetect(si.classesNum, si.packageName)
                 //所有选择的set
-
                 val scriptSet = getScriptSets(si.scriptId)
+                if (conf.recordStatus){
+                    if(appDb.scriptRunStatusDao.countByFlowIdAndType(set.scriptId, scriptSet[0].flowIdType, LocalDate.now().toString()) > 0 ){
+                        Lom.n(INFO, "当前时间段已执行，跳过：${si.scriptName}")
+                        return@scriptForEach
+                    }
+                }
                 /*println("scriptSet")
                 scriptSet.forEach {
                     println(it)
@@ -149,7 +157,7 @@ object  RunScript {
                 scriptSet.forEach setForEach@ { forSet->
                     set = forSet
                     //跳跃或有今天的执行记录，则遍历下一条
-                    if(appDb.scriptRunStatusDao.countByFlowIdAndType(set.scriptId,set.flowId!!, set.flowIdType, LocalDate.now().toString()) > 0 ){
+                    if(conf.recordStatus && appDb.scriptSetRunStatusDao.countByFlowIdAndType(set.scriptId,set.flowId!!, set.flowIdType, LocalDate.now().toString()) > 0 ){
                         Lom.n(INFO, "当前时间段已执行，跳过：${set.setName}")
                         return@setForEach
                     }
@@ -218,6 +226,10 @@ object  RunScript {
                     }
                 }//set for each
                 conf.capture?.recycle()
+                //记录是否完成
+                if (conf.recordStatus){
+                    setScriptStatus(set)
+                }
                 return@scriptForEach
             }else{
                 si.currentRunNum = 0
@@ -226,6 +238,13 @@ object  RunScript {
             }
         }
     }
+
+    private fun deleteRunStatus(){
+        val d : String = LocalDate.now().minusDays(7).toString()
+        appDb.scriptRunStatusDao.deleteStatus(d)
+        appDb.scriptSetRunStatusDao.deleteStatus(d)
+    }
+
     //启动APP
     private fun startApp(pkgName : String){
         try {
@@ -349,7 +368,9 @@ object  RunScript {
                         is Return -> {
                             when (cmd.type) {
                                 ActionString.FINISH -> {
-                                    setScriptStatus(set, sai)
+                                    if (conf.recordStatus){
+                                        setScriptSetStatus(set, sai)
+                                    }
                                     return 1
                                 }
                             }
@@ -431,18 +452,16 @@ object  RunScript {
         //return  int && intExc && txt
     }
 
-    private fun setScriptStatus(set : ScriptSetInfo, sai: ScriptActionInfo){
-        if (set.backFlag ==0 && appDb.scriptRunStatusDao.countByFlowIdAndType(
-                sai.scriptId,
-                sai.flowId,
+    private fun setScriptStatus(set : ScriptSetInfo){
+        if (appDb.scriptRunStatusDao.countByFlowIdAndType(
+                set.scriptId,
                 set.flowIdType,
                 dateTime = LocalDate.now()
                     .toString()
             ) == 0
         ) {
             val scriptStatus = ScriptRunStatus(
-                scriptId = sai.scriptId,
-                flowId = sai.flowId,
+                scriptId = set.scriptId,
                 flowIdType = set.flowIdType,
                 curStatus = 2,
                 dateTime = LocalDate.now()
@@ -451,7 +470,34 @@ object  RunScript {
             appDb.scriptRunStatusDao.insert(
                 scriptStatus
             )
-            Lom.d(INFO, "完成${sai.flowId}")
+            Lom.d(INFO, "\uD83D\uDCDD 运行结束 ${set.scriptId}")
+        }
+    }
+
+    /*
+    *设置设置运行状态的表，暂未使用
+     * */
+    private fun setScriptSetStatus(set : ScriptSetInfo, sai: ScriptActionInfo){
+        if (set.backFlag ==0 && appDb.scriptSetRunStatusDao.countByFlowIdAndType(
+                sai.scriptId,
+                sai.flowId,
+                set.flowIdType,
+                dateTime = LocalDate.now()
+                    .toString()
+            ) == 0
+        ) {
+            val scriptStatus = ScriptSetRunStatus(
+                scriptId = sai.scriptId,
+                flowId = sai.flowId,
+                flowIdType = set.flowIdType,
+                curStatus = 2,
+                dateTime = LocalDate.now()
+                    .toString()
+            )
+            appDb.scriptSetRunStatusDao.insert(
+                scriptStatus
+            )
+            Lom.d(INFO, "\uD83D\uDCDD完成流程id${sai.flowId}")
         }
     }
 
@@ -618,22 +664,5 @@ object  RunScript {
     //初始化已选择脚本数据，HomeScreen调用
     fun initScriptData(scriptList : List<ScriptInfo>){
         this._scriptCheckedList.value = scriptList
-    }
-
-    private fun debugPrintScriptActionLabels(detectRes : Array<DetectResult>?=null,detectLabels: Set<Short>?=null,sai: ScriptActionInfo?=null){
-        detectRes?.let {
-            println("detectRes.size："+detectRes.size)
-            println(detectRes.toList().toString())
-        }
-        detectLabels?.let {
-            println("detectLabels.size："+detectLabels.size)
-            println( detectLabels.toList().toString())
-        }
-        sai?.let {
-            println("intLabelSet："+it.intLabelSet.toString())
-            println("intExcLabelSet："+it.intExcLabelSet.toString())
-            println("txtLabelSet："+it.txtLabelSet.toString())
-            println("txtExcLabelSet："+it.txtExcLabelSet.toString())
-        }
     }
 }

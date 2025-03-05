@@ -5,6 +5,8 @@ import android.graphics.Bitmap
 data class ConfigData(
     //截图前延迟
     val intervalTime : Long,
+    //是否记录完成情况
+    val recordStatus : Boolean,
     //置信度分数过滤
     val similarScore : Float,
     //重启时间

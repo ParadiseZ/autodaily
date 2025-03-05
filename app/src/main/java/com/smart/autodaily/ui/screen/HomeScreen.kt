@@ -237,6 +237,26 @@ fun HomeScreen(
                                                     imageVector = Icons.Outlined.Delete,
                                                     contentDescription = null
                                                 )
+                                                Text(text = "删除运行记录")
+                                            }
+                                        },
+                                        onClick = {
+                                            currentScriptInfo = scriptInfo
+                                            dropdownIsOpen = false
+                                            homeViewModel.appViewModel.stopRunScript()
+                                            homeViewModel.deleteRunStatus(scriptInfo)
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar("删除运行记录成功！")
+                                            }
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row {
+                                                Icon(
+                                                    imageVector = Icons.Outlined.Delete,
+                                                    contentDescription = null
+                                                )
                                                 Text(text = "删除")
                                             }
                                         },

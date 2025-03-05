@@ -42,6 +42,7 @@ fun CheckBoxSettingItem(
         .clickable {
             isChecked = !isChecked
             setting.checkedFlag = isChecked
+            setting.setValue = if(isChecked) "true" else "false"
             onCheckedChange(setting)
         }
     ){
@@ -52,6 +53,7 @@ fun CheckBoxSettingItem(
             Checkbox(checked = isChecked, onCheckedChange = {
                 isChecked = it
                 setting.checkedFlag = it
+                setting.setValue = if(isChecked) "true" else "false"
                 onCheckedChange(setting)
             })
             Text(text = setting.setName)

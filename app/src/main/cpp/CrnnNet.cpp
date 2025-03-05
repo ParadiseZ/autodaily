@@ -144,13 +144,10 @@ TextLine CrnnNet::scoreToTextLine(const std::vector<float>& outputData, int h, i
             scores.emplace_back(maxValue);
             label.emplace_back(maxIndex-1);
             strRes.append(keys[maxIndex-1]);
-            if(label.size()>13){
-                return {};
-            }
         }
         lastIndex = maxIndex;
     }
-    if (label.size()<2){
+    if (label.size()>22 || label.size()<2){
         return {};
     }
     return { label, idx,strRes, scores };
