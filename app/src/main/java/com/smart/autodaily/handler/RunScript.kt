@@ -5,9 +5,13 @@ import androidx.compose.runtime.mutableIntStateOf
 import com.smart.autodaily.command.AdbBack
 import com.smart.autodaily.command.AdbClick
 import com.smart.autodaily.command.AdbPartClick
+import com.smart.autodaily.command.NotFlowId
 import com.smart.autodaily.command.Operation
 import com.smart.autodaily.command.Return
+import com.smart.autodaily.command.RmSkipAcId
+import com.smart.autodaily.command.RmSkipFlowId
 import com.smart.autodaily.command.Skip
+import com.smart.autodaily.command.SkipAcId
 import com.smart.autodaily.command.SkipFlowId
 import com.smart.autodaily.command.Sleep
 import com.smart.autodaily.command.adbRebootApp
@@ -38,6 +42,7 @@ import com.smart.autodaily.utils.partScope
 import com.smart.autodaily.utils.rgbToHsv
 import com.smart.autodaily.utils.runScope
 import com.smart.autodaily.utils.toastOnUi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,6 +61,10 @@ val isRunning  by lazy {
 val skipFlowIds  by lazy {
     mutableIntSetOf()
 }
+val skipAcIds  by lazy {
+    mutableIntSetOf()
+}
+
 
 const val INFO = "info"
 const val ERROR = "error"
@@ -126,6 +135,7 @@ object  RunScript {
         _scriptCheckedList.value.forEach scriptForEach@{ si->
             Lom.n( INFO, si.scriptName )
             skipFlowIds.clear()
+            skipAcIds.clear()
             conf.pkgName = si.packageName
             //保存的所有的action map
             val allActionMap : HashMap<Int,ScriptActionInfo> = hashMapOf()
@@ -161,7 +171,7 @@ object  RunScript {
                         Lom.n(INFO, "当前时间段已执行，跳过：${set.setName}")
                         return@setForEach
                     }
-                    Lom.n(INFO, "本次任务：${set.setName}")
+                    Lom.n(INFO, "本次任务：${set.setId} ${set.setName}")
                     //遍历的操作合集
                     val scriptAction = appDb.scriptActionInfoDao.getCheckedBySetId( set.scriptId, set.flowParentIdList, set.flowIdType )
                     val scriptActionArrayList = actionsInit(scriptAction,allActionMap)
@@ -174,11 +184,24 @@ object  RunScript {
                         val capture = if (conf.capture == null || conf.capture!!.isRecycled) {
                             getPicture()?:continue
                         }else conf.capture!!
-                        val detectRes = ModelUtil.model.detectYolo(capture, si.classesNum).toList().filter { it.prob > conf.similarScore }
+                        //Lom.d( INFO, "detect and ocr" )
+                        val detectDeferred = runScope.async {
+                            ModelUtil.model.detectYolo(capture, si.classesNum).toList().filter { it.prob > conf.similarScore }
+                                .toTypedArray()
+                        }
+                        val ocrDeferred = runScope.async {
+                            ModelUtil.model.detectOcr(capture)
+                        }
+                        val detectRes = detectDeferred.await()
+                        val detectLabels = detectRes.map { it.label }.toSet()
+                        val ocrRes = ocrDeferred.await()
+                        //Lom.d( INFO, "detect and ocr end" )
+                        /*val detectRes = ModelUtil.model.detectYolo(capture, si.classesNum).toList().filter { it.prob > conf.similarScore }
                             .toTypedArray()
                         val detectLabels = detectRes.map { it.label }.toSet()
                         //OCR
-                        val ocrRes =ModelUtil.model.detectOcr(capture)
+                        Lom.d( INFO, "ocr" )
+                        val ocrRes =ModelUtil.model.detectOcr(capture)*/
                         val txtLabels = ocrRes.map {
                             if(it.colorSet.isEmpty()){
                                 it.colorSet = it.colorArr.toSet()
@@ -208,7 +231,7 @@ object  RunScript {
                                 //整个操作执行结束
                             }
                             3 ->{
-                                Lom.d(INFO,"当前任务[${set.setName}]未匹配到")
+                                Lom.d(INFO,"当前任务 ${set.setId} [${set.setName}]未匹配到")
                                 if (conf.tryBackAction && isSame(0.2f)){
                                     Lom.d(INFO,"准备尝试返回")
                                     tryBackAction( backActionArrayList, detectLabels,detectRes, txtLabels,ocrRes)
@@ -230,6 +253,7 @@ object  RunScript {
                 if (conf.recordStatus){
                     setScriptStatus(set)
                 }
+                Lom.n(INFO , "${si.scriptName} 结束")
                 return@scriptForEach
             }else{
                 si.currentRunNum = 0
@@ -356,7 +380,7 @@ object  RunScript {
         txtLabels: Array<Set<Short>>,
         ocrRes: Array<OcrResult>) : Int{
         actionList.forEach scriptAction@{ sai ->
-            if (sai.skipFlag || sai.flowId in skipFlowIds) {
+            if (sai.skipFlag || sai.flowId in skipFlowIds || sai.id in skipAcIds) {
                 Lom.n(INFO, "跳过${sai.pageDesc}")
                 return@scriptAction
             }
@@ -365,6 +389,17 @@ object  RunScript {
                 sai.pageDesc?.let { Lom.n(INFO, "✔\uFE0F【${it}】") }
                 sai.command.onEach cmdForEach@{ cmd ->
                     when (cmd) {
+                        is Operation ->{
+                            when (cmd.type) {
+                                //点击
+                                1 -> {
+                                    val exeRes = execClick(sai,detectRes,ocrRes,cmd)
+                                    if (exeRes in 4..5){
+                                        return exeRes
+                                    }
+                                }
+                            }
+                        }
                         is Return -> {
                             when (cmd.type) {
                                 ActionString.FINISH -> {
@@ -375,15 +410,10 @@ object  RunScript {
                                 }
                             }
                         }
-                        is Operation ->{
-                            when (cmd.type) {
-                                //点击
-                                1 -> {
-                                    val exeRes = execClick(sai,detectRes,ocrRes,cmd)
-                                    if (exeRes in 4..5){
-                                        return exeRes
-                                    }
-                                }
+                        is NotFlowId->{
+                            if (set.flowId == cmd.notFlowId){
+                                skipAcIds.add(sai.id)
+                                return@scriptAction
                             }
                         }
                         else -> {
@@ -546,8 +576,8 @@ object  RunScript {
                                 val sleepTime = action.substring(   ActionString.SLEEP.length+1, action.length-1   ).toLong()
                                 scriptActionInfo.command.add(Sleep(sleepTime))
                             }
-                            action.startsWith(  ActionString.SKIP  ) -> {
-                                val flowId = action.substring(   ActionString.SKIP.length+1, action.length-1   ).toInt()
+                            action.startsWith(  ActionString.SKIP_FLOW_ID  ) -> {
+                                val flowId = action.substring(   ActionString.SKIP_FLOW_ID.length+1, action.length-1   ).toInt()
                                 scriptActionInfo.command.add(SkipFlowId(flowId))
                             }
                             action.startsWith( ActionString.CLICK_PART ) ->{
@@ -639,6 +669,22 @@ object  RunScript {
                                     scriptActionInfo.addFlag = false
                                     return
                                 }
+                            }
+                            action.startsWith( ActionString.NOT_FLOWID) ->{
+                                val flowId = action.substring(   ActionString.NOT_FLOWID.length+1, action.length-1   ).toInt()
+                                scriptActionInfo.command.add(NotFlowId(flowId))
+                            }
+                            action.startsWith( ActionString.RM_FLOW_ID) ->{
+                                val flowId = action.substring(   ActionString.RM_FLOW_ID.length+1, action.length-1   ).toInt()
+                                scriptActionInfo.command.add(RmSkipFlowId(flowId))
+                            }
+                            action.startsWith( ActionString.SKIP_ACID) ->{
+                                val acId = action.substring(   ActionString.SKIP_ACID.length+1, action.length-1   ).toInt()
+                                scriptActionInfo.command.add(SkipAcId(acId))
+                            }
+                            action.startsWith( ActionString.RM_SKIP_ACID) ->{
+                                val acId = action.substring(   ActionString.RM_SKIP_ACID.length+1, action.length-1   ).toInt()
+                                scriptActionInfo.command.add(RmSkipAcId(acId))
                             }
                         }
                     }

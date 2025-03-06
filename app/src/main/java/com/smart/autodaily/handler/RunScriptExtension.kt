@@ -99,7 +99,7 @@ private fun matchColorAndSetPoints(sai: ScriptActionInfo,ocrRes : Array<OcrResul
                 {it.yCenter} ,{ it.xCenter}
             )
         )
-        val idx = sai.labelPos.coerceAtMost(secFilter.size-1)
+        val idx = (sai.labelPos-1).coerceAtMost(secFilter.size-1)
         secFilter[idx].let {
             Lom.d(INFO, "目标色  ${sai.id}" ,sai.hsv)
             Lom.d(INFO, "图像色  ${sai.id}" ,it.colorSet)

@@ -6,6 +6,7 @@ import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.handler.ActionHandler
 import com.smart.autodaily.handler.INFO
 import com.smart.autodaily.handler.conf
+import com.smart.autodaily.handler.skipAcIds
 import com.smart.autodaily.handler.skipFlowIds
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.ShizukuUtil
@@ -36,8 +37,32 @@ class Operation(val type: Int, val operation : Command) : Command{
 
 class SkipFlowId(private val skipFlowId :Int): Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
-        Lom.d(INFO , "＋跳过流程 ${sai.flowId} ${sai.pageDesc}")
         skipFlowIds.add(skipFlowId)
+        return true
+    }
+}
+class RmSkipFlowId(private val skipFlowId :Int): Command{
+    override fun exec(sai: ScriptActionInfo): Boolean {
+        skipFlowIds.remove(skipFlowId)
+        return true
+    }
+}
+
+class SkipAcId(private val skipAcId :Int): Command{
+    override fun exec(sai: ScriptActionInfo): Boolean {
+        skipAcIds.add(skipAcId)
+        return true
+    }
+}
+class RmSkipAcId(private val skipAcId :Int): Command{
+    override fun exec(sai: ScriptActionInfo): Boolean {
+        skipAcIds.remove(skipAcId)
+        return true
+    }
+}
+
+class NotFlowId(val notFlowId: Int) : Command{
+    override fun exec(sai: ScriptActionInfo): Boolean {
         return true
     }
 }

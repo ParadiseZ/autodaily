@@ -158,7 +158,22 @@ TextLine  CrnnNet::getColors(TextLine textLine, cv::Mat & src) const{
     std::mutex mutex;
     // 统计颜色频率，并应用颜色合并
     std::unordered_map<short, int> colorFrequency;
-    int row = src.rows/2 + 3;
+    for (int r = 0; r < 3; ++r) {
+        for (int c = 0; c < 10; ++c) {
+            cv::Vec3b pixel = src.at<cv::Vec3b>(r, c);
+            short color = colorMapping(pixel[0], pixel[1], pixel[2]);
+            colorFrequency[color]++;  // 统计颜色频率
+            // 关键修改：当 localFreq 大小达到 55时，强制外层循环终止
+            if (colorFrequency.size() >= 3) {
+                r = 10;  // 将 r 设为 range.end-1，外层循环的 ++r 会使其超过范围
+                break;              // 退出内层循环
+            }
+        }
+    }
+    for (auto color: colorFrequency) {
+        textLine.color.emplace_back(color.first);
+    }
+    /*int row = src.rows/2 + 3;
     int col = src.rows/2 + 3;
     cv::parallel_for_(cv::Range(0, row), [&](const cv::Range& range) {
         std::unordered_map<short, int> localFreq;
@@ -189,7 +204,7 @@ TextLine  CrnnNet::getColors(TextLine textLine, cv::Mat & src) const{
     while (!pq.empty()) {
         textLine.color.emplace_back(pq.top().second);
         pq.pop();
-    }
+    }*/
     return textLine;
 }
 

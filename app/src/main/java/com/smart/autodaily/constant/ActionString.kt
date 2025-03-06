@@ -12,5 +12,9 @@ object ActionString {
     const val VER_SWIPE = "1swipe"
     const val HOR_SWIPE = "2swipe"
     const val UN_CHECKED = "uc"
-
+    const val NOT_FLOWID = "nflow"
+    const val RM_SKIP_ACID = "rmacid"
+    const val SKIP_ACID = "skipacid"
+    const val RM_FLOW_ID = "rmflowid"
+    const val SKIP_FLOW_ID = "skipflowid"
 }
