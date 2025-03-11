@@ -26,7 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.core.content.ContextCompat.startActivity
+import androidx.core.content.edit
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -98,7 +98,7 @@ fun SettingScreen(
             //全局脚本设置模块
             item {
                 CardCustom(firstSettingOpenFlag, SettingTitle.SETTING_GLOBAL, onClick = {
-                    sharedPreferences.edit().putBoolean("first_setting_expand", it).apply()
+                    sharedPreferences.edit { putBoolean("first_setting_expand", it) }
                 })
             }
             if (firstSettingOpenFlag.value) {
@@ -201,8 +201,7 @@ fun SettingScreen(
                 item {
                     RowIconButtonPermission(PermissionSettingText.IGNORE_BATTERIES_TEXT,
                         iconButtonOnClick = {
-                            startActivity(
-                                settingViewModel.context,
+                            settingViewModel.context.startActivity(
                                 Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                                 null
                             )
@@ -212,8 +211,7 @@ fun SettingScreen(
                     RowSwitchPermission(PermissionSettingText.FLOAT_WINDOW_TEXT,
                         isSwitchOpen = floatWindowFlag,
                         onSwitchChange = {
-                            startActivity(
-                                settingViewModel.context,
+                            settingViewModel.context.startActivity(
                                 Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                                 null
                             )
@@ -224,8 +222,9 @@ fun SettingScreen(
                                     canDrawOverlays = Settings.canDrawOverlays(settingViewModel.context)
                                     if (canDrawOverlays != floatWindowFlag.value) {
                                         floatWindowFlag.value = it
-                                        sharedPreferences.edit()
-                                            .putBoolean("float_window", floatWindowFlag.value).apply()
+                                        sharedPreferences.edit {
+                                            putBoolean("float_window", floatWindowFlag.value)
+                                        }
                                         break
                                     }
                                 }

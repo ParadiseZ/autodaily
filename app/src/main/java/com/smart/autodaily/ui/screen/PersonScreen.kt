@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.AccountCircle
@@ -79,7 +81,12 @@ fun PersonScreen(modifier: Modifier,
     //是否开启确认按钮
     var keyConfirmEnable by remember { mutableStateOf(true) }
     //登出后更新user
-    Column {
+
+    val scrollState = rememberScrollState()
+    Column(
+        modifier = Modifier
+            .verticalScroll(scrollState) // 启用垂直滚动
+    ) {
         Row(
             modifier = Modifier
                 .padding(8.dp)
@@ -182,7 +189,7 @@ fun PersonScreen(modifier: Modifier,
         }
         PersonRowFirst(textLabel = "分享", imageVector = Icons.Outlined.Share){
             if (isLogin(personViewModel.context, user)){
-                clipboardManager.setPrimaryClip(ClipData.newPlainText("", "省肝神器AutoDaily，解放您的双手！在这里下载：https://www.baidu.com后填入我的邀请码：${user!!.inviteCode} ，免费得周vip3！"))
+                clipboardManager.setPrimaryClip(ClipData.newPlainText("", "省肝神器AutoDaily，解放您的双手！在这里下载：https://www.baidu.com后填入我的邀请码：${user!!.inviteCode} ，免费得周赞助权益！"))
                 personViewModel.context.toastOnUi("已复制分享信息到剪切板！")
             }
         }
@@ -284,7 +291,7 @@ fun PersonScreen(modifier: Modifier,
             },
             title = {
                 Text(
-                    text = "输入好友邀请码，得vip",
+                    text = "输入好友邀请码，得周赞助权益",
                     fontWeight = FontWeight.W700,
                     style = MaterialTheme.typography.bodyMedium
                 )

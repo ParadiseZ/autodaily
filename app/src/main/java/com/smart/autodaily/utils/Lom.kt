@@ -27,6 +27,7 @@ object Lom {
     private val dateFormat = DateTimeFormatter.ofPattern("yy-MM-dd HH:mm:ss")
     private val logChannel = Channel<String>(256)
     private var enableLog = false
+    private var enableConsole = true
 
     fun d(category: String, message: String) {
         logPrint(category,message)
@@ -58,10 +59,12 @@ object Lom {
     }
 
     private fun logPrint(category: String, message: String){
-        if (category== ERROR){
-            Log.e(category, message)
-        }else{
-            Log.d(category, message)
+        if(enableConsole){
+            if (category== ERROR){
+                Log.e(category, message)
+            }else{
+                Log.d(category, message)
+            }
         }
     }
 
@@ -70,7 +73,7 @@ object Lom {
         enableLog = false
         logSet.value =  RunScript.globalSetMap.value[7]?.setValue?:"关闭"
         n(INFO , "日志设置：${logSet.value}")
-        if ("关闭" == logSet.value){
+        if ("关闭" != logSet.value){
             enableLog = true
             writeLogToFile()
         }

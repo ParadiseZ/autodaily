@@ -3,6 +3,7 @@ package com.smart.autodaily.ui.screen
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import androidx.activity.compose.BackHandler
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -38,6 +39,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -45,7 +47,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -60,6 +61,7 @@ import com.smart.autodaily.ui.conponent.RowScriptInfo
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.ToastUtil
+import com.smart.autodaily.utils.isLogin
 import com.smart.autodaily.utils.runScope
 import com.smart.autodaily.utils.toastOnUi
 import com.smart.autodaily.viewmodel.HomeViewModel
@@ -68,6 +70,8 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import splitties.init.appCtx
+import java.io.InterruptedIOException
+import kotlin.system.exitProcess
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,6 +84,8 @@ fun HomeScreen(
     val openDialog = remember { mutableStateOf(false) }
     //更新弹窗
     val  newDialog = remember { mutableStateOf(false) }
+    //退出确认弹窗
+    val lastBackTime = remember { mutableLongStateOf(0L) }
     //加载本地数据
     val localScriptList by homeViewModel.appViewModel.localScriptListAll.collectAsState()
     val user by homeViewModel.appViewModel.user.collectAsState()
@@ -90,6 +96,22 @@ fun HomeScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     //设置详细展开、提示信息设置公用
     val scope = rememberCoroutineScope()
+    
+    // 处理返回键事件
+    BackHandler {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastBackTime.longValue < 2000) {
+            // 两次点击间隔小于2秒，退出应用
+            exitProcess(0)
+        } else {
+            // 更新上次点击时间并提示用户
+            lastBackTime.longValue = currentTime
+            scope.launch {
+                snackbarHostState.showSnackbar("再按一次退出")
+            }
+        }
+    }
+    
     Scaffold (
         modifier = modifier,
         snackbarHost = {
@@ -123,17 +145,16 @@ fun HomeScreen(
                         shape = MaterialTheme.shapes.medium.copy(CornerSize(percent = 50)),
                         onClick = {
                             runScope.launch {
-                                homeViewModel.appViewModel.setIsRunning(2)
+                                /*homeViewModel.appViewModel.setIsRunning(2)
                                 RunScript.initGlobalSet()
                                 homeViewModel.appViewModel.runScript()
-                                //unScript.testOcr()
-                                /*homeViewModel.appViewModel.setIsRunning(2)
+                                homeViewModel.appViewModel.setIsRunning(2)*/
                                 if(isLogin(homeViewModel.context, user)){
                                     val res : Response<String>
                                     try {
                                         res =  homeViewModel.runScriptCheck()
                                     }catch(e : InterruptedIOException){
-                                        appCtx.toastOnUi("网络连接超时！")
+                                        appCtx.toastOnUi("连接服务器异常！")
                                         homeViewModel.appViewModel.setIsRunning(0)
                                         return@launch
                                     }
@@ -145,7 +166,7 @@ fun HomeScreen(
                                     }
                                 }else{
                                     homeViewModel.appViewModel.setIsRunning(0)
-                                }*/
+                                }
                             }
                         }
                     ) {
@@ -397,8 +418,7 @@ private fun scriptCheckResHand(context: Context= appCtx , res : Response<String>
 private fun accessibilityAndMediaProjectionRequest() {
     if (!ServiceUtil.isAccessibilityServiceEnabled(appCtx)) {
         ToastUtil.show(appCtx, "请先开启无障碍服务!")
-        startActivity(
-            appCtx,
+        appCtx.startActivity(
             Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             null
         )

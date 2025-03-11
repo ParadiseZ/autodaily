@@ -51,11 +51,11 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
 
     //检测可运行数量
     suspend fun runScriptCheck() : Response<String>{
-        val checkedScriptNum = appDb.scriptInfoDao.getAllCheckedScript().size
-        if(checkedScriptNum==0){
+        val checkedScript = appDb.scriptInfoDao.getAllCheckedScript()
+        if(checkedScript.isEmpty()){
             return Response.error("未选择脚本")
         }
-        val request = Request(appViewModel.user.value, checkedScriptNum)
+        val request = Request(appViewModel.user.value, checkedScript)
         return RemoteApi.runRetrofit.runCheck(request)
     }
 }

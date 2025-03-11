@@ -23,6 +23,7 @@ class LogDataSource(private var oldFileLen :Long): PagingSource<Long, String>() 
             var pos = params.key ?: logFile.length()
             if (oldFileLen > logFile.length()){
                 pos = logFile.length()
+                oldFileLen = logFile.length()
             }
             val (prePos,nexPos, lines) = getLogs(pos, params.loadSize)
             LoadResult.Page(

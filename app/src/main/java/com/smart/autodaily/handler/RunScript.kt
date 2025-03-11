@@ -131,7 +131,7 @@ object  RunScript {
         Lom.waitWriteLog()
         Lom.n( INFO, "初始化全局设置" )
         initConfData()
-        Lom.n("config", conf.toString())
+        Lom.d("config", conf.toString())
         _scriptCheckedList.value.forEach scriptForEach@{ si->
             Lom.n( INFO, si.scriptName )
             skipFlowIds.clear()
