@@ -111,8 +111,8 @@ private fun matchColorAndSetPoints(sai: ScriptActionInfo,ocrRes : Array<OcrResul
     }else{
         //默认第一个
         secFilter[0].let {
-            Lom.d(INFO, "目标色 ${sai.id}" ,sai.hsv)
-            Lom.d(INFO, "图像色  ${sai.id}" ,it.colorSet)
+            Lom.d(INFO, "目标 ${sai.id}" ,sai.hsv)
+            Lom.d(INFO, "图像  ${sai.id}" ,it.colorSet)
             if (it.colorSet.containsAll(sai.hsv)){
                 sai.point = getPoint(it)
                 return true

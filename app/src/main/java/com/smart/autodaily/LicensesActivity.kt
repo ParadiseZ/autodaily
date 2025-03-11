@@ -50,7 +50,10 @@ class LicensesActivity  : ComponentActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if(appDb.appInfoDao.getPrivacyRes() == 0){
-            startActivity(Intent("android.intent.action.HOME").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            val intent = Intent("android.intent.action.HOME")
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK )
+            startActivity(intent)
+            finish()
         }else{
             setContent {
                 AutoDailyTheme {

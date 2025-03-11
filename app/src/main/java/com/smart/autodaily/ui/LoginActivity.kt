@@ -95,7 +95,7 @@ fun LoginScreen() {
                     Button(
                         onClick = {
                             loginViewMode.context.startActivity(
-                                Intent("android.intent.action.REGISTER").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                Intent("android.intent.action.REGISTER").setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                             )
                         },
                         modifier = Modifier.weight(1f)

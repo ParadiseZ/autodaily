@@ -244,8 +244,8 @@ fun HomeScreen(
                                             currentScriptInfo = scriptInfo
                                             dropdownIsOpen = false
                                             homeViewModel.appViewModel.stopRunScript()
-                                            homeViewModel.deleteRunStatus(scriptInfo)
                                             scope.launch {
+                                                homeViewModel.deleteRunStatus(scriptInfo)
                                                 snackbarHostState.showSnackbar("删除运行记录成功！")
                                             }
                                         }

@@ -127,11 +127,11 @@ object  RunScript {
     }
     //shell运行
     suspend fun runScriptByAdb(){
+        deleteRunStatus()
         Lom.waitWriteLog()
         Lom.n( INFO, "初始化全局设置" )
         initConfData()
         Lom.n("config", conf.toString())
-        deleteRunStatus()
         _scriptCheckedList.value.forEach scriptForEach@{ si->
             Lom.n( INFO, si.scriptName )
             skipFlowIds.clear()
@@ -147,7 +147,8 @@ object  RunScript {
                 //所有选择的set
                 val scriptSet = getScriptSets(si.scriptId)
                 if (conf.recordStatus){
-                    if(appDb.scriptRunStatusDao.countByFlowIdAndType(set.scriptId, scriptSet[0].flowIdType, LocalDate.now().toString()) > 0 ){
+                    val date = LocalDate.now().toString()
+                    if(appDb.scriptRunStatusDao.countByFlowIdAndType(set.scriptId, scriptSet[0].flowIdType, date) > 0 ){
                         Lom.n(INFO, "当前时间段已执行，跳过：${si.scriptName}")
                         return@scriptForEach
                     }
@@ -195,6 +196,7 @@ object  RunScript {
                         val detectRes = detectDeferred.await()
                         val detectLabels = detectRes.map { it.label }.toSet()
                         val ocrRes = ocrDeferred.await()
+
                         //Lom.d( INFO, "detect and ocr end" )
                         /*val detectRes = ModelUtil.model.detectYolo(capture, si.classesNum).toList().filter { it.prob > conf.similarScore }
                             .toTypedArray()
@@ -261,9 +263,10 @@ object  RunScript {
                 //appDb.scriptInfoDao.update(si)
             }
         }
+        isRunning.intValue = 0
     }
 
-    private fun deleteRunStatus(){
+    private suspend fun deleteRunStatus(){
         val d : String = LocalDate.now().minusDays(7).toString()
         appDb.scriptRunStatusDao.deleteStatus(d)
         appDb.scriptSetRunStatusDao.deleteStatus(d)
@@ -283,7 +286,6 @@ object  RunScript {
     }
 
     private fun loadModel(si  : ScriptInfo){
-        Lom.d(INFO,"加载模型")
         appCtx.getExternalFilesDir("")?.let {
             ModelUtil.reloadModelSec(
                 it.path+"/"+si.modelPath+"/"+ MODEL_PARAM,
@@ -291,8 +293,9 @@ object  RunScript {
                 si.imgSize , conf.useGpu
             )
         }
-        Lom.d(INFO,"加载OCR模型")
+        Lom.d(INFO,"加载模型...")
         ModelUtil.loadOcr(si.lang,conf.useGpu, conf.detectSize, 5, 16)
+        Lom.d(INFO,"加载OCR结束")
     }
 
     private fun getScriptSets(scriptId : Int) : List<ScriptSetInfo>{
@@ -373,7 +376,7 @@ object  RunScript {
         return resList
     }
 
-    private fun tryAction(
+    private suspend fun tryAction(
         actionList: ArrayList<ScriptActionInfo>,
         detectLabels: Set<Short>,
         detectRes: Array<DetectResult>,
@@ -385,6 +388,7 @@ object  RunScript {
                 return@scriptAction
             }
             if (isMatch(sai, detectLabels,txtLabels) && checkColor(sai,ocrRes)) {
+
                 conf.remRebootTime = System.currentTimeMillis()
                 sai.pageDesc?.let { Lom.n(INFO, "✔\uFE0F【${it}】") }
                 sai.command.onEach cmdForEach@{ cmd ->
@@ -468,12 +472,14 @@ object  RunScript {
 
         // 检查 txtLabelSet 条件
         val txt = if(intExc) sai.txtLabelSet.all { expect ->
-            txtLabels.any { it.containsAll(expect)  && it.size < expect.size*3}
+            txtLabels.any {
+                it.containsAll(expect)  && it.size < expect.size*3
+            }
         }
         else return false
-
         // 检查 txtExcLabelSet 条件
         val txtExc = if(txt) sai.txtExcLabelSet.all { except->
+
             txtLabels.none { it.containsAll(except) }
         }else return false
 
@@ -482,7 +488,7 @@ object  RunScript {
         //return  int && intExc && txt
     }
 
-    private fun setScriptStatus(set : ScriptSetInfo){
+    private suspend fun setScriptStatus(set : ScriptSetInfo){
         if (appDb.scriptRunStatusDao.countByFlowIdAndType(
                 set.scriptId,
                 set.flowIdType,
@@ -507,7 +513,7 @@ object  RunScript {
     /*
     *设置设置运行状态的表，暂未使用
      * */
-    private fun setScriptSetStatus(set : ScriptSetInfo, sai: ScriptActionInfo){
+    private suspend fun setScriptSetStatus(set : ScriptSetInfo, sai: ScriptActionInfo){
         if (set.backFlag ==0 && appDb.scriptSetRunStatusDao.countByFlowIdAndType(
                 sai.scriptId,
                 sai.flowId,

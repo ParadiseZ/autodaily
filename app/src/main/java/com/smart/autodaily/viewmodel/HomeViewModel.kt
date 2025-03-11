@@ -44,7 +44,7 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
         //dataList[index] =  sc.copy(checked_flag = !sc.checked_flag)
     }
 
-    fun deleteRunStatus(si : ScriptInfo){
+    suspend fun deleteRunStatus(si : ScriptInfo){
         appDb.scriptRunStatusDao.deleteStatus(si.scriptId)
         appDb.scriptSetRunStatusDao.deleteStatus(si.scriptId)
     }
