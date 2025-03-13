@@ -19,7 +19,6 @@ import com.smart.autodaily.data.entity.ScriptRunStatus
 import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.data.entity.ScriptSetRunStatus
 import com.smart.autodaily.data.entity.UserInfo
-import org.intellij.lang.annotations.Language
 import splitties.init.appCtx
 import java.util.Locale
 
@@ -63,7 +62,7 @@ abstract class AppDb  :  RoomDatabase(){
         val dbCallback = object : Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 db.setLocale(Locale.CHINESE)
-                initData(db)
+                //initData(db)
             }
 
             override fun onOpen(db: SupportSQLiteDatabase) {
@@ -89,14 +88,6 @@ abstract class AppDb  :  RoomDatabase(){
                     (0,10,'true','CHECK_BOX','使用gpu推理','',-1,1,'true','true','','','true','false','false')
             """.trimIndent()
             db.execSQL(insertScriptSetGlobalSql)*/
-
-            @Language("sql")
-            val insertAppInfo = """
-                INSERT INTO app_info(id, type, value, desc) VALUES
-                (1, 'PRIVACY', 0, '隐私政策'),
-                (2, 'TERMS_OF_USE', 0, '使用条款')
-            """.trimIndent()
-            db.execSQL(insertAppInfo)
         }
     }
 }

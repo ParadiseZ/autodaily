@@ -20,6 +20,7 @@ fun startActivity(context: Context = appCtx, action: String) {
     )
 }
 
+
 fun gotoExchange(context: Context = appCtx){
     context.startActivity(
         Intent("android.intent.action.COIN EXCHANGE").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

@@ -151,7 +151,7 @@ fun SettingScreen(
             item {
                 //权限设置模块
                 CardCustom(secondSettingOpenFlag, SettingTitle.SETTING_PERMISSION, onClick = {
-                    sharedPreferences.edit().putBoolean("second_setting_expand", it).apply()
+                    sharedPreferences.edit{ putBoolean("second_setting_expand", it) }
                 })
             }
             if (secondSettingOpenFlag.value) {

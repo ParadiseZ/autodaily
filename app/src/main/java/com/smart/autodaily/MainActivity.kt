@@ -27,6 +27,7 @@ import com.smart.autodaily.ui.conponent.AppNavHost
 import com.smart.autodaily.ui.conponent.floatingView
 import com.smart.autodaily.ui.conponent.initAlertWindow
 import com.smart.autodaily.ui.conponent.navSingleTopTo
+import com.smart.autodaily.ui.screen.UpdateScreen
 import com.smart.autodaily.ui.theme.AutoDailyTheme
 import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.binderScope
@@ -83,6 +84,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                             }
                         },
                         content = {
+                            UpdateScreen()
                             AppNavHost( modifier = Modifier.padding(it), navController = navController)
                         }
                     )

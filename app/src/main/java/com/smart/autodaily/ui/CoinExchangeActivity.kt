@@ -99,7 +99,8 @@ fun CoinExchange(
         ) {
         item {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(vertical = (-2).dp)
             ){
                 Text(text = "剩余：" + (user?.virtualCoin?.toString() ?: "0"),fontSize = TextUnit(24f, TextUnitType.Sp))
                 MyButton(text ="详情", onclick = {gotoCoinDetail(viewModel.context)})
@@ -170,8 +171,8 @@ fun KeyTypeItem(
     Column (
         modifier = Modifier.padding(bottom = 20.dp)
     ){
-        Text(text = keyType.typeName+"vip"+keyType.vipLevel,fontSize = TextUnit(16f, TextUnitType.Sp))
-        Text(text = "单次可运行个数："+keyType.canRunNum,fontSize = TextUnit(12f, TextUnitType.Sp))
+        Text(text = keyType.typeName+"赞助"+keyType.vipLevel,fontSize = TextUnit(16f, TextUnitType.Sp))
+        Text(text = "单次额外运行："+keyType.canRunNum,fontSize = TextUnit(12f, TextUnitType.Sp))
         Row {
             Column {
                 Text(text = keyType.buyPrice.toString()+"AD币",fontSize = TextUnit(12f, TextUnitType.Sp))

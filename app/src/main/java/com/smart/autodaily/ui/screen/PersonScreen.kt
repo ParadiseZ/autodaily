@@ -57,6 +57,7 @@ import com.smart.autodaily.utils.startActivity
 import com.smart.autodaily.utils.toastOnUi
 import com.smart.autodaily.viewmodel.PersonViewModel
 import kotlinx.coroutines.launch
+import org.threeten.bp.LocalDateTime
 import splitties.systemservices.clipboardManager
 
 @SuppressLint("DefaultLocale")
@@ -86,6 +87,7 @@ fun PersonScreen(modifier: Modifier,
     Column(
         modifier = Modifier
             .verticalScroll(scrollState) // 启用垂直滚动
+            .padding(end = 8.dp)
     ) {
         Row(
             modifier = Modifier
@@ -151,7 +153,21 @@ fun PersonScreen(modifier: Modifier,
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ){
-            PersonColumnFirst("类型",user?.keyTypeName?:"--")
+            val expirationTime = user?.expirationTime?.let {
+                if (LocalDateTime.parse(it.trim()) > LocalDateTime.now()){
+                    it
+                }else{
+                    "已到期"
+                }
+            }
+            val keyTypeName = user?.keyTypeName?.let {
+                if (LocalDateTime.parse(it) > LocalDateTime.now()){
+                    it
+                }else{
+                    "--"
+                }
+            }
+            PersonColumnFirst("类型",keyTypeName?:"--")
             SingleBorderBox(
                 modifier = Modifier
                     .width(1.dp)
@@ -167,7 +183,7 @@ fun PersonScreen(modifier: Modifier,
                 direction = BorderDirection.RIGHT,
                 content = {}
             )
-            PersonColumnFirst("到期", user?.expirationTime?:"--")
+            PersonColumnFirst("到期",expirationTime?:"--")
         }
 
         PersonRowFirst(textLabel = "兑换码", imageVector = Icons.Outlined.ShoppingCart){
