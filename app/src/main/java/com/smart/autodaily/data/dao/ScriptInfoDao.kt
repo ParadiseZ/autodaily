@@ -30,7 +30,7 @@ interface ScriptInfoDao {
     @Query("SELECT script_id,script_version FROM Script_Info where  current_status!=2 and last_version is null")
     fun getIdAndVersion() : List<ScriptInfoCheckUpdate>
 
-    @Query("SELECT * FROM Script_Info WHERE script_id = :scriptId and  current_status!=2")
+    @Query("SELECT * FROM Script_Info WHERE script_id = :scriptId")
     fun getScriptInfoByScriptId(scriptId : Int) : ScriptInfo
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -45,7 +45,7 @@ interface ScriptInfoDao {
     @Query("delete from Script_Info where script_id = :scriptId")
     fun deleteByScriptId(scriptId: Int )
 
-    @Query("update Script_Info set last_version = :lastVer where script_id = :scriptId and need_app_update = :needAppUpdate and  current_status!=2")
+    @Query("update Script_Info set last_version = :lastVer where script_id = :scriptId and need_app_update = :needAppUpdate")
     fun updateLastVerById(scriptId: Int , lastVer : Int , needAppUpdate : Int)
 
     @Query("select * from Script_Info where current_status!=2")

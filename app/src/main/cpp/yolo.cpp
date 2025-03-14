@@ -8,7 +8,7 @@
 
 #include <opencv2/imgproc/imgproc.hpp>
 
-
+//参考来自https://github.com/Tencent/ncnn
 constexpr auto MAX_STRIDE = 32;
 
 static inline float intersection_area(const Object& a, const Object& b)

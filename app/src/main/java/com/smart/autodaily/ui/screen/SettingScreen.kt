@@ -1,51 +1,64 @@
 package com.smart.autodaily.ui.screen
 
-import android.content.Context
-import android.content.Intent
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material3.Card
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.core.content.edit
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.smart.autodaily.constant.AppBarTitle
+import com.smart.autodaily.constant.BorderDirection
 import com.smart.autodaily.constant.PermissionSettingText
-import com.smart.autodaily.constant.SettingTitle
 import com.smart.autodaily.constant.SettingType
 import com.smart.autodaily.constant.Ui
+import com.smart.autodaily.data.appDb
+import com.smart.autodaily.handler.isRunning
 import com.smart.autodaily.ui.conponent.CheckBoxSettingItem
 import com.smart.autodaily.ui.conponent.RadioButtonSettingItem
+import com.smart.autodaily.ui.conponent.SingleBorderBox
 import com.smart.autodaily.ui.conponent.SliderSecondSettingItem
 import com.smart.autodaily.ui.conponent.SliderSettingItem
 import com.smart.autodaily.ui.conponent.SwitchSettingItem
 import com.smart.autodaily.ui.conponent.TextFieldSettingItem
 import com.smart.autodaily.ui.conponent.TitleSettingItem
 import com.smart.autodaily.viewmodel.SettingViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import splitties.init.appCtx
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,6 +69,20 @@ fun SettingScreen(
     settingViewModel: SettingViewModel = viewModel(),
 ) {
     val scriptSetLocalList = settingViewModel.getGlobalSetting().collectAsLazyPagingItems()
+    val hasNewVer by settingViewModel.hasNewVer.collectAsState()
+    var floatWindowFlag by remember { mutableStateOf(false) }
+    val  newDialog = remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        floatWindowFlag = Settings.canDrawOverlays(appCtx)
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted ->
+            floatWindowFlag = granted
+        }
+    )
+    val snackbarHostState = remember { SnackbarHostState() }
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -64,30 +91,14 @@ fun SettingScreen(
             )
         }
     ) { paddingValues ->
-        val sharedPreferences = remember {
-            settingViewModel.context.getSharedPreferences(
-                "permission_setting",
-                Context.MODE_PRIVATE
-            )
-        }
-        val firstSettingOpenFlag = remember {
-            mutableStateOf(
-                sharedPreferences.getBoolean("first_setting_expand", false)
-            )
-        }
-        val secondSettingOpenFlag = remember {
-            mutableStateOf(
-                sharedPreferences.getBoolean("second_setting_expand", false)
-            )
-        }
         /*var accessibilityServiceOpenFlagOld = false
         val accessibilityServiceOpenFlagNew = remember {
             mutableStateOf(
                 ServiceUtil.isAccessibilityServiceEnabled(settingViewModel.context)
             )
         }*/
-        val floatWindowFlag =
-            remember { mutableStateOf(sharedPreferences.getBoolean("float_window", false)) }
+
+        var drownDownExpan by remember { mutableStateOf(false) }
         LazyColumn(
             modifier = Modifier
                 .padding(paddingValues)
@@ -97,52 +108,79 @@ fun SettingScreen(
         ) {
             //全局脚本设置模块
             item {
-                CardCustom(firstSettingOpenFlag, SettingTitle.SETTING_GLOBAL, onClick = {
-                    sharedPreferences.edit { putBoolean("first_setting_expand", it) }
-                })
-            }
-            if (firstSettingOpenFlag.value) {
-                if (scriptSetLocalList.itemCount == 0) {
-                    item {
-                        Text(text = "空空如也，请先去下载脚本！")
+                SingleBorderBox(direction = BorderDirection.BOTTOM){
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ){
+                        Row {
+                            Text("全局设置")
+                            if (hasNewVer){
+                                Text("New",fontSize = Ui.SIZE_10 , color = Color.Green)
+                            }
+                        }
+                        DropdownMenu(
+                            expanded = drownDownExpan,
+                            onDismissRequest = { drownDownExpan = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Refresh,
+                                        contentDescription = null
+                                    )
+                                    Text(text = "更新")
+                                },
+                                onClick = {
+                                    drownDownExpan = false
+                                    settingViewModel.appViewModel.stopRunScript()
+                                    newDialog.value = !newDialog.value
+                                }
+                            )
+                        }
                     }
-                } else {
-                    items(scriptSetLocalList.itemCount) { index ->
-                        scriptSetLocalList[index]?.let { setting ->
-                            when (setting.setType) {
-                                SettingType.SWITCH -> SwitchSettingItem(
-                                    setting,
-                                    onSwitchChange = { settingViewModel.updateGlobalSetting(setting) })
-                                //slider无step、百分比
-                                SettingType.SLIDER -> SliderSettingItem(
+                }
+            }
+            if (scriptSetLocalList.itemCount == 0) {
+                item {
+                    Text(text = "空空如也，请先去下载脚本！")
+                }
+            } else {
+                items(scriptSetLocalList.itemCount) { index ->
+                    scriptSetLocalList[index]?.let { setting ->
+                        when (setting.setType) {
+                            SettingType.SWITCH -> SwitchSettingItem(
+                                setting,
+                                onSwitchChange = { settingViewModel.updateGlobalSetting(setting) })
+                            //slider无step、百分比
+                            SettingType.SLIDER -> SliderSettingItem(
+                                setting,
+                                onSliderValueChange = {
+                                    settingViewModel.updateGlobalSetting(setting)
+                                })
+
+                            SettingType.TEXT_FIELD -> TextFieldSettingItem(
+                                setting,
+                                onValueChange = { settingViewModel.updateGlobalSetting(setting) })
+
+                            SettingType.CHECK_BOX -> CheckBoxSettingItem(
+                                setting,
+                                onCheckedChange = { settingViewModel.updateGlobalSetting(setting) })
+
+                            SettingType.RADIO_BUTTON -> RadioButtonSettingItem(
+                                setting,
+                                onCheckedChange = { settingViewModel.updateGlobalSetting(setting) })
+
+                            SettingType.TITLE -> TitleSettingItem(setting.setName)
+
+                            SettingType.DROPDOWN_MENU -> {}
+                            else ->{
+                                //slider类型、有step
+                                SliderSecondSettingItem(
                                     setting,
                                     onSliderValueChange = {
                                         settingViewModel.updateGlobalSetting(setting)
                                     })
-
-                                SettingType.TEXT_FIELD -> TextFieldSettingItem(
-                                    setting,
-                                    onValueChange = { settingViewModel.updateGlobalSetting(setting) })
-
-                                SettingType.CHECK_BOX -> CheckBoxSettingItem(
-                                    setting,
-                                    onCheckedChange = { settingViewModel.updateGlobalSetting(setting) })
-
-                                SettingType.RADIO_BUTTON -> RadioButtonSettingItem(
-                                    setting,
-                                    onCheckedChange = { settingViewModel.updateGlobalSetting(setting) })
-
-                                SettingType.TITLE -> TitleSettingItem(setting.setName)
-
-                                SettingType.DROPDOWN_MENU -> {}
-                                else ->{
-                                    //slider类型、有step
-                                    SliderSecondSettingItem(
-                                        setting,
-                                        onSliderValueChange = {
-                                            settingViewModel.updateGlobalSetting(setting)
-                                        })
-                                }
                             }
                         }
                     }
@@ -150,12 +188,11 @@ fun SettingScreen(
             }
             item {
                 //权限设置模块
-                CardCustom(secondSettingOpenFlag, SettingTitle.SETTING_PERMISSION, onClick = {
-                    sharedPreferences.edit{ putBoolean("second_setting_expand", it) }
-                })
+                SingleBorderBox(direction = BorderDirection.BOTTOM){
+                    Text("权限设置")
+                }
             }
-            if (secondSettingOpenFlag.value) {
-                /*
+            /*
                 item {
                     RowSwitchPermission(
                         labelText = PermissionSettingText.ACCESSBILITY_SERVICE_TEXT,
@@ -198,73 +235,78 @@ fun SettingScreen(
                         })
                 }
                 */
-                item {
-                    RowIconButtonPermission(PermissionSettingText.IGNORE_BATTERIES_TEXT,
-                        iconButtonOnClick = {
-                            settingViewModel.context.startActivity(
-                                Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                                null
-                            )
-                        })
-                }
-                item {
-                    RowSwitchPermission(PermissionSettingText.FLOAT_WINDOW_TEXT,
-                        isSwitchOpen = floatWindowFlag,
-                        onSwitchChange = {
-                            settingViewModel.context.startActivity(
-                                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                                null
-                            )
-                            settingViewModel.viewModelScope.launch {
-                                var canDrawOverlays: Boolean
-                                for (i in 1..30) {//检测30秒内是否开启成功
-                                    delay(1000)
-                                    canDrawOverlays = Settings.canDrawOverlays(settingViewModel.context)
-                                    if (canDrawOverlays != floatWindowFlag.value) {
-                                        floatWindowFlag.value = it
-                                        sharedPreferences.edit {
-                                            putBoolean("float_window", floatWindowFlag.value)
-                                        }
-                                        break
-                                    }
+            item {
+                RowIconButtonPermission(PermissionSettingText.IGNORE_BATTERIES_TEXT,
+                    iconButtonOnClick = {
+                        launcher.launch(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                    })
+            }
+            item {
+                RowSwitchPermission(PermissionSettingText.FLOAT_WINDOW_TEXT,
+                    isSwitchOpen = floatWindowFlag,
+                    onSwitchChange = {
+                        launcher.launch(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION
+                        )
+                    }
+                )
+            }
+        }
+
+
+        if (newDialog.value){
+            AlertDialog(
+                onDismissRequest = {
+                    newDialog.value = false
+                },
+                confirmButton = {
+                    OutlinedButton(
+                        enabled = newDialog.value,
+                        onClick = {
+                            settingViewModel.viewModelScope.launch{
+                                if(isRunning.intValue == 1){
+                                    settingViewModel.appViewModel.stopRunScript()
+                                }
+                                val si = settingViewModel.getScriptInfoGlobal()
+                                try {
+                                    settingViewModel.deleteScript()
+                                    settingViewModel.appViewModel.downScriptByScriptId(si)
+                                    settingViewModel.getGlobalSetting()
+                                    snackbarHostState.showSnackbar("更新成功！")
+                                }catch (e : Exception){
+                                    appDb.scriptInfoDao.insert(si)
+                                    snackbarHostState.showSnackbar("更新失败，请稍后重试！")
                                 }
                             }
                         }
+                    ){
+                        Text(text = "确定")
+                    }
+                },
+                dismissButton = {
+                    OutlinedButton(
+                        enabled = newDialog.value,
+                        onClick = {
+                            newDialog.value = false
+                        }
+                    ){
+                        Text(text = "取消")
+                    }
+                },
+                title = {
+                    Text(
+                        text = "确认操作",
+                        fontWeight = FontWeight.W700,
+                        style = MaterialTheme.typography.bodyMedium
                     )
-                }
-            }
-        }
-    }
-}
-
-
-@Composable
-fun CardCustom(
-    isExpanded: MutableState<Boolean>,
-    labelText: String,
-    onClick: (Boolean) -> Unit = {}
-) {
-    Card(
-        onClick = {
-            isExpanded.value = !isExpanded.value
-            onClick(isExpanded.value)
-        }
-    ) {
-        Row (
-            modifier = Modifier.padding(Ui.SPACE_8),
-            verticalAlignment = Alignment.CenterVertically
-        ){
-            Text(
-                modifier = Modifier.weight(1f),
-                text = labelText
+                },
+                text = {
+                    Text(
+                        text = "您确定要更新吗？",
+                        fontSize = Ui.SIZE_16
+                    )
+                },
             )
-            IconButton(onClick = {
-                isExpanded.value = !isExpanded.value
-                onClick(isExpanded.value)
-            }) {
-                Icon(imageVector = (if (isExpanded.value) Icons.Default.KeyboardArrowDown else Icons.AutoMirrored.Filled.KeyboardArrowLeft)
-                    , contentDescription = null)
-            }
         }
     }
 }
@@ -272,14 +314,14 @@ fun CardCustom(
 @Composable
 fun RowSwitchPermission(
     labelText: String,
-    isSwitchOpen: MutableState<Boolean>,
+    isSwitchOpen: Boolean,
     onSwitchChange: (Boolean) -> Unit
 ) {
     Row(
         modifier = Modifier
             .padding(horizontal = Ui.SPACE_8, vertical = Ui.SPACE_4)
             .clickable {
-                onSwitchChange(!isSwitchOpen.value)
+                onSwitchChange(!isSwitchOpen)
             },
         verticalAlignment = Alignment.CenterVertically
     ){
@@ -287,7 +329,7 @@ fun RowSwitchPermission(
             modifier = Modifier.weight(1f),
             text = labelText
         )
-        Switch(checked = isSwitchOpen.value, onCheckedChange = {
+        Switch(checked = isSwitchOpen, onCheckedChange = {
             onSwitchChange(it)
         })
     }

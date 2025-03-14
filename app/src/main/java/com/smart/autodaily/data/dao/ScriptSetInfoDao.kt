@@ -13,6 +13,9 @@ interface ScriptSetInfoDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(setInfoListi: List<ScriptSetInfo>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insert(scriptSetInfo: ScriptSetInfo)
+
     //展示
     @Query("select * from script_set_info where script_id = :scriptId and is_show = 1 order by sort LIMIT :pageSize OFFSET :starIndex")
     fun queryScriptSetInfo(scriptId: Int, pageSize: Int, starIndex: Int) : List<ScriptSetInfo>
@@ -61,4 +64,7 @@ interface ScriptSetInfoDao {
 
     @Query("select *  FROM script_set_info a where a.script_id = :scriptId and a.flow_id = :flowId")
     fun getScriptSetByFlowId(scriptId: Int, flowId : Int) : List<ScriptSetInfo>
+
+    @Query("select *  FROM script_set_info a where a.set_id = :setId")
+    fun getScriptSetById(setId: Int) : ScriptSetInfo?
 }

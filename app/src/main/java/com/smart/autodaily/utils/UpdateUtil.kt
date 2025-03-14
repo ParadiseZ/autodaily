@@ -2,6 +2,7 @@ package com.smart.autodaily.utils
 
 import com.smart.autodaily.api.RemoteApi
 import com.smart.autodaily.data.appDb
+import com.smart.autodaily.data.entity.ScriptSetInfo
 
 suspend fun checkScriptUpdate(){
     try {
@@ -19,5 +20,20 @@ suspend fun checkScriptUpdate(){
         }
     }catch (e:Exception){
         e.message
+    }
+}
+
+fun updateScriptSet(ssi : List<ScriptSetInfo>){
+    ssi.forEach {
+        val local = appDb.scriptSetInfoDao.getScriptSetById(it.setId)
+        if (local == null){
+            appDb.scriptSetInfoDao.insert(it)
+        }else{
+            val merge = it.copy(
+                checkedFlag = local.checkedFlag,
+                setValue = if (it.setDefaultValue?.contains(local.setValue.toString()) == true) local.setValue else it.setValue
+            )
+            appDb.scriptSetInfoDao.update(merge)
+        }
     }
 }

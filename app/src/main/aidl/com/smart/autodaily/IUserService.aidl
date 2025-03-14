@@ -2,7 +2,7 @@
 package com.smart.autodaily;
 
 // Declare any non-default types here with import statements
-
+//参考来自https://github.com/xxinPro/AdbShellUtils
 interface IUserService {
     /**
      * Demonstrates some basic types that you can use as parameters

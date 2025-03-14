@@ -14,6 +14,7 @@ import com.smart.autodaily.constant.WORK_TYPE02
 import com.smart.autodaily.constant.WORK_TYPE03
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.DownloadState
+import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.data.entity.UserInfo
@@ -31,6 +32,7 @@ import com.smart.autodaily.utils.deleteFile
 import com.smart.autodaily.utils.logScope
 import com.smart.autodaily.utils.runScope
 import com.smart.autodaily.utils.toastOnUi
+import com.smart.autodaily.utils.updateScriptSet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -166,7 +168,9 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
 
     //下载
     suspend fun downScriptByScriptId(scriptInfo : ScriptInfo) {
-        downloadModel(scriptInfo)
+        if(scriptInfo.scriptId!=0){
+            downloadModel(scriptInfo)
+        }
         downByScriptId(scriptInfo)
     }
 
@@ -216,11 +220,15 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     private suspend fun downByScriptId(scriptInfo: ScriptInfo) {
         val siNew = RemoteApi.searchDownRetrofit.dlScriptInfo(scriptInfo.scriptId)
         val result = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptInfo.scriptId)
-        val scriptAction = RemoteApi.searchDownRetrofit.downloadActionInfoByScriptId(scriptInfo.scriptId)
+        var scriptAction = Response<List<ScriptActionInfo>>()
         var globalScriptSetResult = Response<List<ScriptSetInfo>>()
-        val localScriptSetGlobal = appDb.scriptSetInfoDao.countScriptSetByScriptId(0)
-        if (localScriptSetGlobal == 0) {
-            globalScriptSetResult = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(0)
+        if(scriptInfo.scriptId !=0){
+            scriptAction = RemoteApi.searchDownRetrofit.downloadActionInfoByScriptId(scriptInfo.scriptId)
+            val localScriptSetGlobal = appDb.scriptSetInfoDao.countScriptSetByScriptId(0)
+            if (localScriptSetGlobal == 0) {
+                globalScriptSetResult = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(0)
+
+            }
         }
 
         //val scriptSetDownload = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptId)
@@ -235,28 +243,23 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                 si.downloadTime = LocalDateTime.now().toString()
                 appDb.scriptInfoDao.insert(si)
             }
-
-            //ScriptSet 全局设置
-            globalScriptSetResult.data?.let {
-                appDb.scriptSetInfoDao.insert(it)
+            if (scriptInfo.scriptId!=0){
+                //ScriptSet 全局设置
+                globalScriptSetResult.data?.let {
+                    updateScriptSet(it)
+                    //appDb.scriptSetInfoDao.insert(it)
+                }
+                //actionInfo 动作信息
+                scriptAction.data?.let {
+                    appDb.scriptActionInfoDao.insert(it)
+                    //fts表
+                }
+                scriptInfo.process.intValue = -1
             }
-            //scriptSetDownload.data?.let {
-            //appDb?.scriptSetInfoDao?.insert(it)
-            // }
             //ScriptSet 设置
             result.data?.let {
-                /*it.map{ ssi->
-
-                    }*/
-                appDb.scriptSetInfoDao.insert(it)
+                updateScriptSet(it)
             }
-            //picInfo 图片信息
-            //actionInfo 动作信息
-            scriptAction.data?.let {
-                appDb.scriptActionInfoDao.insert(it)
-                //fts表
-            }
-            scriptInfo.process.intValue = -1
         }
     }
 

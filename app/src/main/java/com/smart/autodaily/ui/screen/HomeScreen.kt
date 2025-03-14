@@ -362,18 +362,19 @@ fun HomeScreen(
                     OutlinedButton(
                         enabled = newDialog.value,
                         onClick = {
-                            currentScriptInfo?.let { scriptInfo->
-                                homeViewModel.viewModelScope.launch {
+                            homeViewModel.viewModelScope.launch {
+                                if (currentScriptInfo!=null){
                                     try {
-                                        homeViewModel.deleteScript(scriptInfo)
-                                        homeViewModel.appViewModel.downScriptByScriptId(scriptInfo)
+                                        homeViewModel.deleteScript(currentScriptInfo)
+                                        homeViewModel.appViewModel.downScriptByScriptId(currentScriptInfo)
                                     }catch (e:Exception){
-                                        homeViewModel.context.toastOnUi("更新失败！请重新下载")
+                                        snackbarHostState.showSnackbar("更新失败！请重新下载！")
                                     }
-
+                                }else{
+                                    snackbarHostState.showSnackbar("更新成功！")
                                 }
+                                newDialog.value = false
                             }
-                            newDialog.value = false
                         }
                     ){
                         Text(text = "确定")
@@ -398,7 +399,7 @@ fun HomeScreen(
                 },
                 text = {
                     Text(
-                        text = "更新可能会删除您的设置，您确定要更新吗？",
+                        text = "您确定要更新吗？",
                         fontSize = Ui.SIZE_16
                     )
                 },
