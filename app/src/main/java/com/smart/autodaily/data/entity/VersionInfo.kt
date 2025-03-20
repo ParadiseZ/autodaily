@@ -6,4 +6,5 @@ data class VersionInfo(
     @SerializedName("script_id") val scriptId : Int,
     @SerializedName("script_version") val scriptVersion: Int,
     @SerializedName("need_app_update") val needAppUpdate : Int,
+    @SerializedName("current_status") val currentStatus : Int,
 )

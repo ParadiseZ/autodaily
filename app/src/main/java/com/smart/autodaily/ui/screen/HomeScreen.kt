@@ -89,7 +89,7 @@ fun HomeScreen(
     //加载本地数据
     val localScriptList by homeViewModel.appViewModel.localScriptListAll.collectAsState()
     val user by homeViewModel.appViewModel.user.collectAsState()
-    var currentScriptInfo : ScriptInfo? = null
+    val currentScriptInfo  = remember { mutableStateOf<ScriptInfo?>(null) }
     //script运行状态
     val runStatus by isRunning
     //提示信息设置
@@ -226,7 +226,7 @@ fun HomeScreen(
                                         },
                                         onClick = {
                                             dropdownIsOpen = false
-                                            currentScriptInfo = scriptInfo
+                                            currentScriptInfo.value = scriptInfo
                                             appCtx.startActivity(
                                                 Intent("android.intent.action.SCRIPT SET DETAIL")
                                                     .putExtra("CUR_SCRIPT_ID", scriptInfo.scriptId)
@@ -245,7 +245,7 @@ fun HomeScreen(
                                             }
                                         },
                                         onClick = {
-                                            currentScriptInfo = scriptInfo
+                                            currentScriptInfo.value = scriptInfo
                                             dropdownIsOpen = false
                                             homeViewModel.appViewModel.stopRunScript()
                                             newDialog.value = !newDialog.value
@@ -262,7 +262,7 @@ fun HomeScreen(
                                             }
                                         },
                                         onClick = {
-                                            currentScriptInfo = scriptInfo
+                                            currentScriptInfo.value = scriptInfo
                                             dropdownIsOpen = false
                                             homeViewModel.appViewModel.stopRunScript()
                                             scope.launch {
@@ -282,7 +282,7 @@ fun HomeScreen(
                                             }
                                         },
                                         onClick = {
-                                            currentScriptInfo = scriptInfo
+                                            currentScriptInfo.value = scriptInfo
                                             dropdownIsOpen = false
                                             homeViewModel.appViewModel.stopRunScript()
                                             openDialog.value = !openDialog.value
@@ -315,7 +315,7 @@ fun HomeScreen(
                     TextButton(
                         enabled = openDialog.value,
                         onClick = {
-                            currentScriptInfo?.let { scriptInfo->
+                            currentScriptInfo.value?.let { scriptInfo->
                                 homeViewModel.deleteScript(scriptInfo)
                             }
                             openDialog.value = false
@@ -363,15 +363,18 @@ fun HomeScreen(
                         enabled = newDialog.value,
                         onClick = {
                             homeViewModel.viewModelScope.launch {
-                                if (currentScriptInfo!=null){
-                                    try {
-                                        homeViewModel.deleteScript(currentScriptInfo)
-                                        homeViewModel.appViewModel.downScriptByScriptId(currentScriptInfo)
-                                    }catch (e:Exception){
-                                        snackbarHostState.showSnackbar("更新失败！请重新下载！")
+                                try {
+                                    currentScriptInfo.value?.let {
+                                        homeViewModel.deleteScript(it)
+                                        homeViewModel.appViewModel.downScriptByScriptId(it)
+                                        snackbarHostState.showSnackbar("更新成功！")
+                                    }?:{
+                                        homeViewModel.viewModelScope.launch {
+                                            snackbarHostState.showSnackbar("更新成功！")
+                                        }
                                     }
-                                }else{
-                                    snackbarHostState.showSnackbar("更新成功！")
+                                }catch (e:Exception){
+                                    snackbarHostState.showSnackbar("更新失败！请重新下载！")
                                 }
                                 newDialog.value = false
                             }

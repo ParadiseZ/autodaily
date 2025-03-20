@@ -4,7 +4,7 @@ object AppBarTitle {
     const val SEARCH_SCREEN ="搜索"
     const val LOG_SCREEN ="日志"
     const val HOME_SCREEN ="本地列表"
-    const val SETTING_SCREEN ="全局设置"
+    const val SETTING_SCREEN ="设置"
     const val PERSON_SCREEN ="我的"
 
     const val COIN_DETAIL_SCREEN ="AD币详情"

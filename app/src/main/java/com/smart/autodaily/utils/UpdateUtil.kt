@@ -14,7 +14,7 @@ suspend fun checkScriptUpdate(){
             val remoteScriptList = RemoteApi.searchDownRetrofit.checkUpdateByIdAndVer(localScriptListMap)
             // 更新本地数据库中的脚本版本信息
             remoteScriptList.data?.forEach {
-                appDb.scriptInfoDao.updateLastVerById(it.key, it.value.scriptVersion ,it.value.needAppUpdate)
+                appDb.scriptInfoDao.updateLastVerById(it.key, it.value.scriptVersion, it.value.currentStatus ,it.value.needAppUpdate)
             }
             // 重新加载本地数据
         }

@@ -17,9 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.Create
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.AlertDialog
@@ -71,6 +69,8 @@ fun PersonScreen(modifier: Modifier,
     //联系方式
     val contact by personViewModel.contact.collectAsState()
     val contactDialog = remember { mutableStateOf(false) }
+    //下载地址
+    val downloadLink by personViewModel.downloadLink.collectAsState()
     //是否开启弹窗
     val openDialog = remember { mutableStateOf(false) }
     //是否显示好友邀请码悬浮窗
@@ -204,18 +204,29 @@ fun PersonScreen(modifier: Modifier,
             }
         }
         PersonRowFirst(textLabel = "分享", imageVector = Icons.Outlined.Share){
-            if (isLogin(personViewModel.context, user)){
-                clipboardManager.setPrimaryClip(ClipData.newPlainText("", "省肝神器AutoDaily，解放您的双手！在这里下载：https://www.baidu.com后填入我的邀请码：${user!!.inviteCode} ，免费得周赞助权益！"))
-                personViewModel.context.toastOnUi("已复制分享信息到剪切板！")
+            personViewModel.viewModelScope.launch {
+                if (isLogin(personViewModel.context, user)){
+                    if (downloadLink == null){
+                        personViewModel.getDownloadLink()
+                    }
+                    downloadLink?.let {
+                        val link = it.configValue.split(";")
+                        clipboardManager.setPrimaryClip(ClipData.newPlainText(null, "省肝神器AutoDaily，解放您的双手！下载：${link[0]} 备用:${link[1]} 后填入我的邀请码：${user!!.inviteCode} ，免费得周赞助权益！"))
+                        personViewModel.context.toastOnUi("已复制分享信息到剪切板！")
+
+                    }
+
+                }
             }
+
         }
-        PersonRowFirst(textLabel = "检查更新", imageVector = Icons.Outlined.Refresh){
+        /*PersonRowFirst(textLabel = "检查更新", imageVector = Icons.Outlined.Refresh){
             personViewModel.context.toastOnUi("嗯，还未开发")
-        }
-        PersonRowFirst(textLabel = "反馈", imageVector = Icons.Outlined.Create){
+        }*/
+        /*PersonRowFirst(textLabel = "反馈", imageVector = Icons.Outlined.Create){
             isLogin(personViewModel.context, user)
             personViewModel.context.toastOnUi("嗯，还未开发")
-        }
+        }*/
         PersonRowFirst(textLabel = "联系方式", imageVector = Icons.Outlined.Info){
             personViewModel.getContact()
             contactDialog.value = !contactDialog.value

@@ -1,17 +1,20 @@
 package com.smart.autodaily.ui.screen
 
+import android.content.Intent
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -37,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -77,9 +81,9 @@ fun SettingScreen(
     }
 
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
+        contract = ActivityResultContracts.StartActivityForResult(),
         onResult = { granted ->
-            floatWindowFlag = granted
+            floatWindowFlag = Settings.canDrawOverlays(appCtx)
         }
     )
     val snackbarHostState = remember { SnackbarHostState() }
@@ -102,44 +106,62 @@ fun SettingScreen(
         LazyColumn(
             modifier = Modifier
                 .padding(paddingValues)
+                .padding(horizontal = 10.dp)
                 .fillMaxSize()
                 //.padding(vertical = Ui.SPACE_8),
             //state = rememberLazyListState()
         ) {
+            item {
+                Spacer(modifier = Modifier.padding(vertical = Ui.SPACE_5))
+            }
             //全局脚本设置模块
             item {
                 SingleBorderBox(direction = BorderDirection.BOTTOM){
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ){
-                        Row {
-                            Text("全局设置")
+                        Row{
+                            Text("全局设置",fontWeight = FontWeight.Bold)
                             if (hasNewVer){
-                                Text("New",fontSize = Ui.SIZE_10 , color = Color.Green)
+                                Spacer(modifier = Modifier.padding(start = Ui.SPACE_5))
+                                Text("New",fontSize = Ui.SIZE_10 , color = Color.Red)
                             }
                         }
-                        DropdownMenu(
-                            expanded = drownDownExpan,
-                            onDismissRequest = { drownDownExpan = false },
-                        ) {
-                            DropdownMenuItem(
-                                text = {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Refresh,
-                                        contentDescription = null
-                                    )
-                                    Text(text = "更新")
-                                },
-                                onClick = {
-                                    drownDownExpan = false
-                                    settingViewModel.appViewModel.stopRunScript()
-                                    newDialog.value = !newDialog.value
-                                }
+                        IconButton(onClick = {
+                            drownDownExpan = !drownDownExpan
+                        }){
+                            Icon(
+                                imageVector = Icons.Outlined.MoreVert,
+                                contentDescription = null
                             )
+                            DropdownMenu(
+                                expanded = drownDownExpan,
+                                onDismissRequest = { drownDownExpan = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Refresh,
+                                            contentDescription = null
+                                        )
+                                        Text(text = "更新")
+                                    },
+                                    onClick = {
+                                        drownDownExpan = false
+                                        settingViewModel.appViewModel.stopRunScript()
+                                        newDialog.value = !newDialog.value
+                                    }
+                                )
+                            }
                         }
+
                     }
                 }
+            }
+            item {
+                Spacer(modifier = Modifier.padding(vertical = Ui.SPACE_5))
             }
             if (scriptSetLocalList.itemCount == 0) {
                 item {
@@ -187,10 +209,18 @@ fun SettingScreen(
                 }
             }
             item {
+                Spacer(modifier = Modifier.padding(vertical = Ui.SPACE_5))
+            }
+            item {
                 //权限设置模块
                 SingleBorderBox(direction = BorderDirection.BOTTOM){
-                    Text("权限设置")
+                    Row (modifier = Modifier.fillMaxWidth()){
+                        Text("权限设置", fontWeight = FontWeight.Bold)
+                    }
                 }
+            }
+            item {
+                Spacer(modifier = Modifier.padding(vertical = Ui.SPACE_5))
             }
             /*
                 item {
@@ -238,7 +268,7 @@ fun SettingScreen(
             item {
                 RowIconButtonPermission(PermissionSettingText.IGNORE_BATTERIES_TEXT,
                     iconButtonOnClick = {
-                        launcher.launch(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                        launcher.launch(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
                     })
             }
             item {
@@ -246,7 +276,7 @@ fun SettingScreen(
                     isSwitchOpen = floatWindowFlag,
                     onSwitchChange = {
                         launcher.launch(
-                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION
+                            Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
                         )
                     }
                 )
@@ -267,15 +297,16 @@ fun SettingScreen(
                                 if(isRunning.intValue == 1){
                                     settingViewModel.appViewModel.stopRunScript()
                                 }
-                                val si = settingViewModel.getScriptInfoGlobal()
-                                try {
-                                    settingViewModel.deleteScript()
-                                    settingViewModel.appViewModel.downScriptByScriptId(si)
-                                    settingViewModel.getGlobalSetting()
-                                    snackbarHostState.showSnackbar("更新成功！")
-                                }catch (e : Exception){
-                                    appDb.scriptInfoDao.insert(si)
-                                    snackbarHostState.showSnackbar("更新失败，请稍后重试！")
+                                settingViewModel.appViewModel.getScriptInfoGlobal()?.let {
+                                    try {
+                                        settingViewModel.deleteScript()
+                                        settingViewModel.appViewModel.downScriptByScriptId(it)
+                                        settingViewModel.getGlobalSetting()
+                                        snackbarHostState.showSnackbar("更新成功！")
+                                    }catch (e : Exception){
+                                        appDb.scriptInfoDao.insert(it)
+                                        snackbarHostState.showSnackbar("更新失败，请稍后重试！")
+                                    }
                                 }
                             }
                         }
@@ -319,7 +350,7 @@ fun RowSwitchPermission(
 ) {
     Row(
         modifier = Modifier
-            .padding(horizontal = Ui.SPACE_8, vertical = Ui.SPACE_4)
+            .padding(horizontal = Ui.SPACE_8, vertical = Ui.SPACE_5)
             .clickable {
                 onSwitchChange(!isSwitchOpen)
             },
@@ -342,7 +373,7 @@ fun RowIconButtonPermission(
 ){
     Row(
         modifier = Modifier
-            .padding(horizontal = Ui.SPACE_8, vertical = Ui.SPACE_4)
+            .padding(horizontal = Ui.SPACE_8, vertical = Ui.SPACE_5)
             .clickable { iconButtonOnClick() },
         verticalAlignment = Alignment.CenterVertically
     ){

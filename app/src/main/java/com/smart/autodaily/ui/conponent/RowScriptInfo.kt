@@ -68,11 +68,11 @@ fun RowScriptInfo(
                         Text(text = scriptInfo.scriptName, fontSize = Ui.SIZE_16 )
                         Spacer(modifier = Modifier.width( Ui.SPACE_5 ))
                         if (scriptInfo.currentStatus==0){
-                            Text(text = "Beta", fontSize = Ui.SIZE_10 , color = Color.Red)
+                            Text(text = "Beta", fontSize = Ui.SIZE_10 , color = Color.Blue)
                             Spacer(modifier = Modifier.width( Ui.SPACE_5 ))
                         }
                         scriptInfo.lastVersion?.takeIf { scriptInfo.scriptVersion in 1..<it }?.let {
-                            Text(text = "New", fontSize = Ui.SIZE_10 , color = Color.Green)
+                            Text(text = "New", fontSize = Ui.SIZE_10 , color = Color.Red)
                         }
                     }
                     Spacer(modifier = Modifier.height( Ui.SPACE_5 ))

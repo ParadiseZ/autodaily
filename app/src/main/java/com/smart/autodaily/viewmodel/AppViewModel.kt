@@ -16,7 +16,6 @@ import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.DownloadState
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
-import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.data.entity.request.Request
 import com.smart.autodaily.data.entity.resp.Response
@@ -221,13 +220,29 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
         val siNew = RemoteApi.searchDownRetrofit.dlScriptInfo(scriptInfo.scriptId)
         val result = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptInfo.scriptId)
         var scriptAction = Response<List<ScriptActionInfo>>()
-        var globalScriptSetResult = Response<List<ScriptSetInfo>>()
+        //var globalScriptSetResult = Response<List<ScriptSetInfo>>()
         if(scriptInfo.scriptId !=0){
             scriptAction = RemoteApi.searchDownRetrofit.downloadActionInfoByScriptId(scriptInfo.scriptId)
             val localScriptSetGlobal = appDb.scriptSetInfoDao.countScriptSetByScriptId(0)
             if (localScriptSetGlobal == 0) {
-                globalScriptSetResult = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(0)
-
+                //globalScriptSetResult = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(0)
+                val siGlobal = RemoteApi.searchDownRetrofit.dlScriptInfo(0)
+                val setGlobal = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(0)
+                appDb.runInTransaction{
+                    siGlobal.data?.let { si->
+                        //scriptInfo
+                        si.isDownloaded = 1
+                        si.lastVersion?.let {
+                            si.scriptVersion = it   //更新（即重新下载）时使用
+                        }
+                        si.lastVersion = null //检测更新时使用
+                        si.downloadTime = LocalDateTime.now().toString()
+                        appDb.scriptInfoDao.insert(si)
+                    }
+                    setGlobal.data?.let {
+                        updateScriptSet(it)
+                    }
+                }
             }
         }
 
@@ -245,10 +260,10 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
             }
             if (scriptInfo.scriptId!=0){
                 //ScriptSet 全局设置
-                globalScriptSetResult.data?.let {
+                /*globalScriptSetResult.data?.let {
                     updateScriptSet(it)
                     //appDb.scriptSetInfoDao.insert(it)
-                }
+                }*/
                 //actionInfo 动作信息
                 scriptAction.data?.let {
                     appDb.scriptActionInfoDao.insert(it)
@@ -263,6 +278,9 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
         }
     }
 
+    fun getScriptInfoGlobal(): ScriptInfo?{
+        return appDb.scriptInfoDao.getScriptInfoByScriptId(0)
+    }
     override fun onCleared() {
         super.onCleared()
         cancelChildrenJob()

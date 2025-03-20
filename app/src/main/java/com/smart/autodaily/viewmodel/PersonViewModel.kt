@@ -18,6 +18,9 @@ class PersonViewModel(app : Application)  : BaseViewModel(application = app) {
     private val _contact = MutableStateFlow<List<ServerConfig>>(emptyList())
     val contact: StateFlow<List<ServerConfig>> = _contact
 
+    private val _downloadLink = MutableStateFlow<ServerConfig?>(null)
+    val downloadLink: StateFlow<ServerConfig?> = _downloadLink
+
     suspend fun inputKey(userId : Int, key : String):Response<UserInfo>{
         val res = ExceptionUtil.tryCatch(
             tryFun = {
@@ -42,6 +45,18 @@ class PersonViewModel(app : Application)  : BaseViewModel(application = app) {
             res.data?.let { appViewModel.updateUser(it) }
         }*/
         return res
+    }
+
+    suspend fun getDownloadLink(){
+        if (_downloadLink.value == null){
+            runCatching {
+                RemoteApi.concatAndNotice.getDownLoadLinkToShare()
+            }.onSuccess {
+                if (it.code == ResponseCode.SUCCESS.code){
+                    _downloadLink.value = it.data
+                }
+            }
+        }
     }
 
     fun logout(userInfo : UserInfo){

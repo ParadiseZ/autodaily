@@ -10,7 +10,6 @@ import androidx.paging.cachedIn
 import com.smart.autodaily.base.BaseViewModel
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.dataresource.ScriptSetLocalDataSource
-import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.utils.PageUtil
 import kotlinx.coroutines.flow.Flow
@@ -22,12 +21,12 @@ val mediaProjectionServiceStartFlag by lazy {
 }
 class SettingViewModel (app: Application) : BaseViewModel(application = app) {
 
-    private val _hasNewVer  = MutableStateFlow<Boolean>(true)
+    private val _hasNewVer  = MutableStateFlow<Boolean>(false)
     val hasNewVer : StateFlow<Boolean> = _hasNewVer
 
     init {
         val scriptInfo = appDb.scriptInfoDao.getScriptInfoByScriptId(0)
-        scriptInfo.lastVersion?.let {
+        scriptInfo?.lastVersion?.let {
             if (scriptInfo.scriptVersion in 0..< it ){
                 _hasNewVer.value = true
             }else{
@@ -56,9 +55,7 @@ class SettingViewModel (app: Application) : BaseViewModel(application = app) {
         }
     }
 
-    fun getScriptInfoGlobal(): ScriptInfo{
-        return appDb.scriptInfoDao.getScriptInfoByScriptId(0)
-    }
+
 
     fun deleteScript(){
         appDb.scriptInfoDao.deleteByScriptId(0)

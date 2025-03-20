@@ -7,4 +7,7 @@ import retrofit2.http.GET
 interface ConcatAndNotice {
     @GET("/getContact")
     suspend fun getContact() : Response<List<ServerConfig>>
+
+    @GET("/getDownLoadLinkToShare")
+    suspend fun getDownLoadLinkToShare() : Response<ServerConfig>
 }

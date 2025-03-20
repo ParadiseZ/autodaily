@@ -81,7 +81,7 @@ fun UpdateScreen(
                         onClick = {
                             val intent = Intent(Intent.ACTION_VIEW, updateInfo.first {
                                 it.confDesc == "DOWN_LINK"
-                            }.confValue.toUri())
+                            }.confValue.split(";")[0].toUri())
                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             appCtx.startActivity(intent)
                         },
