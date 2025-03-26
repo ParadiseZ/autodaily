@@ -14,9 +14,9 @@ class RegisterViewModel(app: Application): BaseViewModel(app) {
         return try {
             val encryptedPassword = EncryptUtil.encryptSHA256(password)
             RemoteApi.registerLoginRetrofit.registerByEmail(RegisterByEmailRequest(username, emailCheckCode, encryptedPassword, inviteCodeFather))
-        }catch (e: IOException) {
+        }catch (_: IOException) {
             Response.error("网络异常，注册失败")
-        }catch (e: Exception){
+        }catch (_: Exception){
             Response.error("未知异常，注册失败")
         }
     }
@@ -24,9 +24,9 @@ class RegisterViewModel(app: Application): BaseViewModel(app) {
     suspend fun sendEmailCode(email: String,msgType : Short):Response<String> {
         return try {
             RemoteApi.registerLoginRetrofit.sendEmailCode(email, msgType)
-        }catch (e:IOException){
+        }catch (_:IOException){
             Response.error(201,"发送失败，网络异常")
-        }catch (e : Exception){
+        }catch (_ : Exception){
             Response.error(201,"发送失败，未知异常，请稍后重试")
         }
     }

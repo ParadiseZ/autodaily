@@ -82,7 +82,8 @@ fun RegisterScreen() {
 
                 Row (
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
                 ){
                     OutlinedTextField(
                         value = emailCheckCode,
@@ -172,9 +173,16 @@ fun RegisterScreen() {
                                     val registerResult = registerViewModel.registerByEmail(username,emailCheckCode, password, inviteCodeFather)
                                     isLocked.value = false
                                     registerResult.message?.let {
-                                        ToastUtil.show(registerViewModel.context,
-                                            it
-                                        )
+                                        if (it.isEmpty()){
+                                            ToastUtil.show(registerViewModel.context,
+                                                "注册失败！请联系管理员"
+                                            )
+                                        }else{
+                                            ToastUtil.show(registerViewModel.context,
+                                                it
+                                            )
+                                        }
+
                                     }
                                     if (registerResult.code == 200){
                                         ToastUtil.show(registerViewModel.context, "注册成功！")
