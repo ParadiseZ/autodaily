@@ -373,7 +373,7 @@ extern "C"
             float y = boxResult[txt.idx].boxPoint[0].y;
             float w = boxResult[txt.idx].boxPoint[1].x - x;
             float h = boxResult[txt.idx].boxPoint[3].y - y;
-            printLabels(txt.label, txt.text, txt.color);
+            //printLabels(txt.label, txt.text, txt.color);
             //颜色处理begin
             jobject colorSet = env->NewObject(hashSetClass, hashSetCon);
             auto colorSize = static_cast<jshort>(txt.color.size());

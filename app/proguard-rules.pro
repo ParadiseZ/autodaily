@@ -115,6 +115,15 @@
 }
 -keep enum org.greenrobot.eventbus.ThreadMode { *; }
 
+# OkHttp GraalVM 相关警告处理
+-dontwarn com.oracle.svm.core.annotate.Delete
+-dontwarn com.oracle.svm.core.annotate.Substitute
+-dontwarn com.oracle.svm.core.annotate.TargetClass
+-dontwarn java.lang.Module
+-dontwarn org.graalvm.nativeimage.hosted.Feature$BeforeAnalysisAccess
+-dontwarn org.graalvm.nativeimage.hosted.Feature
+-dontwarn org.graalvm.nativeimage.hosted.RuntimeResourceAccess
+
 # 保留 DataStore 相关
 -keep class androidx.datastore.** { *; }
 -keep class androidx.datastore.preferences.** { *; }
