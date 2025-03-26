@@ -7,13 +7,16 @@ import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.data.entity.request.LoginByEmailRequest
 import com.smart.autodaily.data.entity.resp.Response
+import com.smart.autodaily.utils.EncryptUtil
 import java.io.IOException
 
 
 class LoginViewModel(app: Application): BaseViewModel(app) {
     suspend fun loginByEmail(email: String, password: String) : Response<UserInfo> {
         try {
-            val loginResult = RemoteApi.registerLoginRetrofit.loginByEmail(LoginByEmailRequest(email, password))
+            // 对密码进行SHA-256加密
+            val encryptedPassword = EncryptUtil.encryptSHA256(password)
+            val loginResult = RemoteApi.registerLoginRetrofit.loginByEmail(LoginByEmailRequest(email, encryptedPassword))
             if (loginResult.code == 200) {
                 loginResult.data?.let {
                     it.isLogin=true

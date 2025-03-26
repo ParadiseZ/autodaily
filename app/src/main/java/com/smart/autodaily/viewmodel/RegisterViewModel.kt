@@ -5,13 +5,15 @@ import com.smart.autodaily.api.RemoteApi
 import com.smart.autodaily.base.BaseViewModel
 import com.smart.autodaily.data.entity.request.RegisterByEmailRequest
 import com.smart.autodaily.data.entity.resp.Response
+import com.smart.autodaily.utils.EncryptUtil
 import java.io.IOException
 
 class RegisterViewModel(app: Application): BaseViewModel(app) {
 
     suspend fun registerByEmail(username: String,emailCheckCode : String, password: String, inviteCodeFather: String): Response<String> {
         return try {
-            RemoteApi.registerLoginRetrofit.registerByEmail(RegisterByEmailRequest(username, emailCheckCode, password, inviteCodeFather))
+            val encryptedPassword = EncryptUtil.encryptSHA256(password)
+            RemoteApi.registerLoginRetrofit.registerByEmail(RegisterByEmailRequest(username, emailCheckCode, encryptedPassword, inviteCodeFather))
         }catch (e: IOException) {
             Response.error("网络异常，注册失败")
         }catch (e: Exception){

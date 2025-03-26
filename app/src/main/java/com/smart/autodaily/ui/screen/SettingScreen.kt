@@ -142,11 +142,13 @@ fun SettingScreen(
                             ) {
                                 DropdownMenuItem(
                                     text = {
-                                        Icon(
-                                            imageVector = Icons.Outlined.Refresh,
-                                            contentDescription = null
-                                        )
-                                        Text(text = "更新")
+                                        Row {
+                                            Icon(
+                                                imageVector = Icons.Outlined.Refresh,
+                                                contentDescription = null
+                                            )
+                                            Text(text = "更新")
+                                        }
                                     },
                                     onClick = {
                                         drownDownExpan = false

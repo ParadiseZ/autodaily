@@ -198,6 +198,21 @@ fun HomeScreen(
                             })
                         },
                         iconInfo = {
+                            IconButton(
+                                onClick = {
+                                    currentScriptInfo.value = scriptInfo
+                                    appCtx.startActivity(
+                                        Intent("android.intent.action.SCRIPT SET DETAIL")
+                                            .putExtra("CUR_SCRIPT_ID", scriptInfo.scriptId)
+                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    )
+                                }
+                            ){
+                                Icon(
+                                    imageVector = Icons.Outlined.Settings,
+                                    contentDescription = null
+                                )
+                            }
                             var dropdownIsOpen by remember { mutableStateOf(false) }
                             IconButton(
                                 onClick = {
@@ -214,26 +229,6 @@ fun HomeScreen(
                                     // 使用offset控制DropdownMenu的显示位置，基于按钮的位置和大小动态计算
                                 ) {
                                     // DropdownMenu的内容
-                                    DropdownMenuItem(
-                                        text = {
-                                            Row {
-                                                Icon(
-                                                    imageVector = Icons.Outlined.Settings,
-                                                    contentDescription = null
-                                                )
-                                                Text(text = "设置")
-                                            }
-                                        },
-                                        onClick = {
-                                            dropdownIsOpen = false
-                                            currentScriptInfo.value = scriptInfo
-                                            appCtx.startActivity(
-                                                Intent("android.intent.action.SCRIPT SET DETAIL")
-                                                    .putExtra("CUR_SCRIPT_ID", scriptInfo.scriptId)
-                                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                            )
-                                        }
-                                    )
                                     DropdownMenuItem(
                                         text = {
                                             Row {
