@@ -1,6 +1,6 @@
 package com.smart.autodaily.api
 
-import com.smart.autodaily.data.entity.UserInfo
+import com.smart.autodaily.data.entity.LoginResponse
 import com.smart.autodaily.data.entity.request.LoginByEmailRequest
 import com.smart.autodaily.data.entity.request.RegisterByEmailRequest
 import com.smart.autodaily.data.entity.request.RestPwdByEmailRequest
@@ -13,7 +13,7 @@ import retrofit2.http.Query
 
 interface RegisterLoginApi {
     @POST("/loginByEmail")
-    suspend fun loginByEmail(@Body request: LoginByEmailRequest): Response<UserInfo>
+    suspend fun loginByEmail(@Body request: LoginByEmailRequest): Response<LoginResponse>
 
     @POST("/registerByEmail")
     suspend fun registerByEmail(@Body request: RegisterByEmailRequest): Response<String>

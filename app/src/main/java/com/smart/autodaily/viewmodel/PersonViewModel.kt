@@ -10,6 +10,7 @@ import com.smart.autodaily.data.entity.ServerConfig
 import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.utils.ExceptionUtil
+import com.smart.autodaily.utils.TokenManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -62,6 +63,7 @@ class PersonViewModel(app : Application)  : BaseViewModel(application = app) {
     fun logout(userInfo : UserInfo){
         viewModelScope.launch {
             appDb.userInfoDao.delete(userInfo)
+            TokenManager.clearToken()
             appViewModel.updateUser(null)
         }
     }
