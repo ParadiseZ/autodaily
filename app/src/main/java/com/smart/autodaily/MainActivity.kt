@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.core.content.edit
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -35,9 +36,18 @@ import com.smart.autodaily.utils.cancelJob
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
-
+import kotlinx.coroutines.launch
+import splitties.alertdialog.appcompat.alertDialog
+import splitties.systemservices.notificationManager
 
 class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        // 无论结果如何，都记录已经检查过权限
+        App.sharedPreferences.edit { putBoolean(App.KEY_NOTIFICATION_PERMISSION_CHECKED, true) }
+    }
 
     override fun onStart() {
         super.onStart()
@@ -46,6 +56,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // 检查通知权限
+        checkNotificationPermission()
+        
         setContent {
             AutoDailyTheme {
                 // A surface container using the 'background' color from the theme
@@ -120,6 +133,45 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }*/
     }
 
+    private fun checkNotificationPermission() {
+        // 检查是否已经检查过权限
+        if (App.sharedPreferences.getBoolean(App.KEY_NOTIFICATION_PERMISSION_CHECKED, true)) {
+            return
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (!notificationManager.areNotificationsEnabled()) {
+                showNotificationPermissionDialog()
+            }
+        }
+    }
+
+    private fun showNotificationPermissionDialog() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            launch {
+                try {
+                    alertDialog(
+                        title = "需要通知权限",
+                        message = "为了确保您能及时收到重要通知，请允许应用发送通知。",
+                        isCancellable = true
+                    ) {
+                        setPositiveButton("去设置") { _, _ ->
+                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = android.net.Uri.fromParts("package", packageName, null)
+                            }
+                            notificationPermissionLauncher.launch(intent)
+                        }
+                        setNegativeButton("暂不设置") { _, _ ->
+                            // 用户点击"暂不设置"时也记录状态
+                            App.sharedPreferences.edit { putBoolean(App.KEY_NOTIFICATION_PERMISSION_CHECKED, true) }
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
 
     override fun onDestroy() {
         super.onDestroy()

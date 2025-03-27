@@ -5,6 +5,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Build
 import android.os.Process
 import android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE
@@ -16,14 +17,22 @@ import com.smart.autodaily.utils.checkScriptUpdate
 import com.smart.autodaily.utils.partScope
 import com.smart.autodaily.utils.updateScope
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.weishu.reflection.Reflection
 import splitties.systemservices.notificationManager
 
+class App : Application() {
+    companion object {
+        private const val PREFS_NAME = "notification_prefs"
+        internal const val KEY_NOTIFICATION_PERMISSION_CHECKED = "notification_permission_checked"
+        internal lateinit var sharedPreferences: SharedPreferences
+    }
 
-class App : Application(){
     override fun onCreate() {
         super.onCreate()
+        sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        
         //初始化时区
         AndroidThreeTen.init(this)
         //Thread.setDefaultUncaughtExceptionHandler(ExceptionHandler(this))
@@ -35,12 +44,15 @@ class App : Application(){
             //.enableLogger(BuildConfig.DEBUG)
             //.setLogger(EventLogger())
         Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE)
-        partScope.launch{
+        
+        partScope.launch {
             //初始化全局设置
             RunScript.initGlobalSet()
             try {
+                // 延迟检查更新
+                delay(1000)
                 checkScriptUpdate()
-            }catch (e : Exception){
+            } catch (e: Exception) {
                 updateScope.coroutineContext.cancelChildren()
             }
         }

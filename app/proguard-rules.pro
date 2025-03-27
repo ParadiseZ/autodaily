@@ -168,3 +168,25 @@
     public static *** w(...);
     public static *** e(...);
 }
+
+# 保留 Toast 相关
+-keep class android.widget.Toast { *; }
+-keep class android.widget.Toast$TN { *; }
+-keep class android.widget.Toast$TN$Handler { *; }
+-keep class android.widget.Toast$TN$InnerHandler { *; }
+
+# 保留 Response 相关
+-keep class com.smart.autodaily.data.entity.resp.Response { *; }
+-keep class com.smart.autodaily.data.entity.resp.Response$Companion { *; }
+-keepclassmembers class com.smart.autodaily.data.entity.resp.Response {
+    public <init>(...);
+    public final int getCode();
+    public final java.lang.String getMessage();
+    public final java.lang.Object getData();
+}
+
+# 保留 ToastUtil 相关
+-keep class com.smart.autodaily.utils.ToastUtil { *; }
+-keepclassmembers class com.smart.autodaily.utils.ToastUtil {
+    public static void show(android.content.Context, java.lang.String);
+}
