@@ -285,16 +285,15 @@ extern "C"
     {
         // 1. 从Bitmap转换为cv::Mat
         cv::Mat image = bitmapToMat(env, imageData);
-
-        // 1.1. 转换颜色空间
-        // cv::Mat imageBGR;
-        // cv::cvtColor(image, imageBGR, cv::COLOR_RGBA2BGR);
+        if (image.empty()) {
+            return nullptr;
+        }
 
         // 2. 调用detect方法
         std::vector<Object> objects;
-        // Yolo detector;
         g_yolo->detect(image, objects, numClasses, threshold, nmsThreshold);
         image.release();
+        // 3. 返回结果，但不释放image
         return changeDetectResultToJavaArray(env, objects);
     }
 /*
@@ -350,12 +349,18 @@ extern "C"
     }
     JNIEXPORT jobjectArray JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_detectOcr(JNIEnv *env, jobject thiz, jobject bitmap)
     {
-        jobjectArray jOcrResArray;
+        jobjectArray jOcrResArray = nullptr;
         cv::Mat in = bitmapToMat(env, bitmap);
+        if (in.empty()) {
+            return nullptr;
+        }
         cv::Mat rgb;
         cv::cvtColor(in, rgb, cv::COLOR_RGBA2RGB);
         in.release();
         std::vector<TextBox> boxResult = g_ocr->dbNet->getTextBoxes(rgb, 0.2, 0.3, 2);
+        if (boxResult.empty()) {
+            return nullptr;
+        }
         std::vector<cv::Mat> partImages = getPartImages(rgb, boxResult);
         std::vector<TextLine> textLines = g_ocr->crnnNet->getTextLines(partImages);
         rgb.release();
@@ -368,11 +373,8 @@ extern "C"
             jobject hashSet = env->NewObject(hashSetClass, hashSetCon);
             for (short k : txt.label)
             {
-                //LOGD("%d",k);
                 jobject shortObj = env->NewObject(shortClass, shortCon, static_cast<jshort>(k));
-                // add
                 env->CallBooleanMethod(hashSet, hashAddMethod, shortObj);
-                // 释放局部引用
                 env->DeleteLocalRef(shortObj);
             }
 
@@ -388,9 +390,11 @@ extern "C"
             jshortArray colorArr = env->NewShortArray(colorSize);
             env->SetShortArrayRegion(colorArr, 0, colorSize, txt.color.data());
             //颜色处理end
+            
             jobject res = env->NewObject(ocrResCls, ocrResMethod, hashSet, x, y, w, h, x + w/2, y + h/2, colorSet, colorArr);
             env->SetObjectArrayElement(jOcrResArray, idx, res);
             idx++;
+            
             // 释放局部引用
             env->DeleteLocalRef(colorSet);
             env->DeleteLocalRef(colorArr);

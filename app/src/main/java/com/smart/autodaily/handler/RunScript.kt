@@ -201,13 +201,6 @@ object  RunScript {
                         val detectLabels = detectRes.map { it.label }.toSet()
                         val ocrRes = ocrDeferred.await()
 
-                        //Lom.d( INFO, "detect and ocr end" )
-                        /*val detectRes = ModelUtil.model.detectYolo(capture, si.classesNum).toList().filter { it.prob > conf.similarScore }
-                            .toTypedArray()
-                        val detectLabels = detectRes.map { it.label }.toSet()
-                        //OCR
-                        Lom.d( INFO, "ocr" )
-                        val ocrRes =ModelUtil.model.detectOcr(capture)*/
                         val txtLabels = ocrRes.map {
                             if(it.colorSet.isEmpty()){
                                 it.colorSet = it.colorArr.toSet()
