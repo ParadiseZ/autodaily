@@ -356,14 +356,12 @@ extern "C"
         }
         cv::Mat rgb;
         cv::cvtColor(in, rgb, cv::COLOR_RGBA2RGB);
-        in.release();
         std::vector<TextBox> boxResult = g_ocr->dbNet->getTextBoxes(rgb, 0.2, 0.3, 2);
         if (boxResult.empty()) {
             return nullptr;
         }
         std::vector<cv::Mat> partImages = getPartImages(rgb, boxResult);
         std::vector<TextLine> textLines = g_ocr->crnnNet->getTextLines(partImages);
-        rgb.release();
         // objects to Obj[]
         jOcrResArray = env->NewObjectArray(static_cast<jsize>(textLines.size()), ocrResCls, nullptr);
         short idx = 0;
@@ -401,6 +399,8 @@ extern "C"
             env->DeleteLocalRef(res);
             env->DeleteLocalRef(hashSet);
         }
+        in.release();
+        rgb.release();
         return jOcrResArray;
     }
 
