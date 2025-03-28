@@ -119,10 +119,15 @@ std::vector<cv::Point> unClip(const std::vector<cv::Point>& inBox, float perimet
 }
 
 cv::Mat getRotateCropImage(const cv::Mat& src, std::vector<cv::Point> box) {
+    // 检查输入图像是否为空
+    if (src.empty()) {
+        return {};
+    }
     cv::Mat image;
     src.copyTo(image);
     std::vector<cv::Point> points = box;
 
+    // 检查边界点是否有效
     int collectX[4] = { box[0].x, box[1].x, box[2].x, box[3].x };
     int collectY[4] = { box[0].y, box[1].y, box[2].y, box[3].y };
     int left = int(*std::min_element(collectX, collectX + 4));
@@ -130,19 +135,39 @@ cv::Mat getRotateCropImage(const cv::Mat& src, std::vector<cv::Point> box) {
     int top = int(*std::min_element(collectY, collectY + 4));
     int bottom = int(*std::max_element(collectY, collectY + 4));
 
+    // 确保边界在图像范围内
+    left = std::max(0, left);
+    top = std::max(0, top);
+    right = std::min(image.cols, right);
+    bottom = std::min(image.rows, bottom);
+
+    // 检查裁剪区域是否有效
+    if (right <= left || bottom <= top || left >= image.cols || top >= image.rows) {
+        return {};
+    }
+
     cv::Mat imgCrop;
     image(cv::Rect(left, top, right - left, bottom - top)).copyTo(imgCrop);
+
+    // 检查裁剪后图像是否为空
+    if (imgCrop.empty()) {
+        return {};
+    }
 
     for (auto & point : points) {
         point.x -= left;
         point.y -= top;
     }
 
-
     int imgCropWidth = int(sqrt(pow(points[0].x - points[1].x, 2) +
-        pow(points[0].y - points[1].y, 2)));
+                                pow(points[0].y - points[1].y, 2)));
     int imgCropHeight = int(sqrt(pow(points[0].x - points[3].x, 2) +
-        pow(points[0].y - points[3].y, 2)));
+                                 pow(points[0].y - points[3].y, 2)));
+
+    // 确保宽高是有效值
+    if (imgCropWidth <= 0 || imgCropHeight <= 0) {
+        return {};
+    }
 
     cv::Point2f ptsDst[4];
     ptsDst[0] = cv::Point2f(0., 0.);
@@ -159,17 +184,27 @@ cv::Mat getRotateCropImage(const cv::Mat& src, std::vector<cv::Point> box) {
     cv::Mat M = cv::getPerspectiveTransform(ptsSrc, ptsDst);
 
     cv::Mat partImg;
-    cv::warpPerspective(imgCrop, partImg, M,
-        cv::Size(imgCropWidth, imgCropHeight),
-        cv::BORDER_REPLICATE);
+    try {
+        cv::warpPerspective(imgCrop, partImg, M,
+                            cv::Size(imgCropWidth, imgCropHeight),
+                            cv::BORDER_REPLICATE);
+    } catch (const cv::Exception& e) {
+        // 记录错误信息
+        __android_log_print(ANDROID_LOG_ERROR, "NCNN", "warpPerspective error: %s", e.what());
+        return {};
+    }
+
+    // 检查结果图像是否为空
+    if (partImg.empty()) {
+        return {};
+    }
 
     if (float(partImg.rows) >= float(partImg.cols) * 1.5) {
-        cv::Mat srcCopy = cv::Mat(partImg.rows, partImg.cols, partImg.depth());
+        cv::Mat srcCopy;
         cv::transpose(partImg, srcCopy);
         cv::flip(srcCopy, srcCopy, 0);
         return srcCopy;
-    }
-    else {
+    } else {
         return partImg;
     }
 }
@@ -182,7 +217,9 @@ std::vector<cv::Mat> getPartImages(const cv::Mat& src, std::vector<TextBox>& tex
         for (auto & textBox : textBoxes)
         {
             cv::Mat partImg = getRotateCropImage(src, textBox.boxPoint);
-            partImages.emplace_back(partImg);
+            if(!partImg.empty()){
+                partImages.emplace_back(partImg);
+            }
         }
     }
 

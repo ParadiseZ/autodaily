@@ -280,21 +280,36 @@ extern "C"
         return JNI_TRUE;
     }
 
-    JNIEXPORT jobjectArray JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_detectYolo(JNIEnv *env, jobject thiz, jobject imageData, jint numClasses,
-                                                                                        jfloat threshold, jfloat nmsThreshold)
+    JNIEXPORT jobjectArray JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_detectYolo(JNIEnv *env, jobject thiz, jobject imageData, jint numClasses, jfloat threshold, jfloat nmsThreshold)
     {
-        // 1. 从Bitmap转换为cv::Mat
+        // 检查输入参数
+        if (imageData == nullptr || g_yolo == nullptr) {
+            return nullptr;
+        }
+        // 从Bitmap转换为cv::Mat
         cv::Mat image = bitmapToMat(env, imageData);
         if (image.empty()) {
             return nullptr;
         }
 
-        // 2. 调用detect方法
+        // 调用detect方法
         std::vector<Object> objects;
-        g_yolo->detect(image, objects, numClasses, threshold, nmsThreshold);
+        try {
+            ncnn::MutexLockGuard g(lock);
+            g_yolo->detect(image, objects, numClasses, threshold, nmsThreshold);
+        } catch (const std::exception& e) {
+            __android_log_print(ANDROID_LOG_ERROR, "NCNN", "Detection error: %s", e.what());
+            image.release();
+            return nullptr;
+        }
+        
+        // 创建并返回结果数组
+        jobjectArray result = changeDetectResultToJavaArray(env, objects);
+        
+        // 释放资源
         image.release();
-        // 3. 返回结果，但不释放image
-        return changeDetectResultToJavaArray(env, objects);
+        
+        return result;
     }
 /*
     JNIEXPORT jobjectArray JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_detectAndDraw(JNIEnv *env, jobject thiz, jobject imageData, jint numClasses,
@@ -350,23 +365,67 @@ extern "C"
     JNIEXPORT jobjectArray JNICALL Java_com_smart_autodaily_navpkg_AutoDaily_detectOcr(JNIEnv *env, jobject thiz, jobject bitmap)
     {
         jobjectArray jOcrResArray = nullptr;
+        // 检查输入参数
+        if (bitmap == nullptr || g_ocr == nullptr) {
+            return nullptr;
+        }
+        
         cv::Mat in = bitmapToMat(env, bitmap);
         if (in.empty()) {
             return nullptr;
         }
+        
         cv::Mat rgb;
         cv::cvtColor(in, rgb, cv::COLOR_RGBA2RGB);
-        std::vector<TextBox> boxResult = g_ocr->dbNet->getTextBoxes(rgb, 0.2, 0.3, 2);
-        if (boxResult.empty()) {
+        
+        // 确保OCR检测器已初始化
+        if (!g_ocr->dbNet) {
+            in.release();
+            rgb.release();
             return nullptr;
         }
+        
+        std::vector<TextBox> boxResult = g_ocr->dbNet->getTextBoxes(rgb, 0.2, 0.3, 2);
+        if (boxResult.empty()) {
+            in.release();
+            rgb.release();
+            return nullptr;
+        }
+        
+        // 获取文本区域图像
         std::vector<cv::Mat> partImages = getPartImages(rgb, boxResult);
+        
+        // 检查是否有有效的部分图像
+        if (partImages.empty() || !g_ocr->crnnNet) {
+            in.release();
+            rgb.release();
+            // 释放partImages中的所有Mat
+            for (auto& img : partImages) {
+                img.release();
+            }
+            return nullptr;
+        }
+        
+        // 进行文本识别
         std::vector<TextLine> textLines = g_ocr->crnnNet->getTextLines(partImages);
-        // objects to Obj[]
+        if (textLines.empty()) {
+            in.release();
+            rgb.release();
+            // 释放partImages中的所有Mat
+            for (auto& img : partImages) {
+                img.release();
+            }
+            return nullptr;
+        }
+        // 创建结果数组
         jOcrResArray = env->NewObjectArray(static_cast<jsize>(textLines.size()), ocrResCls, nullptr);
         short idx = 0;
         for (const auto &txt : textLines)
         {
+            // 检查索引是否有效
+            if (txt.idx < 0 || txt.idx >= boxResult.size()) {
+                continue;
+            }
             //  创建 HashSet 对象
             jobject hashSet = env->NewObject(hashSetClass, hashSetCon);
             for (short k : txt.label)
@@ -399,8 +458,14 @@ extern "C"
             env->DeleteLocalRef(res);
             env->DeleteLocalRef(hashSet);
         }
+        
+        // 释放内存
         in.release();
         rgb.release();
+        // 释放partImages中的所有Mat
+        for (auto& img : partImages) {
+            img.release();
+        }
         return jOcrResArray;
     }
 

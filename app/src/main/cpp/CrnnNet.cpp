@@ -122,6 +122,7 @@ std::vector<TextLine> CrnnNet::getTextLines(std::vector<cv::Mat>& partImg) {
             textLine = getColors(textLine, partImg[i]);
             textLines.emplace_back(textLine);
         }
+        partImg[i].release();
     }
     return textLines;
 }
