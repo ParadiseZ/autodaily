@@ -369,8 +369,7 @@ extern "C"
         if (bitmap == nullptr || g_ocr == nullptr) {
             return nullptr;
         }
-        
-        cv::Mat in = bitmapToMat(env, bitmap);
+        const cv::Mat& in = bitmapToMat(env, bitmap);
         if (in.empty()) {
             return nullptr;
         }
