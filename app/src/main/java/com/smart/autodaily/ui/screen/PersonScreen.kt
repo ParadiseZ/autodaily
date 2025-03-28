@@ -24,6 +24,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -47,21 +48,32 @@ import com.smart.autodaily.constant.BorderDirection
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.ui.conponent.MyButton
 import com.smart.autodaily.ui.conponent.SingleBorderBox
-import com.smart.autodaily.utils.ToastUtil
+import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.gotoExchange
 import com.smart.autodaily.utils.gotoUserKeyRecord
 import com.smart.autodaily.utils.isLogin
 import com.smart.autodaily.utils.startActivity
-import com.smart.autodaily.utils.toastOnUi
 import com.smart.autodaily.viewmodel.PersonViewModel
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalDateTime
 import splitties.systemservices.clipboardManager
 
-@SuppressLint("DefaultLocale")
+
 @Composable
 fun PersonScreen(modifier: Modifier,
-    nhc: NavHostController,
+                 nhc: NavHostController,){
+    Scaffold (
+        snackbarHost = {
+            SnackbarUtil.CustomSnackbarHost()
+        }
+    ){
+        ChildScreen(modifier = Modifier.padding(it))
+    }
+}
+@SuppressLint("DefaultLocale")
+@Composable
+fun ChildScreen(
+    modifier: Modifier,
     personViewModel: PersonViewModel = viewModel()
 ) {
     //Text(text = "Hello PersonalScreen！")
@@ -111,7 +123,7 @@ fun PersonScreen(modifier: Modifier,
                         }
                         TextButton(onClick = {
                             clipboardManager.setPrimaryClip(ClipData.newPlainText("", it.inviteCode))
-                            personViewModel.context.toastOnUi("已复制！")
+                            SnackbarUtil.show("已复制！")
                         }){
                             Text(text = "点击复制")
                         }
@@ -145,7 +157,7 @@ fun PersonScreen(modifier: Modifier,
                 } ?: Text(text = "登录>")
             }
         }
-        
+
         Row (
             modifier = Modifier
                 .fillMaxWidth()
@@ -212,7 +224,7 @@ fun PersonScreen(modifier: Modifier,
                     downloadLink?.let {
                         val link = it.configValue.split(";")
                         clipboardManager.setPrimaryClip(ClipData.newPlainText(null, "省肝神器AutoDaily，解放您的双手！下载：${link[0]} 备用:${link[1]} 后填入我的邀请码：${user!!.inviteCode} ，免费得周赞助权益！"))
-                        personViewModel.context.toastOnUi("已复制分享信息到剪切板！")
+                        SnackbarUtil.show("已复制分享信息到剪切板！")
 
                     }
 
@@ -221,11 +233,11 @@ fun PersonScreen(modifier: Modifier,
 
         }
         /*PersonRowFirst(textLabel = "检查更新", imageVector = Icons.Outlined.Refresh){
-            personViewModel.context.toastOnUi("嗯，还未开发")
+            SnackbarUtil.show("嗯，还未开发")
         }*/
         /*PersonRowFirst(textLabel = "反馈", imageVector = Icons.Outlined.Create){
             isLogin(personViewModel.context, user)
-            personViewModel.context.toastOnUi("嗯，还未开发")
+            SnackbarUtil.show("嗯，还未开发")
         }*/
         PersonRowFirst(textLabel = "联系方式", imageVector = Icons.Outlined.Info){
             personViewModel.getContact()
@@ -245,7 +257,7 @@ fun PersonScreen(modifier: Modifier,
                     enabled = keyConfirmEnable,
                     onClick = {
                         if (keyInfo.value.isBlank()){
-                            personViewModel.context.toastOnUi("输入内容不能为空！")
+                            SnackbarUtil.show("输入内容不能为空！")
                         }else{
                             keyConfirmEnable = false
                             personViewModel.viewModelScope.launch {
@@ -254,9 +266,7 @@ fun PersonScreen(modifier: Modifier,
                                     openDialog.value = false
                                 }
                                 result.message?.let {
-                                    ToastUtil.show(personViewModel.context,
-                                        it
-                                    )
+                                    SnackbarUtil.show(it)
                                 }
                                 keyConfirmEnable = true
                             }
@@ -295,7 +305,7 @@ fun PersonScreen(modifier: Modifier,
                     enabled = keyConfirmEnable,
                     onClick = {
                         if (keyInfo.value.isBlank()){
-                            personViewModel.context.toastOnUi("输入内容不能为空！")
+                            SnackbarUtil.show("输入内容不能为空！")
                         }else{
                             keyConfirmEnable = false
                             personViewModel.viewModelScope.launch {
@@ -304,9 +314,7 @@ fun PersonScreen(modifier: Modifier,
                                     inviteDialog.value = false
                                 }
                                 result.message?.let {
-                                    ToastUtil.show(personViewModel.context,
-                                        it
-                                    )
+                                    SnackbarUtil.show(it)
                                 }
                                 keyConfirmEnable = true
                             }

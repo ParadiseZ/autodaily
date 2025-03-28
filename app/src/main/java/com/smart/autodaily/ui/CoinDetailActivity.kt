@@ -27,6 +27,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.smart.autodaily.constant.AppBarTitle
 import com.smart.autodaily.ui.conponent.SwipeRefreshList
 import com.smart.autodaily.ui.theme.AutoDailyTheme
+import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.viewmodel.person.CoinRecordViewModel
 
 class CoinDetailActivity : ComponentActivity() {
@@ -48,7 +49,9 @@ class CoinDetailActivity : ComponentActivity() {
                             }
                         )
                     },
-
+                    snackbarHost = {
+                        SnackbarUtil.CustomSnackbarHost()
+                    }
                 ){
                     CoinDetailScreen(modifier = Modifier.padding(it))
                 }

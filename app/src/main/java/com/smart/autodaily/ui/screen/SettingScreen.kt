@@ -25,7 +25,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -60,6 +59,7 @@ import com.smart.autodaily.ui.conponent.SliderSettingItem
 import com.smart.autodaily.ui.conponent.SwitchSettingItem
 import com.smart.autodaily.ui.conponent.TextFieldSettingItem
 import com.smart.autodaily.ui.conponent.TitleSettingItem
+import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.viewmodel.SettingViewModel
 import kotlinx.coroutines.launch
 import splitties.init.appCtx
@@ -86,13 +86,15 @@ fun SettingScreen(
             floatWindowFlag = Settings.canDrawOverlays(appCtx)
         }
     )
-    val snackbarHostState = remember { SnackbarHostState() }
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
                 title = { Text(text = AppBarTitle.SETTING_SCREEN) },
             )
+        },
+        snackbarHost = {
+            SnackbarUtil.CustomSnackbarHost()
         }
     ) { paddingValues ->
         /*var accessibilityServiceOpenFlagOld = false
@@ -295,6 +297,8 @@ fun SettingScreen(
                     OutlinedButton(
                         enabled = newDialog.value,
                         onClick = {
+                            newDialog.value = false
+
                             settingViewModel.viewModelScope.launch{
                                 if(isRunning.intValue == 1){
                                     settingViewModel.appViewModel.stopRunScript()
@@ -304,10 +308,10 @@ fun SettingScreen(
                                         settingViewModel.deleteScript()
                                         settingViewModel.appViewModel.downScriptByScriptId(it)
                                         settingViewModel.getGlobalSetting()
-                                        snackbarHostState.showSnackbar("更新成功！")
-                                    }catch (e : Exception){
+                                        SnackbarUtil.show("更新成功！")
+                                    }catch (_ : Exception){
                                         appDb.scriptInfoDao.insert(it)
-                                        snackbarHostState.showSnackbar("更新失败，请稍后重试！")
+                                        SnackbarUtil.show("更新失败，请稍后重试！")
                                     }
                                 }
                             }

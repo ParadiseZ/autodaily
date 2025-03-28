@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,7 +34,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.smart.autodaily.MainActivity
 import com.smart.autodaily.constant.ResponseCode
 import com.smart.autodaily.ui.conponent.LockScreenLoading
-import com.smart.autodaily.utils.ToastUtil
+import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.ValidUtil
 import com.smart.autodaily.viewmodel.LoginViewModel
 import kotlinx.coroutines.launch
@@ -42,13 +43,19 @@ class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            LoginScreen()
+            Scaffold(
+                snackbarHost = {
+                    SnackbarUtil.CustomSnackbarHost()
+                }
+            ) {
+                LoginScreen(modifier = Modifier.padding(it))
+            }
         }
     }
 }
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(modifier: Modifier) {
     val loginViewMode : LoginViewModel = viewModel()
     // You should use proper state-hoisting for real-world scenarios
     var username by remember { mutableStateOf("") }
@@ -58,7 +65,7 @@ fun LoginScreen() {
         isLocked =isLocked,
         content = {
             Column(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxSize()
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -116,9 +123,7 @@ fun LoginScreen() {
                                         )
                                     }else{
                                         loginResult.message?.let {
-                                            ToastUtil.show(loginViewMode.context,
-                                                it
-                                            )
+                                            SnackbarUtil.show(it)
                                         }
                                     }
                                 }
@@ -148,7 +153,7 @@ fun LoginScreen() {
 
 private fun loginCheck(username: String, password: String,context: Context):Boolean{
     if( username.isEmpty() || password.isEmpty() ) {
-        ToastUtil.show(context, "邮箱或密码不能为空")
+        SnackbarUtil.show("邮箱或密码不能为空")
     }
     if ( ValidUtil.isValidEmail(username) ){
         return true
@@ -156,7 +161,7 @@ private fun loginCheck(username: String, password: String,context: Context):Bool
         if( ValidUtil.isNumeric(username) ){
             return true
         }else{
-            ToastUtil.show(context, "邮箱不符合规范")
+            SnackbarUtil.show("邮箱不符合规范")
         }
     }
     return false

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,7 +33,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.smart.autodaily.constant.ResponseCode
 import com.smart.autodaily.ui.conponent.LockScreenLoading
-import com.smart.autodaily.utils.ToastUtil
+import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.ValidUtil
 import com.smart.autodaily.viewmodel.ResetPasswordViewModel
 import kotlinx.coroutines.delay
@@ -43,13 +44,21 @@ class ResetPasswordActivity: ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             // Theme wrappers and other composables may be needed based on your application setup
-            ResetPasswordScreen()
+            Scaffold (
+                snackbarHost = {
+                    SnackbarUtil.CustomSnackbarHost()
+                }
+            ){
+                ResetPasswordScreen(modifier = Modifier.padding(it))
+            }
         }
     }
 }
 
 @Composable
-fun ResetPasswordScreen() {
+fun ResetPasswordScreen(
+    modifier: Modifier
+) {
     val resetPwdViewModel : ResetPasswordViewModel = viewModel()
     // You should use proper state-hoisting for real-world scenarios
     var username by remember { mutableStateOf("") }
@@ -62,7 +71,7 @@ fun ResetPasswordScreen() {
         isLocked =isLocked,
         content = {
             Column(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxSize()
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -108,7 +117,7 @@ fun ResetPasswordScreen() {
                                             delay(1000)
                                         }
                                     }else{
-                                        ToastUtil.show(resetPwdViewModel.context,result.message.toString())
+                                        SnackbarUtil.show(result.message.toString())
                                     }
                                     emailCheckButtonEnabled = true
                                 }
@@ -161,7 +170,7 @@ fun ResetPasswordScreen() {
                                     isLocked.value = true
                                     val resetResult = resetPwdViewModel.resetPwdByEmail(username,emailCheckCode, password)
                                     isLocked.value = false
-                                    ToastUtil.show(resetPwdViewModel.context,resetResult.message.toString())
+                                    SnackbarUtil.show(resetResult.message.toString())
                                     if (resetResult.code== ResponseCode.SUCCESS.code){
                                         resetPwdViewModel.context.startActivity(
                                             Intent("android.intent.action.LOGIN")
@@ -185,7 +194,7 @@ fun ResetPasswordScreen() {
 
 private fun resetCheck(username: String, password: String,context: Context):Boolean{
     if( username.isEmpty() || password.isEmpty() ) {
-        ToastUtil.show(context, "邮箱或密码不能为空")
+        SnackbarUtil.show("邮箱或密码不能为空")
         return false
     }
     if ( ValidUtil.isValidEmail(username) ){
@@ -194,7 +203,7 @@ private fun resetCheck(username: String, password: String,context: Context):Bool
         if( ValidUtil.isNumeric(username) ){
             return true
         }else{
-            ToastUtil.show(context, "邮箱不符合规范")
+            SnackbarUtil.show("邮箱不符合规范")
         }
     }
     return false
@@ -202,7 +211,7 @@ private fun resetCheck(username: String, password: String,context: Context):Bool
 
 private fun resetCheck(username: String,context: Context):Boolean{
     if( username.isEmpty()) {
-        ToastUtil.show(context, "邮箱不能为空")
+        SnackbarUtil.show("邮箱不能为空")
     }
     if ( ValidUtil.isValidEmail(username) ){
         return true
@@ -210,7 +219,7 @@ private fun resetCheck(username: String,context: Context):Boolean{
         if( ValidUtil.isNumeric(username) ){
             return true
         }else{
-            ToastUtil.show(context, "邮箱不符合规范")
+            SnackbarUtil.show("邮箱不符合规范")
         }
     }
     return false

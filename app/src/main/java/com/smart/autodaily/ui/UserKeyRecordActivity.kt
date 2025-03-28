@@ -24,6 +24,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.smart.autodaily.constant.AppBarTitle
 import com.smart.autodaily.data.entity.UserKeyRecord
 import com.smart.autodaily.ui.theme.AutoDailyTheme
+import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.viewmodel.person.UserKeyRecordViewModel
 
 class UserKeyRecordActivity: ComponentActivity() {
@@ -44,6 +45,9 @@ class UserKeyRecordActivity: ComponentActivity() {
                                 }
                             }
                         )
+                    },
+                    snackbarHost = {
+                        SnackbarUtil.CustomSnackbarHost()
                     }
                 ){
                     UserKeyRecordScreen(modifier = Modifier.padding(it))

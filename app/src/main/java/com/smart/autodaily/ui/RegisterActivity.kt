@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.smart.autodaily.ui.conponent.LockScreenLoading
-import com.smart.autodaily.utils.ToastUtil
+import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.ValidUtil
 import com.smart.autodaily.viewmodel.RegisterViewModel
 import kotlinx.coroutines.delay
@@ -41,14 +42,19 @@ class RegisterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            // Theme wrappers and other composables may be needed based on your application setup
-            RegisterScreen()
+            Scaffold(
+                snackbarHost = {
+                    SnackbarUtil.CustomSnackbarHost()
+                }
+            ) {
+                RegisterScreen(modifier = Modifier.padding(it))
+            }
         }
     }
 }
 
 @Composable
-fun RegisterScreen() {
+fun RegisterScreen(modifier: Modifier) {
     val registerViewModel : RegisterViewModel = viewModel()
     // You should use proper state-hoisting for real-world scenarios
     var username by remember { mutableStateOf("") }
@@ -62,7 +68,7 @@ fun RegisterScreen() {
         isLocked =isLocked,
         content = {
             Column(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxSize()
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -109,7 +115,9 @@ fun RegisterScreen() {
                                             delay(1000)
                                         }
                                     }else{
-                                        ToastUtil.show(registerViewModel.context,result.message.toString())
+                                        result.message?.let {
+                                            SnackbarUtil.show(it)
+                                        }
                                     }
                                     emailCheckButtonEnabled = true
                                 }
@@ -173,19 +181,10 @@ fun RegisterScreen() {
                                     val registerResult = registerViewModel.registerByEmail(username,emailCheckCode, password, inviteCodeFather)
                                     isLocked.value = false
                                     registerResult.message?.let {
-                                        if (it.isEmpty()){
-                                            ToastUtil.show(registerViewModel.context,
-                                                "注册失败！请联系管理员"
-                                            )
-                                        }else{
-                                            ToastUtil.show(registerViewModel.context,
-                                                it
-                                            )
-                                        }
-
+                                        SnackbarUtil.show(it)
                                     }
                                     if (registerResult.code == 200){
-                                        ToastUtil.show(registerViewModel.context, "注册成功！")
+                                        SnackbarUtil.show("注册成功！")
                                         registerViewModel.context.startActivity(
                                             Intent("android.intent.action.LOGIN")
                                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -208,7 +207,7 @@ fun RegisterScreen() {
 
 private fun registerCheck(username: String, password: String,context: Context):Boolean{
     if( username.isEmpty() || password.isEmpty() ) {
-        ToastUtil.show(context, "邮箱或密码不能为空")
+        SnackbarUtil.show("邮箱或密码不能为空")
         return false
     }
     if ( ValidUtil.isValidEmail(username) ){
@@ -217,7 +216,7 @@ private fun registerCheck(username: String, password: String,context: Context):B
         if( ValidUtil.isNumeric(username) ){
             return true
         }else{
-            ToastUtil.show(context, "邮箱不符合规范")
+            SnackbarUtil.show("邮箱不符合规范")
         }
     }
     return false
@@ -225,7 +224,7 @@ private fun registerCheck(username: String, password: String,context: Context):B
 
 private fun registerCheck(username: String,context: Context):Boolean{
     if( username.isEmpty()) {
-        ToastUtil.show(context, "邮箱不能为空")
+        SnackbarUtil.show("邮箱不能为空")
     }
     if ( ValidUtil.isValidEmail(username) ){
         return true
@@ -233,7 +232,7 @@ private fun registerCheck(username: String,context: Context):Boolean{
         if( ValidUtil.isNumeric(username) ){
             return true
         }else{
-            ToastUtil.show(context, "邮箱不符合规范")
+            SnackbarUtil.show("邮箱不符合规范")
         }
     }
     return false

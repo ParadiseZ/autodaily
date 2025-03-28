@@ -175,18 +175,48 @@
 -keep class android.widget.Toast$TN$Handler { *; }
 -keep class android.widget.Toast$TN$InnerHandler { *; }
 
-# 保留 Response 相关
--keep class com.smart.autodaily.data.entity.resp.Response { *; }
--keep class com.smart.autodaily.data.entity.resp.Response$Companion { *; }
--keepclassmembers class com.smart.autodaily.data.entity.resp.Response {
-    public <init>(...);
-    public final int getCode();
-    public final java.lang.String getMessage();
-    public final java.lang.Object getData();
+# 保留注册相关的数据类
+-keep class com.smart.autodaily.data.entity.request.RegisterByEmailRequest { *; }
+-keep class com.smart.autodaily.data.entity.request.LoginByEmailRequest { *; }
+-keep class com.smart.autodaily.data.entity.request.RestPwdByEmailRequest { *; }
+-keep class com.smart.autodaily.data.entity.LoginResponse { *; }
+-keep class com.smart.autodaily.data.entity.UserInfo { *; }
+
+# 保留 Retrofit 接口
+-keep,allowobfuscation interface com.smart.autodaily.api.RegisterLoginApi
+-keepclassmembers,allowobfuscation interface com.smart.autodaily.api.RegisterLoginApi {
+    <methods>;
 }
 
-# 保留 ToastUtil 相关
--keep class com.smart.autodaily.utils.ToastUtil { *; }
--keepclassmembers class com.smart.autodaily.utils.ToastUtil {
-    public static void show(android.content.Context, java.lang.String);
+# 保留所有API接口
+-keep,allowobfuscation interface com.smart.autodaily.api.** {
+    <methods>;
+}
+
+# 保留所有实体类
+-keep class com.smart.autodaily.data.entity.** { *; }
+-keep class com.smart.autodaily.data.entity.request.** { *; }
+-keep class com.smart.autodaily.data.entity.resp.** { *; }
+
+# 保留实体类中的序列化字段
+-keepattributes *Annotation*
+-keepattributes Signature
+-keepattributes SourceFile,LineNumberTable
+-keepattributes EnclosingMethod
+-keepattributes InnerClasses
+
+# 保留实体类中的getter和setter方法
+-keepclassmembers class com.smart.autodaily.data.entity.** {
+    public <init>(...);
+    public *** get*();
+    public void set*(***);
+}
+
+# 保留实体类中的序列化相关字段
+-keepclassmembers class * implements java.io.Serializable {
+    private static final java.io.ObjectStreamField[] serialPersistentFields;
+    private void writeObject(java.io.ObjectOutputStream);
+    private void readObject(java.io.ObjectInputStream);
+    java.lang.Object writeReplace();
+    java.lang.Object readResolve();
 }

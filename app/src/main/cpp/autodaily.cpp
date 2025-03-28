@@ -104,8 +104,9 @@ extern "C"
     JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved)
     {
         __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "JNI_OnLoad");
-        ncnn::create_gpu_instance();
-
+        #if NCNN_VULKAN
+            ncnn::create_gpu_instance();
+        #endif
         JNIEnv *env;
         if (vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) != JNI_OK)
         {
@@ -156,7 +157,9 @@ extern "C"
         {
             ncnn::MutexLockGuard g(lock);
             ncnn::MutexLockGuard ocr(lock);
-            ncnn::destroy_gpu_instance();
+            #if NCNN_VULKAN
+                ncnn::destroy_gpu_instance();
+            #endif
             delete g_yolo;
             delete g_ocr;
 
@@ -254,8 +257,10 @@ extern "C"
         // reload
         {
             ncnn::MutexLockGuard g(lock);
-            if (!g_yolo)
+            if (!g_yolo){
                 g_yolo = new Yolo;
+            }
+            #if NCNN_VULKAN
             if (ncnn::get_gpu_count() == 0)
             {
                 g_yolo->load(paramFile, modelFile, target_size, norm_vals[0], false);
@@ -264,6 +269,9 @@ extern "C"
             {
                 g_yolo->load(paramFile, modelFile, target_size, norm_vals[0], use_gpu);
             }
+            #else
+                g_yolo->load(paramFile, modelFile, target_size, norm_vals[0], false);
+            #endif
         }
         fclose(paramFile);
         fclose(modelFile);

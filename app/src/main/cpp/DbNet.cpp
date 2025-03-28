@@ -16,7 +16,6 @@ int DbNet::load(AAssetManager* mgr,const char* modelPath, int _target_size, cons
     net.opt = ncnn::Option();
     net.opt.lightmode = true;
 #if NCNN_VULKAN
-    //LOGD("gpu count %d",ncnn::get_gpu_count());
     if (ncnn::get_gpu_count() != 0)
         net.opt.use_vulkan_compute = use_gpu;
 #endif

@@ -8,19 +8,19 @@ object ModelUtil{
     /*fun reloadModel(modelPath:String, targetSize : Int, useGpu : Boolean){
         val modelLoaded = model.loadModel(appCtx.assets,modelPath,targetSize,useGpu)
         if (!modelLoaded){
-            appCtx.toastOnUi("加载模型失败！")
+            SnackbarUtil.show("加载模型失败!")
         }
     }*/
 
     fun reloadModelSec(paramPath: String, modelPath:String, targetSize : Int, useGpu : Boolean){
         if (!model.loadModelSec(paramPath,modelPath,targetSize,useGpu)){
-            appCtx.toastOnUi("加载模型失败！")
+            SnackbarUtil.show("加载模型失败!")
         }
     }
 
     fun loadOcr(lang : Int, useGpu: Boolean, detectSize : Int, colorNum: Short, colorStep : Short){
         if (!model.loadOcr(appCtx.assets, lang, useGpu,detectSize,colorNum,colorStep)){
-            appCtx.toastOnUi("加载OCR模型失败！")
+            SnackbarUtil.show("加载OCR模型失败!")
         }
     }
 }

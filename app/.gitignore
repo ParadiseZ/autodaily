@@ -1,4 +1,6 @@
 /build
+/src/main/cpp/opencv-mobile-4.11.0-android
 /src/main/cpp/opencv-mobile-4.10.0-android
-/src/main/cpp/ncnn-20240410-android-vulkan
+/src/main/cpp/ncnn-20241226-android-vulkan
+/src/main/cpp/ncnn-20241226-android
 /src/main/assets/*.png

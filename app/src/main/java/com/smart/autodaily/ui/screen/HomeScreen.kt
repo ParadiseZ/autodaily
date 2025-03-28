@@ -1,10 +1,7 @@
 package com.smart.autodaily.ui.screen
 
-import android.content.Context
 import android.content.Intent
-import android.provider.Settings
 import androidx.activity.compose.BackHandler
-import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,8 +28,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -58,16 +53,11 @@ import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.handler.RunScript
 import com.smart.autodaily.handler.isRunning
 import com.smart.autodaily.ui.conponent.RowScriptInfo
-import com.smart.autodaily.utils.ScreenCaptureUtil
-import com.smart.autodaily.utils.ServiceUtil
-import com.smart.autodaily.utils.ToastUtil
+import com.smart.autodaily.utils.SnackbarUtil
+import com.smart.autodaily.utils.SnackbarUtil.CustomSnackbarHost
 import com.smart.autodaily.utils.isLogin
 import com.smart.autodaily.utils.runScope
-import com.smart.autodaily.utils.toastOnUi
 import com.smart.autodaily.viewmodel.HomeViewModel
-import com.smart.autodaily.viewmodel.mediaProjectionServiceStartFlag
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import splitties.init.appCtx
 import java.io.InterruptedIOException
@@ -92,8 +82,6 @@ fun HomeScreen(
     val currentScriptInfo  = remember { mutableStateOf<ScriptInfo?>(null) }
     //script运行状态
     val runStatus by isRunning
-    //提示信息设置
-    val snackbarHostState = remember { SnackbarHostState() }
     //设置详细展开、提示信息设置公用
     val scope = rememberCoroutineScope()
     
@@ -106,16 +94,14 @@ fun HomeScreen(
         } else {
             // 更新上次点击时间并提示用户
             lastBackTime.longValue = currentTime
-            scope.launch {
-                snackbarHostState.showSnackbar("再按一次退出")
-            }
+            SnackbarUtil.show("再按一次退出")
         }
     }
     
     Scaffold (
         modifier = modifier,
         snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
+            CustomSnackbarHost()
         },
         topBar = {
             TopAppBar(
@@ -145,23 +131,31 @@ fun HomeScreen(
                         shape = MaterialTheme.shapes.medium.copy(CornerSize(percent = 50)),
                         onClick = {
                             runScope.launch {
-                                /*homeViewModel.appViewModel.setIsRunning(2)
-                                RunScript.initGlobalSet()
+                                homeViewModel.appViewModel.setIsRunning(2)
+                                /*RunScript.initGlobalSet()
                                 homeViewModel.appViewModel.runScript()
                                 homeViewModel.appViewModel.setIsRunning(2)*/
                                 if(isLogin(homeViewModel.context, user)){
                                     val res : Response<String>
                                     try {
                                         res =  homeViewModel.runScriptCheck()
-                                    }catch(e : InterruptedIOException){
-                                        appCtx.toastOnUi("连接服务器异常！")
+                                    }catch(_ : InterruptedIOException){
+                                        SnackbarUtil.show("连接服务器异常!")
+                                        homeViewModel.appViewModel.setIsRunning(0)
+                                        return@launch
+                                    }catch (_ : Exception){
+                                        SnackbarUtil.show("检测脚本状态异常!")
                                         homeViewModel.appViewModel.setIsRunning(0)
                                         return@launch
                                     }
                                     if(scriptCheckResHand(res =res)){
                                         RunScript.initGlobalSet()
                                         homeViewModel.appViewModel.runScript()
+                                        if (isRunning.intValue == 0){
+                                            SnackbarUtil.show("shizuku服务异常!")
+                                        }
                                     }else{
+                                        SnackbarUtil.show("检测脚本状态异常!")
                                         homeViewModel.appViewModel.setIsRunning(0)
                                     }
                                 }else{
@@ -262,8 +256,8 @@ fun HomeScreen(
                                             homeViewModel.appViewModel.stopRunScript()
                                             scope.launch {
                                                 homeViewModel.deleteRunStatus(scriptInfo)
-                                                snackbarHostState.showSnackbar("删除运行记录成功！")
                                             }
+                                            SnackbarUtil.show("删除运行记录成功！")
                                         }
                                     )
                                     DropdownMenuItem(
@@ -314,9 +308,7 @@ fun HomeScreen(
                                 homeViewModel.deleteScript(scriptInfo)
                             }
                             openDialog.value = false
-                            scope.launch {
-                                snackbarHostState.showSnackbar("删除成功！")
-                            }
+                            SnackbarUtil.show("删除成功！")
                         }
                     ){
                         Text(text = "确定")
@@ -357,21 +349,20 @@ fun HomeScreen(
                     OutlinedButton(
                         enabled = newDialog.value,
                         onClick = {
+                            newDialog.value = false
+                            SnackbarUtil.show("正在更新，请勿重复点击！")
                             homeViewModel.viewModelScope.launch {
                                 try {
                                     currentScriptInfo.value?.let {
                                         homeViewModel.deleteScript(it)
                                         homeViewModel.appViewModel.downScriptByScriptId(it)
-                                        snackbarHostState.showSnackbar("更新成功！")
+                                        SnackbarUtil.show("更新成功！")
                                     }?:{
-                                        homeViewModel.viewModelScope.launch {
-                                            snackbarHostState.showSnackbar("更新成功！")
-                                        }
+                                        SnackbarUtil.show("更新成功！")
                                     }
-                                }catch (e:Exception){
-                                    snackbarHostState.showSnackbar("更新失败！请重新下载！")
+                                }catch (_:Exception){
+                                    SnackbarUtil.show("更新失败！请重新下载！")
                                 }
-                                newDialog.value = false
                             }
                         }
                     ){
@@ -406,55 +397,13 @@ fun HomeScreen(
     }
 }
 
-private fun scriptCheckResHand(context: Context= appCtx , res : Response<String>) : Boolean{
+private fun scriptCheckResHand(res : Response<String>) : Boolean{
     if (res.code==ResponseCode.SUCCESS_OK.code){
         return true
     }
-    context.toastOnUi(res.message)
-    return false
-}
-
-private fun accessibilityAndMediaProjectionRequest() {
-    if (!ServiceUtil.isAccessibilityServiceEnabled(appCtx)) {
-        ToastUtil.show(appCtx, "请先开启无障碍服务!")
-        appCtx.startActivity(
-            Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            null
-        )
-
-        //runCheckScope.cancel().takeIf { runCheckScope.isActive }
-        MainScope().launch {
-            for (time in 1..10) {
-                if (ServiceUtil.isAccessibilityServiceEnabled(appCtx)) {
-                    if (ScreenCaptureUtil.mps != null) {
-                        //homeViewModel.appViewModel.runScript()
-                        //ScreenCaptureUtil.screenCapture()
-                        //break
-                    } else {
-                        (ScreenCaptureUtil.mediaProjectionDataMap["startActivityForResultLauncher"] as ActivityResultLauncher<Intent>).launch(
-                            ScreenCaptureUtil.mediaProjectionDataMap["mediaProjectionIntent"] as Intent
-                        )
-                        ScreenCaptureUtil.mediaProjectionDataMap["resolver"] =
-                            appCtx.contentResolver//用来测试图片保存
-                        break
-                    }
-                }
-                delay(1000)
-            }
-        }
-
-
-        MainScope().launch {
-            for (time in 1..20) {
-                if (mediaProjectionServiceStartFlag.value){
-                    //ScreenCaptureUtil.screenCapture()
-                    //ScreenCaptureU.getScreenshot(homeViewModel.context)
-                    //ScreenCaptureUtil.screenCapture()
-                    ScreenCaptureUtil.screenCaptureTIRAMISU()
-                    break
-                }
-                delay(2000)
-            }
-        }
+    res.message?.let {
+        print(it)
+        SnackbarUtil.show(it)
     }
+    return false
 }

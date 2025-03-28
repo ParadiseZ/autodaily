@@ -1,6 +1,5 @@
 package com.smart.autodaily.utils
 
-
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
 import android.content.Context.ACCESSIBILITY_SERVICE
@@ -44,10 +43,9 @@ object ServiceUtil {
                 delay(1000)
             }
             serviceBoundChannel.send(Unit)
-            context.toastOnUi("等待授权超时！  ")
+            SnackbarUtil.show("等待授权超时！")
         }catch (e : Exception){
             serviceBoundChannel.send(Unit)
-            //context.toastOnUi("shizuku服务异常！  ")
         }
     }
 }

@@ -46,7 +46,7 @@ object ShizukuUtil {
             return
         }
         if (Shizuku.isPreV11()) {
-            context.toastOnUi("当前shizuku版本不支持动态申请")
+            SnackbarUtil.show("当前shizuku版本不支持动态申请")
             return
         }
         // 动态申请权限
@@ -100,7 +100,6 @@ object ShizukuUtil {
                 scope.launch {
                     ServiceUtil.serviceBoundChannel.send(Unit)
                 }
-                //appCtx.toastOnUi("shizuku连接成功！")
             }
         }
         override fun onServiceDisconnected(componentName: ComponentName) {

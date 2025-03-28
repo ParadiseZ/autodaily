@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.22.1)
 project("autodaily")
 #设置ncnn
-set(ncnn_DIR ${CMAKE_SOURCE_DIR}/ncnn-20240410-android-vulkan/${ANDROID_ABI}/lib/cmake/ncnn)
+set(ncnn_DIR ${CMAKE_SOURCE_DIR}/ncnn-20241226-android-vulkan/${ANDROID_ABI}/lib/cmake/ncnn)
 find_package(ncnn REQUIRED)
 #设置opencv
-set(OpenCV_DIR ${CMAKE_SOURCE_DIR}/opencv-mobile-4.10.0-android/sdk/native/jni)
+set(OpenCV_DIR ${CMAKE_SOURCE_DIR}/opencv-mobile-4.11.0-android/sdk/native/jni)
 find_package(OpenCV REQUIRED core imgproc)
 #关闭exception
 #target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -fexceptions)
@@ -37,8 +37,8 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
 target_link_libraries(${CMAKE_PROJECT_NAME}
     # List libraries link to the target library
     android
+    jnigraphics
     ncnn
     ${OpenCV_LIBS}
     log
-        jnigraphics
 )

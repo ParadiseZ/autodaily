@@ -34,6 +34,7 @@ import com.smart.autodaily.utils.AssetUtil
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.ModelUtil
 import com.smart.autodaily.utils.ScreenCaptureUtil
+import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.getMd5Hash
 import com.smart.autodaily.utils.getPicture
 import com.smart.autodaily.utils.isBetweenHour
@@ -41,7 +42,6 @@ import com.smart.autodaily.utils.isSame
 import com.smart.autodaily.utils.partScope
 import com.smart.autodaily.utils.rgbToHsv
 import com.smart.autodaily.utils.runScope
-import com.smart.autodaily.utils.toastOnUi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
@@ -133,16 +133,19 @@ object  RunScript {
         initConfData()
         Lom.d("config", conf.toString())
         _scriptCheckedList.value.forEach scriptForEach@{ si->
-            Lom.n( INFO, si.scriptName )
             skipFlowIds.clear()
             skipAcIds.clear()
             conf.pkgName = si.packageName
             //保存的所有的action map
             val allActionMap : HashMap<Int,ScriptActionInfo> = hashMapOf()
             if(si.currentRunNum < si.runsMaxNum){
-                Lom.d( INFO, "启动${si.scriptName}" )
+                Lom.n( INFO, si.scriptName )
                 startApp( conf.pkgName )
-                loadModel(si)
+                if(!loadModel(si)){
+                    isRunning.intValue = 0
+                    runScope.coroutineContext.cancelChildren()
+                    return
+                }
                 //insertFirstDetect(si.classesNum, si.packageName)
                 //所有选择的set
                 val scriptSet = getScriptSets(si.scriptId)
@@ -185,11 +188,12 @@ object  RunScript {
                         val capture = if (conf.capture == null || conf.capture!!.isRecycled) {
                             getPicture()?:continue
                         }else conf.capture!!
-                        //Lom.d( INFO, "detect and ocr" )
+                        Lom.d( INFO, "detect" )
                         val detectDeferred = runScope.async {
                             ModelUtil.model.detectYolo(capture, si.classesNum).toList().filter { it.prob > conf.similarScore }
                                 .toTypedArray()
                         }
+                        Lom.d( INFO, "ocr" )
                         val ocrDeferred = runScope.async {
                             ModelUtil.model.detectOcr(capture)
                         }
@@ -278,24 +282,29 @@ object  RunScript {
             partScope.launch {
                 adbStartApp(pkgName)
             }
-        }catch (e : Exception){
+        }catch (_ : Exception){
             Lom.n( ERROR, "app启动失败！")
-            appCtx.toastOnUi( "app启动失败！")
+            SnackbarUtil.show("app启动失败！")
             return
         }
     }
 
-    private fun loadModel(si  : ScriptInfo){
+    private fun loadModel(si  : ScriptInfo) : Boolean{
+        var loadRes = false
         appCtx.getExternalFilesDir("")?.let {
             ModelUtil.reloadModelSec(
                 it.path+"/"+si.modelPath+"/"+ MODEL_PARAM,
                 it.path+"/"+si.modelPath+"/"+ MODEL_BIN,
                 si.imgSize , conf.useGpu
             )
+            loadRes = true
+        }?:{
+            SnackbarUtil.show("加载模型失败!")
         }
         Lom.d(INFO,"加载模型...")
         ModelUtil.loadOcr(si.lang,conf.useGpu, conf.detectSize, 5, 16)
         Lom.d(INFO,"加载OCR结束")
+        return loadRes
     }
 
     private fun getScriptSets(scriptId : Int) : List<ScriptSetInfo>{
@@ -708,7 +717,7 @@ object  RunScript {
         }catch (e : Exception){
             Lom.d(ERROR, "initActionFun error")
             runScope.coroutineContext.cancelChildren()
-            appCtx.toastOnUi("初始化action失败，请联系管理员！")
+            SnackbarUtil.show("初始化action失败，请联系管理员！")
         }
     }
 

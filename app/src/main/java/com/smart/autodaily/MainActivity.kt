@@ -31,6 +31,7 @@ import com.smart.autodaily.ui.conponent.navSingleTopTo
 import com.smart.autodaily.ui.screen.UpdateScreen
 import com.smart.autodaily.ui.theme.AutoDailyTheme
 import com.smart.autodaily.utils.ShizukuUtil
+import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.binderScope
 import com.smart.autodaily.utils.cancelJob
 import kotlinx.coroutines.CoroutineScope
@@ -99,6 +100,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         content = {
                             UpdateScreen()
                             AppNavHost( modifier = Modifier.padding(it), navController = navController)
+                        },
+                        snackbarHost = {
+                            SnackbarUtil.CustomSnackbarHost()
                         }
                     )
                 }
@@ -120,7 +124,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                             startService(intent)
                         }
                     }else {
-                        this@MainActivity.toastOnUi("拒绝了录屏申请，将无法运行")
+                        SnackbarUtil.show("拒绝了录屏申请，将无法运行")
                     }
                     // stopService(intent)
                 }
@@ -164,6 +168,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         setNegativeButton("暂不设置") { _, _ ->
                             // 用户点击"暂不设置"时也记录状态
                             App.sharedPreferences.edit { putBoolean(App.KEY_NOTIFICATION_PERMISSION_CHECKED, true) }
+                            SnackbarUtil.show("您可以在设置中随时开启通知权限")
                         }
                     }
                 } catch (e: Exception) {

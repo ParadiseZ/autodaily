@@ -32,6 +32,7 @@ import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.ui.conponent.RowScriptInfo
 import com.smart.autodaily.ui.conponent.SearchTopAppBar
 import com.smart.autodaily.ui.conponent.SwipeRefreshList
+import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.viewmodel.SearchViewModel
 import kotlinx.coroutines.launch
 import kotlin.random.Random
@@ -54,6 +55,9 @@ fun SearchScreen(
                 searchViewModel.changeSearchText(it)
             })
         },
+        snackbarHost = {
+            SnackbarUtil.CustomSnackbarHost()
+        }
     ){
         SwipeRefreshList(
             collectAsLazyPagingItems = netSearScriptList,
@@ -96,11 +100,11 @@ fun SearchScreen(
                                 }
                             },
                             onClick = {
-                                if (scriptInfo.isDownloaded == 0){
+                                if (scriptInfo.downState.intValue == 0){
                                     searchViewModel.viewModelScope.launch {
+                                        scriptInfo.downState.intValue = 2
                                         searchViewModel.appViewModel.downScriptByScriptId( scriptInfo )
                                         //下载中
-                                        scriptInfo.downState.intValue = 2
                                         processShow.value =true
                                     }
                                 }

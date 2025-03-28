@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import com.smart.autodaily.constant.AppBarTitle
 import com.smart.autodaily.ui.screen.ScriptSetScreen
 import com.smart.autodaily.ui.theme.AutoDailyTheme
+import com.smart.autodaily.utils.SnackbarUtil
 
 class ScriptSetActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -38,6 +39,9 @@ class ScriptSetActivity : ComponentActivity() {
                                 }
                             }
                         )
+                    },
+                    snackbarHost = {
+                        SnackbarUtil.CustomSnackbarHost()
                     }
                 ){
                     ScriptSetScreen(

@@ -41,8 +41,8 @@ import com.smart.autodaily.data.entity.KeyTypeExchange
 import com.smart.autodaily.ui.conponent.MyButton
 import com.smart.autodaily.ui.theme.AutoDailyTheme
 import com.smart.autodaily.utils.ScreenCaptureUtil
+import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.gotoCoinDetail
-import com.smart.autodaily.utils.toastOnUi
 import com.smart.autodaily.viewmodel.person.CoinExchangeViewModel
 import kotlinx.coroutines.launch
 import splitties.init.appCtx
@@ -66,6 +66,9 @@ class CoinExchangeActivity : ComponentActivity() {
                             }
                         )
                     },
+                    snackbarHost = {
+                        SnackbarUtil.CustomSnackbarHost()
+                    }
 
                 ){
                     CoinExchange(modifier = Modifier.padding(it))
@@ -128,7 +131,9 @@ fun CoinExchange(
                         viewModel.viewModelScope.launch {
                             val res = viewModel.exchangeVip(selectTypeId.intValue)
                             res?.let {
-                                appCtx.toastOnUi(it.message)
+                                it.message?.let { msg->
+                                    SnackbarUtil.show(msg)
+                                }
                             }
                             exchangeDialog.value = false
                         }

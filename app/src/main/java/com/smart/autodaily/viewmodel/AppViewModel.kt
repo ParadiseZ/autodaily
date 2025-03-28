@@ -26,11 +26,11 @@ import com.smart.autodaily.utils.DownloadManager
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.ShizukuUtil
+import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.cancelChildrenJob
 import com.smart.autodaily.utils.deleteFile
 import com.smart.autodaily.utils.logScope
 import com.smart.autodaily.utils.runScope
-import com.smart.autodaily.utils.toastOnUi
 import com.smart.autodaily.utils.updateScriptSet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
@@ -77,7 +77,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                             res.data?.let { it1 -> appDb.userInfoDao.update(it1) }
                             loadUserInfo()
                         }else{
-                            appCtx.toastOnUi(res.message.toString())
+                            SnackbarUtil.show(res.message.toString())
                         }
                     }
                 }catch (e : Exception){
@@ -126,10 +126,11 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
         workType.value.let {
             when(it) {
                 WORK_TYPE00 ->{
-                    appCtx.toastOnUi("未设置工作模式！")
+                    SnackbarUtil.show("未设置工作模式！")
+                    isRunning.intValue = 0
                 }
                 WORK_TYPE01 -> {
-                    isRunning.intValue = 1
+                    isRunning.intValue = 0
                 }
                 WORK_TYPE02 -> {
                     //_isRunning.value = 2//启动服务
@@ -142,17 +143,16 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                         isRunning.intValue = 0
                     }else{
                         isRunning.intValue = 0//启动服务失败
-                        appCtx.toastOnUi("请检查shizuku服务！")
+                        SnackbarUtil.show("请检查shizuku服务！")
                         return
                     }
                     //(manActivityCtx as MainActivity).requestOverlayPermission()
                 }
 
                 WORK_TYPE03 -> {
-                    isRunning.intValue = 1
+                    isRunning.intValue = 0
                 }
-                else ->{
-                    appCtx.toastOnUi("")
+                else-> {
                     isRunning.intValue = 0
                 }
             }

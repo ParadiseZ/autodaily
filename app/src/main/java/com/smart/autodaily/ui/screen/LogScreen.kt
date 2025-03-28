@@ -33,6 +33,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.smart.autodaily.R
 import com.smart.autodaily.constant.AppBarTitle
 import com.smart.autodaily.constant.Ui
+import com.smart.autodaily.utils.SnackbarUtil.CustomSnackbarHost
 import com.smart.autodaily.viewmodel.LogViewModel
 import kotlinx.coroutines.launch
 
@@ -77,6 +78,9 @@ fun LogScreen(
                 }
             )
         },
+        snackbarHost = {
+            CustomSnackbarHost()
+        }
     ){ padding->
         Box(
             modifier = modifier
