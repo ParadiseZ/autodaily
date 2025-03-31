@@ -122,7 +122,6 @@ std::vector<TextLine> CrnnNet::getTextLines(std::vector<cv::Mat>& partImg) {
             textLine = getColors(textLine, partImg[i]);
             textLines.emplace_back(textLine);
         }
-        partImg[i].release();
     }
     return textLines;
 }
@@ -156,7 +155,6 @@ TextLine CrnnNet::scoreToTextLine(const std::vector<float>& outputData, int h, i
 
 TextLine  CrnnNet::getColors(TextLine textLine, cv::Mat & src) const{
     cv::cvtColor(src, src, cv::COLOR_RGB2HSV);
-    std::mutex mutex;
     // 统计颜色频率，并应用颜色合并
     std::unordered_map<short, int> colorFrequency;
     for (int r = 0; r < 3; ++r) {

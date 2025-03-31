@@ -367,36 +367,38 @@ extern "C"
         jobjectArray jOcrResArray = nullptr;
         // 检查输入参数
         if (bitmap == nullptr || g_ocr == nullptr) {
+            __android_log_print(ANDROID_LOG_ERROR, "NCNN", "bitMap %b,g_ocr %b", bitmap == nullptr,g_ocr == nullptr);
             return nullptr;
         }
-        const cv::Mat& in = bitmapToMat(env, bitmap);
+        cv::Mat in = bitmapToMat(env, bitmap);
         if (in.empty()) {
+            __android_log_print(ANDROID_LOG_ERROR, "NCNN", "in %b", in.empty());
             return nullptr;
         }
         
         cv::Mat rgb;
         cv::cvtColor(in, rgb, cv::COLOR_RGBA2RGB);
-        
+        in.release();
         // 确保OCR检测器已初始化
         if (!g_ocr->dbNet) {
-            in.release();
+            __android_log_print(ANDROID_LOG_ERROR, "NCNN", "g_ocr->dbNet %b", !g_ocr->dbNet);
             rgb.release();
             return nullptr;
         }
         
         std::vector<TextBox> boxResult = g_ocr->dbNet->getTextBoxes(rgb, 0.2, 0.3, 2);
         if (boxResult.empty()) {
-            in.release();
+            __android_log_print(ANDROID_LOG_ERROR, "NCNN", "boxResult %b", boxResult.empty());
             rgb.release();
             return nullptr;
         }
         
         // 获取文本区域图像
         std::vector<cv::Mat> partImages = getPartImages(rgb, boxResult);
-        
+
         // 检查是否有有效的部分图像
         if (partImages.empty() || !g_ocr->crnnNet) {
-            in.release();
+            __android_log_print(ANDROID_LOG_ERROR, "NCNN", "partImages %b,g_ocr->crnnNet %b", partImages.empty(),!g_ocr->crnnNet);
             rgb.release();
             // 释放partImages中的所有Mat
             for (auto& img : partImages) {
@@ -408,6 +410,7 @@ extern "C"
         // 进行文本识别
         std::vector<TextLine> textLines = g_ocr->crnnNet->getTextLines(partImages);
         if (textLines.empty()) {
+            __android_log_print(ANDROID_LOG_ERROR, "NCNN", "textLines %b",textLines.empty());
             in.release();
             rgb.release();
             // 释放partImages中的所有Mat
@@ -439,7 +442,7 @@ extern "C"
             float y = boxResult[txt.idx].boxPoint[0].y;
             float w = boxResult[txt.idx].boxPoint[1].x - x;
             float h = boxResult[txt.idx].boxPoint[3].y - y;
-            //printLabels(txt.label, txt.text, txt.color);
+            printLabels(txt.label, txt.text, txt.color);
             //颜色处理begin
             jobject colorSet = env->NewObject(hashSetClass, hashSetCon);
             auto colorSize = static_cast<jshort>(txt.color.size());
@@ -459,7 +462,6 @@ extern "C"
         }
         
         // 释放内存
-        in.release();
         rgb.release();
         // 释放partImages中的所有Mat
         for (auto& img : partImages) {
