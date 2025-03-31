@@ -3,19 +3,18 @@ package com.smart.autodaily.handler
 import com.smart.autodaily.command.AdbClick
 import com.smart.autodaily.command.Operation
 import com.smart.autodaily.data.entity.DetectResult
-import com.smart.autodaily.data.entity.OcrResult
 import com.smart.autodaily.data.entity.Point
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.getMd5Hash
 import com.smart.autodaily.utils.getPicture
 
-fun execClick(sai: ScriptActionInfo, detectRes: Array<DetectResult>, ocrRes : Array<OcrResult>, cmd : Operation) : Int {
+fun execClick(sai: ScriptActionInfo, detectRes: Array<DetectResult>, cmd : Operation) : Int {
     if (!sai.operTxt){
         sai.point=null
         setPointsByLabel(sai, detectRes)
     }else if(sai.hsv.isEmpty()){
-        matchColorAndSetPoints(sai,ocrRes)
+        matchColorAndSetPoints(sai,detectRes)
     }
     if (sai.point == null) {
         return 5
@@ -70,24 +69,24 @@ private fun hasResponse(): Boolean {
     return true
 }
 
-fun checkColor(sai: ScriptActionInfo,ocrRes : Array<OcrResult>) : Boolean{
+fun checkColor(sai: ScriptActionInfo,ocrRes : Array<DetectResult>) : Boolean{
     if (sai.hsv.isEmpty()){
         return true
     }
     return matchColorAndSetPoints(sai, ocrRes)
 }
 
-private fun matchColorAndSetPoints(sai: ScriptActionInfo,ocrRes : Array<OcrResult>) : Boolean{
-    val firFilter = ocrRes.filter { it.label.containsAll(sai.txtFirstLab) }
+private fun matchColorAndSetPoints(sai: ScriptActionInfo,ocrRes : Array<DetectResult>) : Boolean{
+    val firFilter = ocrRes.filter { it.label == 0 && it.ocr.label.containsAll(sai.txtFirstLab) }
     if (firFilter.isEmpty()) {
         Lom.d(ERROR, "颜色匹配失败${sai.id} ${sai.txtLabel}")
         return false
     }
-    val secFilter: List<OcrResult>
+    val secFilter: List<DetectResult>
     if(firFilter.size>1){
-        val minSize = firFilter.minOf { it.label.size }
+        val minSize = firFilter.minOf { it.ocr.label.size }
         secFilter = firFilter.filter {
-            it.label.size == minSize
+            it.ocr.label.size == minSize
         }
     }else{
         secFilter = firFilter
@@ -102,8 +101,8 @@ private fun matchColorAndSetPoints(sai: ScriptActionInfo,ocrRes : Array<OcrResul
         val idx = (sai.labelPos-1).coerceAtMost(secFilter.size-1)
         secFilter[idx].let {
             Lom.d(INFO, "目标色  ${sai.id}" ,sai.hsv)
-            Lom.d(INFO, "图像色  ${sai.id}" ,it.colorSet)
-            if (it.colorSet.containsAll(sai.hsv)){
+            Lom.d(INFO, "图像色  ${sai.id}" ,it.ocr.colorSet)
+            if (it.ocr.colorSet.containsAll(sai.hsv)){
                 sai.point = getPoint(it)
                 return true
             }
@@ -112,8 +111,8 @@ private fun matchColorAndSetPoints(sai: ScriptActionInfo,ocrRes : Array<OcrResul
         //默认第一个
         secFilter[0].let {
             Lom.d(INFO, "目标 ${sai.id}" ,sai.hsv)
-            Lom.d(INFO, "图像  ${sai.id}" ,it.colorSet)
-            if (it.colorSet.containsAll(sai.hsv)){
+            Lom.d(INFO, "图像  ${sai.id}" ,it.ocr.colorSet)
+            if (it.ocr.colorSet.containsAll(sai.hsv)){
                 sai.point = getPoint(it)
                 return true
             }
@@ -147,7 +146,4 @@ fun setPointsByLabel(sai: ScriptActionInfo, detectRes: Array<DetectResult>){
 
 fun getPoint(detect : DetectResult) : Point{
     return Point(detect.xCenter + conf.random, detect.yCenter + conf.random)
-}
-fun getPoint(ocr : OcrResult) : Point{
-    return Point(ocr.xCenter + conf.random, ocr.yCenter + conf.random)
 }

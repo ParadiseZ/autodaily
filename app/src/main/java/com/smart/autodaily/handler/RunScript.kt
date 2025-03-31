@@ -17,20 +17,17 @@ import com.smart.autodaily.command.Sleep
 import com.smart.autodaily.command.adbRebootApp
 import com.smart.autodaily.command.adbStartApp
 import com.smart.autodaily.constant.ActionString
-import com.smart.autodaily.constant.Color
 import com.smart.autodaily.constant.MODEL_BIN
 import com.smart.autodaily.constant.MODEL_PARAM
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.ConfigData
 import com.smart.autodaily.data.entity.DetectResult
-import com.smart.autodaily.data.entity.OcrResult
 import com.smart.autodaily.data.entity.Rect
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptRunStatus
 import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.data.entity.ScriptSetRunStatus
-import com.smart.autodaily.utils.AssetUtil
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.ModelUtil
 import com.smart.autodaily.utils.ScreenCaptureUtil
@@ -42,7 +39,6 @@ import com.smart.autodaily.utils.isSame
 import com.smart.autodaily.utils.partScope
 import com.smart.autodaily.utils.rgbToHsv
 import com.smart.autodaily.utils.runScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -102,28 +98,6 @@ object  RunScript {
             10000L,
             2,
         )
-    }
-
-    fun testOcr(){
-        val pic = AssetUtil.getFromAssets("tkfm.jpg")
-        println("start ocr")
-        ModelUtil.loadOcr(0,false, 960, 5,16)
-        println("start detect")
-        val res =  ModelUtil.model.detectOcr(pic)
-        //val target : List<Short> = listOf(233,199,73)
-        val target : List<Short> = listOf(9,121,172)
-        val hsv = rgbToHsv(target)
-        println("hsv:${hsv}")
-        val color = ModelUtil.model.hsvToColor(hsv[0], hsv[1], hsv[2])
-        println("targetColor:${Color.entries[color]}")
-        res.map { ocr->
-            print("size:${ocr.colorArr.size},")
-            ocr.colorArr.forEach {
-                print("${Color.entries[it.toInt()]},")
-            }
-            ocr.colorSet = ocr.colorArr.toSet()
-            println()
-        }
     }
     //shell运行
     suspend fun runScriptByAdb(){
@@ -189,23 +163,13 @@ object  RunScript {
                             getPicture()?:continue
                         }else conf.capture!!
                         Lom.d( INFO, "detect" )
-                        val detectDeferred = runScope.async {
-                            ModelUtil.model.detectYolo(capture, si.classesNum).toList().filter { it.prob > conf.similarScore }
-                                .toTypedArray()
-                        }
-                        Lom.d( INFO, "ocr" )
-                        val ocrDeferred = runScope.async {
-                            ModelUtil.model.detectOcr(capture)
-                        }
-                        val detectRes = detectDeferred.await()
+                        val detectRes = ModelUtil.model.detectYolo(capture, si.classesNum).toList().filter { it.prob > conf.similarScore }
+                            .toTypedArray()
                         val detectLabels = detectRes.map { it.label }.toSet()
-                        val ocrRes = ocrDeferred.await()
 
-                        val txtLabels = ocrRes.map {
-                            if(it.colorSet.isEmpty()){
-                                it.colorSet = it.colorArr.toSet()
-                            }
-                            it.label//为了日志显示使用list
+                        val txtLabels = detectRes.filter { it.label ==0 }.map {
+                            it.ocr.label = it.ocr.labelArr.toSet()
+                            it.ocr.label
                         }.toTypedArray()
                         //MD5计算
                         conf.beforeHash = getMd5Hash(capture)
@@ -219,7 +183,7 @@ object  RunScript {
                         Lom.d(INFO, "检测标签$detectLabels")
                         Lom.d(INFO, "OCR标签${txtLabels.flatMap { it.toList() }}")
                         //conf.curHash = getMd5Hash(capture)
-                        when(tryAction(scriptActionArrayList, detectLabels, detectRes, txtLabels, ocrRes)){
+                        when(tryAction(scriptActionArrayList, detectLabels, detectRes, txtLabels)){
                             1 ->{
                                 //finish类
                                 Lom.n(INFO, "结束:${set.setName}")
@@ -233,7 +197,7 @@ object  RunScript {
                                 Lom.d(INFO,"当前任务 ${set.setId} [${set.setName}]未匹配到")
                                 if (conf.tryBackAction && isSame(0.2f)){
                                     Lom.d(INFO,"准备尝试返回")
-                                    tryBackAction( backActionArrayList, detectLabels,detectRes, txtLabels,ocrRes)
+                                    tryBackAction( backActionArrayList, detectLabels,detectRes, txtLabels)
                                 }
                             }
                             4 ->{
@@ -336,12 +300,12 @@ object  RunScript {
             val res = allActionMap.getOrPut(it.id) {
                 initActionFun(it)
                 it.intLabel?.let { label ->
-                    val arr =  label.split(",").map { labelStr -> labelStr.toShort() }
+                    val arr =  label.split(",").map { labelStr -> labelStr.toInt() }
                     it.intFirstLab = arr[0]
                     it.intLabelSet = arr.toSet()
                 }
                 it.intExcLabel?.let { label ->
-                    it.intExcLabelSet = label.split(",").map { labelStr -> labelStr.toShort() }.toSet()
+                    it.intExcLabelSet = label.split(",").map { labelStr -> labelStr.toInt() }.toSet()
                 }
                 it.txtLabel?.let { label ->
                     val arr =  label.split("|")
@@ -380,16 +344,16 @@ object  RunScript {
 
     private suspend fun tryAction(
         actionList: ArrayList<ScriptActionInfo>,
-        detectLabels: Set<Short>,
+        detectLabels: Set<Int>,
         detectRes: Array<DetectResult>,
-        txtLabels: Array<Set<Short>>,
-        ocrRes: Array<OcrResult>) : Int{
+        txtLabels: Array<Set<Short>>
+    ) : Int{
         actionList.forEach scriptAction@{ sai ->
             if (sai.skipFlag || sai.flowId in skipFlowIds || sai.id in skipAcIds) {
                 Lom.n(INFO, "跳过${sai.pageDesc}")
                 return@scriptAction
             }
-            if (isMatch(sai, detectLabels,txtLabels) && checkColor(sai,ocrRes)) {
+            if (isMatch(sai, detectLabels,txtLabels) && checkColor(sai,detectRes)) {
 
                 conf.remRebootTime = System.currentTimeMillis()
                 sai.pageDesc?.let { Lom.n(INFO, "✔\uFE0F【${it}】") }
@@ -399,7 +363,7 @@ object  RunScript {
                             when (cmd.type) {
                                 //点击
                                 1 -> {
-                                    val exeRes = execClick(sai,detectRes,ocrRes,cmd)
+                                    val exeRes = execClick(sai,detectRes,cmd)
                                     if (exeRes in 4..5){
                                         return exeRes
                                     }
@@ -436,10 +400,9 @@ object  RunScript {
 
     private fun tryBackAction(
         actionList: ArrayList<ScriptActionInfo>,
-        detectLabels: Set<Short>,
+        detectLabels: Set<Int>,
         detectRes: Array<DetectResult>,
-        txtLabels: Array<Set<Short>>,
-        ocrRes: Array<OcrResult>,
+        txtLabels: Array<Set<Short>>
     ) : Int{
         actionList.forEach scriptAction@{ sai ->
             if (
@@ -452,7 +415,7 @@ object  RunScript {
                         is Operation ->{
                             when(cmd.type){
                                 1 -> {
-                                    execClick(sai,detectRes,ocrRes,cmd)
+                                    execClick(sai,detectRes,cmd)
                                 }
                             }
                         }
@@ -465,7 +428,7 @@ object  RunScript {
     }
 
 
-    private fun isMatch(sai: ScriptActionInfo, detectLabels: Set<Short>,txtLabels : Array<Set<Short>>) : Boolean{
+    private fun isMatch(sai: ScriptActionInfo, detectLabels: Set<Int>, txtLabels: Array<Set<Short>>) : Boolean{
         // 检查 intLabelSet 条件
         val int = sai.intLabelSet.isEmpty() || detectLabels.containsAll(sai.intLabelSet)
 
@@ -481,7 +444,6 @@ object  RunScript {
         else return false
         // 检查 txtExcLabelSet 条件
         val txtExc = if(txt) sai.txtExcLabelSet.all { except->
-
             txtLabels.none { it.containsAll(except) }
         }else return false
 

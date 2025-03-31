@@ -35,11 +35,11 @@ data class ScriptActionInfo(
     @Ignore
     val command : ArrayList<Command> = arrayListOf()
     @Ignore
-    var intLabelSet : Set<Short> = setOf()
+    var intLabelSet : Set<Int> = setOf()
     @Ignore
-    var intExcLabelSet : Set<Short> = setOf()
+    var intExcLabelSet : Set<Int> = setOf()
     @Ignore
-    var intFirstLab : Short = 0
+    var intFirstLab : Int = 0
     @Ignore
     var txtLabelSet : List<Set<Short>> = listOf()
     @Ignore

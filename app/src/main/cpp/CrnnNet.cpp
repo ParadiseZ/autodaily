@@ -7,7 +7,6 @@
 CrnnNet::CrnnNet() {
     blob_pool_allocator.set_size_compare_ratio(0.f);
     workspace_pool_allocator.set_size_compare_ratio(0.f);
-    target_size = 640;
 }
 
 template<class ForwardIterator>
@@ -15,7 +14,18 @@ inline static size_t argmax(ForwardIterator first, ForwardIterator last) {
     return std::distance(first, std::max_element(first, last));
 }
 
-int CrnnNet::load(AAssetManager* mgr,const char* modelPath, short _target_size,short _color_num,short _colorStep, const float* _mean_vals, const float* _norm_vals, bool use_gpu) {
+int CrnnNet::load(AAssetManager* mgr, short _target_size,short _colorStep, const float* _mean_vals, const float* _norm_vals, bool use_gpu, int lang, bool _getColor) {
+    const char* modelPath;
+    if (lang == 0) {
+        modelPath = "ch_rec";
+        const char *filename = "ch_keys_v1.txt";
+        int redRes = readKeysFromAssets(mgr, filename);
+        if (!redRes){
+            return -1;
+        }
+    } else{
+        return -1;
+    }
     ncnn::set_cpu_powersave(2);
     ncnn::set_omp_num_threads(ncnn::get_big_cpu_count());
 
@@ -35,7 +45,6 @@ int CrnnNet::load(AAssetManager* mgr,const char* modelPath, short _target_size,s
     net.load_param(mgr,parampath);
     net.load_model(mgr,modelpath);
     target_size = _target_size;
-    color_num = _color_num;
     colorStep = _colorStep;
     norm_vals[0] = _norm_vals[0];
     norm_vals[1] = _norm_vals[1];
@@ -43,25 +52,26 @@ int CrnnNet::load(AAssetManager* mgr,const char* modelPath, short _target_size,s
     mean_vals[0] = _mean_vals[0];
     mean_vals[1] = _mean_vals[1];
     mean_vals[2] = _mean_vals[2];
+    getColor = _getColor;
     return 0;
 }
-void CrnnNet::readKeysFromAssets(AAssetManager *mgr,const char *filename)
+bool CrnnNet::readKeysFromAssets(AAssetManager *mgr,const char *filename)
 {
     if (mgr == nullptr) {
-        return;
+        return false;
     }
     char *buffer;
 
     auto *asset = AAssetManager_open(mgr, filename, AASSET_MODE_UNKNOWN);
     if (asset == nullptr) {
-        return;
+        return false;
     }
     off_t bufferSize = AAsset_getLength(asset);
     buffer = (char *)malloc(bufferSize + 1);
     if (buffer == nullptr) {
         // 处理内存分配失败的情况
         AAsset_close(asset);
-        return;
+        return false;
     }
     buffer[bufferSize] = 0;
     // 读取资产内容到缓冲区
@@ -70,7 +80,7 @@ void CrnnNet::readKeysFromAssets(AAssetManager *mgr,const char *filename)
         free(buffer); // 释放已分配的内存
         AAsset_close(asset);
         // 可能需要返回一个错误码或者抛出异常
-        return; // 或者其他适当的错误处理逻辑
+        return false; // 或者其他适当的错误处理逻辑
     }
     if(!keys.empty()){
         keys.clear();
@@ -82,53 +92,43 @@ void CrnnNet::readKeysFromAssets(AAssetManager *mgr,const char *filename)
         keys.emplace_back(line);
         size++;
     }
+    keySize = static_cast<jsize>(keys.size());
     free(buffer);
     AAsset_close(asset);
+    return true;
 }
 
-TextLine CrnnNet::getTextLine(cv::Mat& src, int idx)
+TextLine CrnnNet::getTextLine(cv::Mat& src,cv::Rect rect)
 {
-    float scale = (float)target_size / (float)src.rows;
-    auto dstWidth = short((float)src.cols * scale);
-    //cv::Mat srcResize;
-    cv::resize(src, src, cv::Size(dstWidth, target_size));
+    cv::Mat roi = src(rect);
+    float scale = (float)target_size / (float)roi.rows;
+    auto dstWidth = short((float)roi.cols * scale);
+    if (dstWidth > 1056 || dstWidth < 40){//48*22
+        return {};
+    }
+    cv::resize(roi, roi, cv::Size(dstWidth, target_size));
     //if you use PP-OCRv3 you should change PIXEL_RGB to PIXEL_RGB2BGR
-    ncnn::Mat input = ncnn::Mat::from_pixels(src.data, ncnn::Mat::PIXEL_RGB, src.cols, src.rows);
+    ncnn::Mat input = ncnn::Mat::from_pixels(roi.data, ncnn::Mat::PIXEL_RGB, roi.cols, roi.rows);
     //ncnn::Mat input = ncnn::Mat::from_pixels(srcResize.data, ncnn::Mat::PIXEL_RGB2BGR, srcResize.cols, srcResize.rows);
 
     input.substract_mean_normalize(mean_vals, norm_vals);
 
     ncnn::Extractor extractor = net.create_extractor();
-    //extractor.set_num_threads(2);
-    //cv_show("resize",srcResize,0);
     extractor.input("in0", input);
 
     ncnn::Mat out;
     extractor.extract("out0", out);
     auto* floatArray = (float*)out.data;
     std::vector<float> outputData(floatArray, floatArray + out.h * out.w);
-    TextLine res = scoreToTextLine(outputData, out.h, out.w,idx);
+    TextLine res = scoreToTextLine(outputData, out.h, out.w);
+    if(getColor){
+        res = getColors(res, roi);
+    }
     return res;
 }
 
-std::vector<TextLine> CrnnNet::getTextLines(std::vector<cv::Mat>& partImg) {
-    auto size = static_cast<jshort>(partImg.size());
-    //int size = static_cast<jsize>(partImg.size());
-    std::vector<TextLine> textLines;
-    for (short i = 0; i < size; ++i)
-    {
-        TextLine textLine = getTextLine(partImg[i], i);
-        if (!textLine.text.empty()){
-            textLine = getColors(textLine, partImg[i]);
-            textLines.emplace_back(textLine);
-        }
-    }
-    return textLines;
-}
-
-TextLine CrnnNet::scoreToTextLine(const std::vector<float>& outputData, int h, int w,int idx)
+TextLine CrnnNet::scoreToTextLine(const std::vector<float>& outputData, int h, int w)
 {
-    int keySize = static_cast<jsize>(keys.size());
     std::string strRes;
     std::vector<float> scores;
     std::vector<short> label;
@@ -147,24 +147,21 @@ TextLine CrnnNet::scoreToTextLine(const std::vector<float>& outputData, int h, i
         }
         lastIndex = maxIndex;
     }
-    if (label.size()>22 || label.size()<2){
-        return {};
-    }
-    return { label, idx,strRes, scores };
+    return { label,strRes, scores };
 }
 
-TextLine  CrnnNet::getColors(TextLine textLine, cv::Mat & src) const{
+TextLine  CrnnNet::getColors(TextLine textLine, cv::Mat & src) {
     cv::cvtColor(src, src, cv::COLOR_RGB2HSV);
     // 统计颜色频率，并应用颜色合并
     std::unordered_map<short, int> colorFrequency;
-    for (int r = 0; r < 3; ++r) {
-        for (int c = 0; c < 10; ++c) {
+    for (int r = 0; r < 5; ++r) {
+        for (int c = 0; c < 5; ++c) {
             cv::Vec3b pixel = src.at<cv::Vec3b>(r, c);
             short color = colorMapping(pixel[0], pixel[1], pixel[2]);
             colorFrequency[color]++;  // 统计颜色频率
             // 关键修改：当 localFreq 大小达到 55时，强制外层循环终止
             if (colorFrequency.size() >= 3) {
-                r = 10;  // 将 r 设为 range.end-1，外层循环的 ++r 会使其超过范围
+                r = 5;  // 将 r 设为 range.end-1，外层循环的 ++r 会使其超过范围
                 break;              // 退出内层循环
             }
         }
@@ -172,38 +169,6 @@ TextLine  CrnnNet::getColors(TextLine textLine, cv::Mat & src) const{
     for (auto color: colorFrequency) {
         textLine.color.emplace_back(color.first);
     }
-    /*int row = src.rows/2 + 3;
-    int col = src.rows/2 + 3;
-    cv::parallel_for_(cv::Range(0, row), [&](const cv::Range& range) {
-        std::unordered_map<short, int> localFreq;
-        for (int r = range.start; r < range.end; ++r) {
-            for (int c = 0; c < col; ++c) {
-                //auto h = (short)((pixel[0] / colorStep) * colorStep);
-                cv::Vec3b pixel = src.at<cv::Vec3b>(r, c);
-                localFreq[colorMapping(pixel[0], pixel[1], pixel[2])]++;
-            }
-        }
-        // 合并到全局统计
-        std::lock_guard<std::mutex> lock(mutex);
-        for (auto map : localFreq) {
-            colorFrequency[ map.first ]  += map.second;
-        }
-    },2); // 使用多线程
-    std::priority_queue<
-            std::pair<int, short>,
-            std::vector<std::pair<int,short>>,
-            std::greater<>> pq;// 保留频率最高的 color_num 种颜色
-    for (const auto& pair : colorFrequency) {
-        pq.emplace(pair.second, pair.first); // 按频率降序排序
-        if (pq.size() > color_num) {
-            pq.pop();
-        }
-    }
-    // 构建结果字符串
-    while (!pq.empty()) {
-        textLine.color.emplace_back(pq.top().second);
-        pq.pop();
-    }*/
     return textLine;
 }
 

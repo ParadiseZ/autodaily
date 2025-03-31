@@ -3,7 +3,6 @@
 #define COMMON_H_
 #include <opencv2/opencv.hpp>
 #include <vector>
-#include "clipper.hpp"
 #include "net.h"
 #include "cpu.h"
 //#include <jni.h>
@@ -13,10 +12,15 @@ struct TextBox {
 };
 struct TextLine {
     std::vector<short> label;
-    int idx;
     std::string text;
     std::vector<float> charScores;
     std::vector<short> color;
+};
+struct Object
+{
+    cv::Rect_<float> rect;
+    int label;
+    float prob;
 };
 
 std::vector<cv::Point> getMinBoxes(const std::vector<cv::Point>& inVec, float& minSideLen, float& allEdgeSize);
@@ -31,4 +35,7 @@ std::vector<TextBox> findRsBoxes(const cv::Mat& fMapMat, const cv::Mat& norfMapM
                                  float boxScoreThresh, float unClipRatio);
 
 void resize(cv::Mat& input, int targetSize);
+
+cv::Mat bitmapToMat(JNIEnv *env, jobject j_argb8888_bitmap);
+static void matToBitmap(JNIEnv *env, cv::Mat &drawMat, jobject obj_bitmap);
 #endif //COMMON_H_

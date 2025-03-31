@@ -90,33 +90,6 @@ float boxScoreFast(const cv::Mat& inMat, const std::vector<cv::Point>& inBox) {
         maskMat).val[0];
 }
 
-std::vector<cv::Point> unClip(const std::vector<cv::Point>& inBox, float perimeter, float unClipRatio) {
-    std::vector<cv::Point> outBox;
-    ClipperLib::Path poly;
-
-    for (auto i : inBox) {
-        //poly.push_back(ClipperLib::IntPoint(i.x, i.y));
-        poly.emplace_back(i.x, i.y);
-        //poly.emplace_back(i.x, i.y);
-    }
-
-    double distance = unClipRatio * ClipperLib::Area(poly) / (double)perimeter;
-
-    ClipperLib::ClipperOffset clipperOffset;
-    clipperOffset.AddPath(poly, ClipperLib::JoinType::jtRound, ClipperLib::EndType::etClosedPolygon);
-    ClipperLib::Paths polys;
-    polys.push_back(poly);
-    clipperOffset.Execute(polys, distance);
-
-    outBox.clear();
-    std::vector<cv::Point> rsVec;
-    for (const auto& tmpPoly : polys) {
-        for (auto & j : tmpPoly) {
-            outBox.emplace_back(j.X, j.Y);
-        }
-    }
-    return outBox;
-}
 
 cv::Mat getRotateCropImage(const cv::Mat& src, std::vector<cv::Point> box) {
     // 检查输入图像是否为空
@@ -298,4 +271,46 @@ void resize(cv::Mat& input, int targetSize){
         w = w * scale;
     }
     cv::resize(input, input, cv::Size(w,h));
+}
+
+cv::Mat bitmapToMat(JNIEnv *env, jobject j_argb8888_bitmap)
+{
+    cv::Mat c_rgba;
+    AndroidBitmapInfo j_bitmap_info;
+    if (AndroidBitmap_getInfo(env, j_argb8888_bitmap, &j_bitmap_info) < 0)
+    {
+        return c_rgba;
+    }
+    if (j_bitmap_info.format != ANDROID_BITMAP_FORMAT_RGBA_8888)
+    {
+        return c_rgba;
+    }
+    void *j_bitmap_pixels;
+    if (AndroidBitmap_lockPixels(env, j_argb8888_bitmap, &j_bitmap_pixels) < 0)
+    {
+        return c_rgba;
+    }
+    cv::Mat j_bitmap_im(static_cast<int>(j_bitmap_info.height),
+                        static_cast<int>(j_bitmap_info.width), CV_8UC4,
+                        j_bitmap_pixels); // no copied.
+    c_rgba = j_bitmap_im;                 // ref only.
+    if (AndroidBitmap_unlockPixels(env, j_argb8888_bitmap) < 0)
+    {
+        return c_rgba;
+    }
+    return c_rgba;
+}
+
+static void matToBitmap(JNIEnv *env, cv::Mat &drawMat, jobject obj_bitmap)
+{
+    // 锁定画布
+    void *pixels;
+    AndroidBitmap_lockPixels(env, obj_bitmap, &pixels);
+    // 获取Bitmap的信息
+    AndroidBitmapInfo bitmapInfo;
+    AndroidBitmap_getInfo(env, obj_bitmap, &bitmapInfo);
+    // 将Mat数据复制到Bitmap
+    cv::Mat bitmapMat(static_cast<int>(bitmapInfo.height), static_cast<int>(bitmapInfo.width), CV_8UC4, pixels);
+    drawMat.copyTo(bitmapMat);
+    AndroidBitmap_unlockPixels(env, obj_bitmap);
 }

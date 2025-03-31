@@ -9,7 +9,7 @@ find_package(OpenCV REQUIRED core imgproc)
 #关闭exception
 #target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -fexceptions)
 # 为库单独设置编译选项
-set_source_files_properties(clipper.cpp PROPERTIES COMPILE_FLAGS "-fexceptions")
+#set_source_files_properties(clipper.cpp PROPERTIES COMPILE_FLAGS "-fexceptions")
 set_source_files_properties(autodaily.cpp PROPERTIES COMPILE_FLAGS "-fexceptions")
 set_source_files_properties(common.cpp PROPERTIES COMPILE_FLAGS "-fexceptions")
 #为源文件单独设置编译

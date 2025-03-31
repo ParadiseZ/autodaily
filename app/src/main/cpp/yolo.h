@@ -4,12 +4,7 @@
 
 #include <opencv2/core.hpp>
 #include <net.h>
-struct Object
-{
-    cv::Rect_<float> rect;
-    int label;
-    float prob;
-};
+#include "common.h"
 
 class Yolo
 {

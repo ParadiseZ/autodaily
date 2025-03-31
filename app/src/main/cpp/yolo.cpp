@@ -226,7 +226,7 @@ void Yolo::detect(const cv::Mat& bgr, std::vector<Object>& objects, const int nu
         h = target_size;
         w = w * scale;
     }
-    ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_RGBA2RGB, img_w, img_h, w, h);
+    ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_RGB, img_w, img_h, w, h);
 
     int wpad = (target_size + MAX_STRIDE - 1) / MAX_STRIDE * MAX_STRIDE - w;
     int hpad = (target_size + MAX_STRIDE - 1) / MAX_STRIDE * MAX_STRIDE - h;
