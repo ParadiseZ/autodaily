@@ -137,7 +137,7 @@ extern "C"
         // detect
         jclass localDetectResCls = env->FindClass("com/smart/autodaily/data/entity/DetectResult");
         detectResCls = (jclass)env->NewGlobalRef(localDetectResCls);
-        detectResCon = env->GetMethodID(detectResCls, "<init>", "(SFLcom/smart/autodaily/data/entity/Rect;FFLcom/smart/autodaily/data/entity/OcrResult;)V");
+        detectResCon = env->GetMethodID(detectResCls, "<init>", "(IFLcom/smart/autodaily/data/entity/Rect;FFLcom/smart/autodaily/data/entity/OcrResult;)V");
         env->DeleteLocalRef(localDetectResCls);
 
         jclass localRectCls = env->FindClass("com/smart/autodaily/data/entity/Rect");
