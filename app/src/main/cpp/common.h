@@ -31,9 +31,6 @@ std::vector<cv::Mat> getPartImages(const cv::Mat& src, std::vector<TextBox>& tex
 //cv::Mat matRotateClockWise180(cv::Mat src);
 //cv::Mat makePadding(cv::Mat& src, int padding);
 
-std::vector<TextBox> findRsBoxes(const cv::Mat& fMapMat, const cv::Mat& norfMapMat,
-                                 float boxScoreThresh, float unClipRatio);
-
 void resize(cv::Mat& input, int targetSize);
 
 cv::Mat bitmapToMat(JNIEnv *env, jobject j_argb8888_bitmap);

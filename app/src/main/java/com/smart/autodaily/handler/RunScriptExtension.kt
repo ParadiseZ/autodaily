@@ -77,16 +77,16 @@ fun checkColor(sai: ScriptActionInfo,ocrRes : Array<DetectResult>) : Boolean{
 }
 
 private fun matchColorAndSetPoints(sai: ScriptActionInfo,ocrRes : Array<DetectResult>) : Boolean{
-    val firFilter = ocrRes.filter { it.label == 0 && it.ocr.label.containsAll(sai.txtFirstLab) }
+    val firFilter = ocrRes.filter { it.label == 0 && it.ocr!!.label.containsAll(sai.txtFirstLab) }
     if (firFilter.isEmpty()) {
         Lom.d(ERROR, "颜色匹配失败${sai.id} ${sai.txtLabel}")
         return false
     }
     val secFilter: List<DetectResult>
-    if(firFilter.size>1){
-        val minSize = firFilter.minOf { it.ocr.label.size }
+    if(firFilter.size > 1){
+        val minSize = firFilter.minOf { it.ocr!!.label.size }
         secFilter = firFilter.filter {
-            it.ocr.label.size == minSize
+            it.ocr!!.label.size == minSize
         }
     }else{
         secFilter = firFilter
@@ -101,7 +101,7 @@ private fun matchColorAndSetPoints(sai: ScriptActionInfo,ocrRes : Array<DetectRe
         val idx = (sai.labelPos-1).coerceAtMost(secFilter.size-1)
         secFilter[idx].let {
             Lom.d(INFO, "目标色  ${sai.id}" ,sai.hsv)
-            Lom.d(INFO, "图像色  ${sai.id}" ,it.ocr.colorSet)
+            Lom.d(INFO, "图像色  ${sai.id}" ,it.ocr!!.colorSet)
             if (it.ocr.colorSet.containsAll(sai.hsv)){
                 sai.point = getPoint(it)
                 return true
@@ -111,7 +111,7 @@ private fun matchColorAndSetPoints(sai: ScriptActionInfo,ocrRes : Array<DetectRe
         //默认第一个
         secFilter[0].let {
             Lom.d(INFO, "目标 ${sai.id}" ,sai.hsv)
-            Lom.d(INFO, "图像  ${sai.id}" ,it.ocr.colorSet)
+            Lom.d(INFO, "图像  ${sai.id}" ,it.ocr!!.colorSet)
             if (it.ocr.colorSet.containsAll(sai.hsv)){
                 sai.point = getPoint(it)
                 return true

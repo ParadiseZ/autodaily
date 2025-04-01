@@ -28,14 +28,13 @@ import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.ScriptRunStatus
 import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.data.entity.ScriptSetRunStatus
+import com.smart.autodaily.navpkg.AutoDaily
 import com.smart.autodaily.utils.Lom
-import com.smart.autodaily.utils.ModelUtil
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.getMd5Hash
 import com.smart.autodaily.utils.getPicture
 import com.smart.autodaily.utils.isBetweenHour
-import com.smart.autodaily.utils.isSame
 import com.smart.autodaily.utils.partScope
 import com.smart.autodaily.utils.rgbToHsv
 import com.smart.autodaily.utils.runScope
@@ -60,7 +59,9 @@ val skipFlowIds  by lazy {
 val skipAcIds  by lazy {
     mutableIntSetOf()
 }
-
+val model by lazy{
+    AutoDaily()
+}
 
 const val INFO = "info"
 const val ERROR = "error"
@@ -114,7 +115,7 @@ object  RunScript {
             val allActionMap : HashMap<Int,ScriptActionInfo> = hashMapOf()
             if(si.currentRunNum < si.runsMaxNum){
                 Lom.n( INFO, si.scriptName )
-                startApp( conf.pkgName )
+                //startApp( conf.pkgName )
                 if(!loadModel(si)){
                     isRunning.intValue = 0
                     runScope.coroutineContext.cancelChildren()
@@ -162,26 +163,33 @@ object  RunScript {
                         val capture = if (conf.capture == null || conf.capture!!.isRecycled) {
                             getPicture()?:continue
                         }else conf.capture!!
-                        Lom.d( INFO, "detect" )
-                        val detectRes = ModelUtil.model.detectYolo(capture, si.classesNum).toList().filter { it.prob > conf.similarScore }
+                        //Lom.d( INFO, "开始检测 ${capture.height}" )
+                        val detectRes = model.detectYolo(capture, si.classesNum).filter { it!=null }//.filter { it.prob > conf.similarScore }
                             .toTypedArray()
-                        val detectLabels = detectRes.map { it.label }.toSet()
-
-                        val txtLabels = detectRes.filter { it.label ==0 }.map {
-                            it.ocr.label = it.ocr.labelArr.toSet()
-                            it.ocr.label
-                        }.toTypedArray()
+                        val detectLabels = detectRes.filter { it.label> 0 }.map { it.label  }.toSet()
+                        val txtRes = detectRes.filter { it.label == 0 }
+                        val txtLabels = if(txtRes.isEmpty()){ arrayOf() }else{
+                            txtRes.map {
+                                it.ocr!!.label = it.ocr.labelArr.toSet()
+                                it.ocr.colorSet = it.ocr.colorArr.toSet()
+                                it.ocr.label
+                            }.toTypedArray()
+                        }
                         //MD5计算
                         conf.beforeHash = getMd5Hash(capture)
                         //释放截图
                         conf.capture?.recycle()
                         //debugPrintScriptActionLabels(detectRes, detectLabels)
                         if (detectLabels.isEmpty() && txtLabels.isEmpty()) {
-                            Lom.d(INFO,"未识别到内容")
+                            //Lom.d(INFO,"未识别到内容")
                             continue
                         }
-                        Lom.d(INFO, "检测标签$detectLabels")
-                        Lom.d(INFO, "OCR标签${txtLabels.flatMap { it.toList() }}")
+                        //Lom.d(INFO, "检测标签$detectLabels")
+                        //Lom.d(INFO, "OCR标签${txtLabels.flatMap { it }}")
+                        for (result in detectRes.filter { it.label == 0 }) {
+                            println(result.ocr?.txt)
+                        }
+
                         //conf.curHash = getMd5Hash(capture)
                         when(tryAction(scriptActionArrayList, detectLabels, detectRes, txtLabels)){
                             1 ->{
@@ -195,7 +203,7 @@ object  RunScript {
                             }
                             3 ->{
                                 Lom.d(INFO,"当前任务 ${set.setId} [${set.setName}]未匹配到")
-                                if (conf.tryBackAction && isSame(0.2f)){
+                                if (conf.tryBackAction){
                                     Lom.d(INFO,"准备尝试返回")
                                     tryBackAction( backActionArrayList, detectLabels,detectRes, txtLabels)
                                 }
@@ -249,18 +257,15 @@ object  RunScript {
     private fun loadModel(si  : ScriptInfo) : Boolean{
         var loadRes = false
         appCtx.getExternalFilesDir("")?.let {
-            ModelUtil.reloadModelSec(
+            model.loadModelSec(appCtx.assets,
                 it.path+"/"+si.modelPath+"/"+ MODEL_PARAM,
                 it.path+"/"+si.modelPath+"/"+ MODEL_BIN,
-                si.imgSize , conf.useGpu
-            )
+                si.imgSize,  conf.useGpu, 16, 0, true, true)
             loadRes = true
         }?:{
             SnackbarUtil.show("加载模型失败!")
         }
-        Lom.d(INFO,"加载模型...")
-        ModelUtil.loadOcr(si.lang,conf.useGpu, conf.detectSize, 5, 16)
-        Lom.d(INFO,"加载OCR结束")
+        Lom.d(INFO,"加载模型成功！")
         return loadRes
     }
 
@@ -323,7 +328,7 @@ object  RunScript {
                     it.hsv = color.split(";").map { rgbStr->
                         val co = rgbStr.split(",").map { rgb-> rgb.toShort() }.toList()
                         val hsv = rgbToHsv(co)
-                        ModelUtil.model.hsvToColor(hsv[0], hsv[1], hsv[2]).toShort()
+                        model.hsvToColor(hsv[0], hsv[1], hsv[2]).toShort()
                     }.toSet()
                 }
                 /*it.rgbExc?.let { color->

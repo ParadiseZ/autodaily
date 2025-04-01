@@ -3,7 +3,7 @@ package com.smart.autodaily.data.entity
 data class OcrResult(
     var label : Set<Short>,
     val labelArr : ShortArray,
-    val txt : String?,
+    val txt : String,
     var colorSet : Set<Short>,
     val colorArr : ShortArray
 ) {
@@ -25,7 +25,7 @@ data class OcrResult(
     override fun hashCode(): Int {
         var result = label.hashCode()
         result = 31 * result + labelArr.contentHashCode()
-        result = 31 * result + (txt?.hashCode() ?: 0)
+        result = 31 * result + txt.hashCode()
         result = 31 * result + colorSet.hashCode()
         result = 31 * result + colorArr.contentHashCode()
         return result

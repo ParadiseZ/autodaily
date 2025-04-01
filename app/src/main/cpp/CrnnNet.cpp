@@ -14,7 +14,7 @@ inline static size_t argmax(ForwardIterator first, ForwardIterator last) {
     return std::distance(first, std::max_element(first, last));
 }
 
-int CrnnNet::load(AAssetManager* mgr, short _target_size,short _colorStep, const float* _mean_vals, const float* _norm_vals, bool use_gpu, int lang, bool _getColor) {
+int CrnnNet::load(AAssetManager* mgr, int _target_size,short _colorStep, const float* _mean_vals, const float* _norm_vals, bool use_gpu, int lang, bool _getColor) {
     const char* modelPath;
     if (lang == 0) {
         modelPath = "ch_rec";
@@ -26,7 +26,8 @@ int CrnnNet::load(AAssetManager* mgr, short _target_size,short _colorStep, const
     } else{
         return -1;
     }
-    ncnn::set_cpu_powersave(2);
+    net.clear();
+    ncnn::set_cpu_powersave(0);
     ncnn::set_omp_num_threads(ncnn::get_big_cpu_count());
 
     net.opt = ncnn::Option();
@@ -100,7 +101,7 @@ bool CrnnNet::readKeysFromAssets(AAssetManager *mgr,const char *filename)
 
 TextLine CrnnNet::getTextLine(cv::Mat& src,cv::Rect rect)
 {
-    cv::Mat roi = src(rect);
+    cv::Mat roi = src(rect).clone();
     float scale = (float)target_size / (float)roi.rows;
     auto dstWidth = short((float)roi.cols * scale);
     if (dstWidth > 1056 || dstWidth < 40){//48*22
@@ -121,9 +122,14 @@ TextLine CrnnNet::getTextLine(cv::Mat& src,cv::Rect rect)
     auto* floatArray = (float*)out.data;
     std::vector<float> outputData(floatArray, floatArray + out.h * out.w);
     TextLine res = scoreToTextLine(outputData, out.h, out.w);
+    if(res.text.empty()){
+        roi.release();
+        return {};
+    }
     if(getColor){
         res = getColors(res, roi);
     }
+    roi.release();
     return res;
 }
 

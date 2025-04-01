@@ -12,20 +12,10 @@ fun getPicture() : Bitmap?{
             return it.execCap(CAPTURE)
         }?:{throw IllegalStateException()}
         return null
-    }catch (e:Exception){
+    }catch (_:Exception){
         runScope.coroutineContext.cancelChildren()
         isRunning.intValue = 0
         Lom.n(ERROR, "截图失败，停止运行")
         return null
     }
-}
-
-fun isSame(threshold : Float,targetSize: Int = 640, range:Int =10) : Boolean{
-    val before = getPicture()?: return false
-    Thread.sleep(500)
-    val cur = getPicture()?: return false
-    if (ModelUtil.model.frameDiff(before, cur , targetSize, range)< threshold) {
-        return true
-    }
-    return false
 }

@@ -212,45 +212,6 @@ cv::Mat matRotateClockWise180(cv::Mat src) {
     return paddingSrc;
 }*/
 
-std::vector<TextBox> findRsBoxes(const cv::Mat& fMapMat, const cv::Mat& norfMapMat,float boxScoreThresh, float unClipRatio)
-{
-    float minArea = 3;
-    std::vector<TextBox> rsBoxes;
-    rsBoxes.clear();
-    std::vector<std::vector<cv::Point>> contours;
-    cv::findContours(norfMapMat, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
-    for (const auto & contour : contours)
-    {
-        float minSideLen, perimeter;
-        std::vector<cv::Point> minBox = getMinBoxes(contour, minSideLen, perimeter);
-        if (minSideLen < minArea)
-            continue;
-        float score = boxScoreFast(fMapMat, contour);
-        if (score < boxScoreThresh)
-            continue;
-        //---use clipper start---
-        std::vector<cv::Point> clipBox = unClip(minBox, perimeter, unClipRatio);
-        std::vector<cv::Point> clipMinBox = getMinBoxes(clipBox, minSideLen, perimeter);
-        //---use clipper end---
-
-        if (minSideLen < minArea + 2)
-            continue;
-
-        for (auto & j : clipMinBox)
-        {
-            j.x = (j.x / 1.0);
-            j.x = (std::min)((std::max)(j.x, 0), norfMapMat.cols);
-
-            j.y = (j.y / 1.0);
-            j.y = (std::min)((std::max)(j.y, 0), norfMapMat.rows);
-        }
-
-        rsBoxes.emplace_back(TextBox{ clipMinBox, score });
-    }
-    reverse(rsBoxes.begin(), rsBoxes.end());
-
-    return rsBoxes;
-}
 
 
 void resize(cv::Mat& input, int targetSize){

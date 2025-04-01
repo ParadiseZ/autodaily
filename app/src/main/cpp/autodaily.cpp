@@ -9,7 +9,7 @@
 
 // 自定义头文件
 #include "yolo.h"
-#include "Ocr.h"
+#include "CrnnNet.h"
 
 // ARM NEON优化
 #if __ARM_NEON
@@ -36,7 +36,7 @@ static jmethodID hashSetCon = nullptr;
 static jmethodID shortCon = nullptr;
 static jmethodID hashAddMethod = nullptr;
 
-bool loadOcrModel(JNIEnv *env,jobject assetManager, jint lang, jboolean useGpu, jint detectSize,jshort colorStep,jboolean getColor)
+bool loadOcrModel(JNIEnv *env,jobject assetManager, jint lang, jboolean useGpu,jshort colorStep,jboolean getColor)
 {
     AAssetManager *mgr = AAssetManager_fromJava(env, assetManager);
     // Get the actual characters of the string
@@ -51,14 +51,14 @@ bool loadOcrModel(JNIEnv *env,jobject assetManager, jint lang, jboolean useGpu, 
 #if NCNN_VULKAN
         if (ncnn::get_gpu_count() == 0)
         {
-            g_crnn->load(mgr, detectSize,colorStep, rec_mean_vals, rec_norm_vals, false,lang, getColor);
+            g_crnn->load(mgr, 48,colorStep, rec_mean_vals, rec_norm_vals, false,lang, getColor);
         }
         else
         {
-            g_crnn->load(mgr, detectSize,colorStep, rec_mean_vals, rec_norm_vals,useGpu,lang, getColor);
+            g_crnn->load(mgr, 48,colorStep, rec_mean_vals, rec_norm_vals,useGpu,lang, getColor);
         }
 #else
-        g_crnn->load(mgr, detectSize,colorStep, rec_mean_vals, rec_norm_vals, false,lang, getColor);
+        g_crnn->load(mgr, 48,colorStep, rec_mean_vals, rec_norm_vals, false,lang, getColor);
 #endif
     }
     return JNI_TRUE;
@@ -67,14 +67,16 @@ bool loadOcrModel(JNIEnv *env,jobject assetManager, jint lang, jboolean useGpu, 
 static jobject ocrResHandler(JNIEnv *env, TextLine txt){
     //label
     jobject hashSet = env->NewObject(hashSetClass, hashSetCon);
-    jshortArray labelArr = env->NewShortArray(txt.label.size());
-    env->SetShortArrayRegion(labelArr, 0, txt.label.size(), txt.label.data());
+    jint l = (jint)txt.label.size();
+    jshortArray labelArr = env->NewShortArray(l);
+    env->SetShortArrayRegion(labelArr, 0, l, txt.label.data());
     //txt
     jstring text = env->NewStringUTF(txt.text.c_str());
     //颜色处理begin
     jobject colorSet = env->NewObject(hashSetClass, hashSetCon);
-    jshortArray colorArr = env->NewShortArray(txt.color.size());
-    env->SetShortArrayRegion(colorArr, 0, txt.color.size(), txt.color.data());
+    jint colorLen = (jint)txt.color.size();
+    jshortArray colorArr = env->NewShortArray(colorLen);
+    env->SetShortArrayRegion(colorArr, 0, colorLen, txt.color.data());
     //颜色处理end
     jobject res = env->NewObject(ocrResCls, ocrResMethod, hashSet, labelArr, text, colorSet, colorArr);
     // 释放局部引用
@@ -101,18 +103,20 @@ static jobjectArray transformResult(JNIEnv *env, const std::vector<Object> &obje
             if( g_crnn != nullptr){
                 try{
                     TextLine textLine = g_crnn->getTextLine(src,obj.rect);
+                    if (textLine.text.empty()){
+                        env->DeleteLocalRef(rect);
+                        continue;
+                    }
                     ocrRes = ocrResHandler(env, textLine);
                 }catch(const std::exception& e) {
                     __android_log_print(ANDROID_LOG_ERROR, "CRNN", "ocr eeror at %zu,%s", i ,e.what());
+                    continue;
                 }
-
-            } else{
-                __android_log_print(ANDROID_LOG_ERROR, "CRNN", "CRNN NET INIT FAILED");
             }
         }
         jobject detectRes = env->NewObject(detectResCls, detectResCon,
                                            obj.label, obj.prob, rect, (obj.rect.x + obj.rect.width / 2), obj.rect.y + obj.rect.height / 2, ocrRes);
-        env->SetObjectArrayElement(resultArray, static_cast<jsize>(i), detectRes);
+        env->SetObjectArrayElement(resultArray, i, detectRes);
         env->DeleteLocalRef(rect);
         env->DeleteLocalRef(ocrRes);
         env->DeleteLocalRef(detectRes);
@@ -264,7 +268,7 @@ extern "C"
         env->ReleaseStringUTFChars(paramPath, param_str);
         env->ReleaseStringUTFChars(modelPath, bin_str);
         if(_needOcr){
-            loadOcrModel(env, assetManager, lang, use_gpu, targetSize, colorStep,getColor);
+            loadOcrModel(env, assetManager, lang, use_gpu, colorStep,getColor);
             needOcr = _needOcr;
         }
         return JNI_TRUE;
@@ -284,24 +288,25 @@ extern "C"
             __android_log_print(ANDROID_LOG_ERROR, "NCNN", "error to bitmapToMat");
             return nullptr;
         }
-        cv::cvtColor(image, image, cv::COLOR_RGBA2RGB);
+        cv::Mat dst;
+        cv::cvtColor(image, dst, cv::COLOR_RGBA2RGB);
+        image.release();
         // 调用detect方法
         std::vector<Object> objects;
         try {
             ncnn::MutexLockGuard g(lock);
-            g_yolo->detect(image, objects, numClasses, threshold, nmsThreshold);
+            g_yolo->detect(dst, objects, numClasses, threshold, nmsThreshold);
         } catch (const std::exception& e) {
             __android_log_print(ANDROID_LOG_ERROR, "NCNN", "Detection error: %s", e.what());
-            image.release();
+            dst.release();
             return nullptr;
         }
         
         // 创建并返回结果数组
-        jobjectArray result = transformResult(env, objects, image);
+        jobjectArray result = transformResult(env, objects, dst);
         
         // 释放资源
-        image.release();
-        
+        dst.release();
         return result;
     }
 

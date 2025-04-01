@@ -30,7 +30,7 @@ set_source_files_properties(common.cpp PROPERTIES COMPILE_FLAGS "-fexceptions")
 # used in the AndroidManifest.xml file.
 add_library(${CMAKE_PROJECT_NAME} SHARED
     # List C/C++ source files with relative paths to this CMakeLists.txt.
-    autodaily.cpp yolo.cpp common.cpp clipper.cpp Ocr.cpp DbNet.cpp CrnnNet.cpp
+    autodaily.cpp yolo.cpp common.cpp CrnnNet.cpp
 )
 
 # Specifies libraries CMake should link to your target library. You

@@ -43,7 +43,6 @@ class UserService: IUserService.Stub(){
         return  readBitmap(Runtime.getRuntime().exec(command))
     }
 
-    @Throws(IOException::class, InterruptedException::class)
     fun readBitmap(process: Process): Bitmap {
         val inputStream = process.inputStream
         val bitmap = BitmapFactory.decodeStream(inputStream)

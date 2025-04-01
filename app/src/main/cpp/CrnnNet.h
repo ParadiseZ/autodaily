@@ -9,7 +9,7 @@ class CrnnNet
 public:
 		CrnnNet();
         ncnn::Net net;
-		int load(AAssetManager* mgr, short target_size,short colorStep, const float* _mean_vals, const float* _norm_vals, bool use_gpu = false,int lang=0, bool getColor=false);
+		int load(AAssetManager* mgr, int target_size,short colorStep, const float* _mean_vals, const float* _norm_vals, bool use_gpu = false,int lang=0, bool getColor=false);
         bool readKeysFromAssets(AAssetManager *mgr,const char *filename);
 		TextLine getTextLine(cv::Mat& src,cv::Rect rect);
         TextLine scoreToTextLine(const std::vector<float>& outputData, int h, int w);
@@ -19,7 +19,7 @@ private:
 		std::vector<std::string> keys;
         int keySize = 0;
         bool getColor = false;
-		short target_size = 48;
+		int target_size = 48;
         short colorStep = 16;
 		float mean_vals[3]{};
 		float norm_vals[3]{};

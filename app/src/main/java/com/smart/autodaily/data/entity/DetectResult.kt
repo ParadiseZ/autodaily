@@ -5,5 +5,5 @@ data class DetectResult(
     val rect: Rect,
     val xCenter: Float,
     val yCenter: Float,
-    val ocr : OcrResult
+    val ocr : OcrResult?
 )
