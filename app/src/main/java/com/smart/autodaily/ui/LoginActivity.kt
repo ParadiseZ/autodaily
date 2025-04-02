@@ -119,7 +119,7 @@ fun LoginScreen(modifier: Modifier) {
                                     isLocked.value = false
                                     if (loginResult.code== ResponseCode.SUCCESS.code){
                                         loginViewMode.context.startActivity(
-                                            Intent(loginViewMode.context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                            Intent(loginViewMode.context, MainActivity::class.java).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
                                         )
                                     }else{
                                         loginResult.message?.let {

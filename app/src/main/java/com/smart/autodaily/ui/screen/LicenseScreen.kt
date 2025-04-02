@@ -121,7 +121,7 @@ fun LicenseScreen(
                         modifier = Modifier
                             .clickable{
                                 val data = "PRIVACY"
-                                navController.navigate(NavigationItem.LICENSESHOW.route + "/data= $data")
+                                navController.navigate(NavigationItem.LICENSESHOW.route + "/$data")
                             },
                         text = privacy,
                         style = TextStyle(textDecoration = TextDecoration.Underline),
@@ -131,7 +131,7 @@ fun LicenseScreen(
                         modifier = Modifier
                             .clickable{
                                 val data = "TERMS_OF_USE"
-                                navController.navigate(NavigationItem.LICENSESHOW.route + "/data= $data")
+                                navController.navigate(NavigationItem.LICENSESHOW.route + "/$data")
                             },
                         text = termsUse,
                         style = TextStyle(textDecoration = TextDecoration.Underline),
@@ -153,7 +153,7 @@ fun LicenseScreen(
                     Text(
                         modifier = Modifier.clickable{
                             val data = "PRIVACY"
-                            navController.navigate(NavigationItem.LICENSESHOW.route + "/data = $data")
+                            navController.navigate(NavigationItem.LICENSESHOW.route + "/$data")
                         },
                         text = privacy,
                         style = MaterialTheme.typography.bodyMedium
@@ -172,7 +172,7 @@ fun LicenseScreen(
                     Text(
                         modifier = Modifier.clickable{
                             val data = "TERMS_OF_USE"
-                            navController.navigate(NavigationItem.LICENSESHOW.route + "/data = $data")
+                            navController.navigate(NavigationItem.LICENSESHOW.route + "/$data")
                         },
                         text = termsUse,
                         style = MaterialTheme.typography.bodyMedium
