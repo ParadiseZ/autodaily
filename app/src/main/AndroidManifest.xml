@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <application
         android:name=".App"
         android:enableOnBackInvokedCallback="true"
@@ -134,6 +135,12 @@
             android:name=".service.MediaProjectionService"
             android:enabled="true"
             android:foregroundServiceType="mediaProjection"
+            android:label="@string/app_name"/>
+
+        <service
+            android:name=".service.ForegroundService"
+            android:enabled="true"
+            android:foregroundServiceType="dataSync"
             android:label="@string/app_name"/>
 
         <provider

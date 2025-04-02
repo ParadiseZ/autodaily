@@ -115,7 +115,7 @@ object  RunScript {
             val allActionMap : HashMap<Int,ScriptActionInfo> = hashMapOf()
             if(si.currentRunNum < si.runsMaxNum){
                 Lom.n( INFO, si.scriptName )
-                //startApp( conf.pkgName )
+                startApp( conf.pkgName )
                 if(!loadModel(si)){
                     isRunning.intValue = 0
                     runScope.coroutineContext.cancelChildren()
@@ -186,9 +186,9 @@ object  RunScript {
                         }
                         //Lom.d(INFO, "检测标签$detectLabels")
                         //Lom.d(INFO, "OCR标签${txtLabels.flatMap { it }}")
-                        for (result in detectRes.filter { it.label == 0 }) {
+                        /*for (result in detectRes.filter { it.label == 0 }) {
                             println(result.ocr?.txt)
-                        }
+                        }*/
 
                         //conf.curHash = getMd5Hash(capture)
                         when(tryAction(scriptActionArrayList, detectLabels, detectRes, txtLabels)){

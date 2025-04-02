@@ -5,14 +5,19 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Process
 import android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationManagerCompat
 import com.jakewharton.threetenabp.AndroidThreeTen
 import com.jeremyliao.liveeventbus.LiveEventBus
 import com.smart.autodaily.config.AppConfig.channelIdDownload
 import com.smart.autodaily.handler.RunScript
+import com.smart.autodaily.service.ForegroundService
 import com.smart.autodaily.utils.checkScriptUpdate
 import com.smart.autodaily.utils.partScope
 import com.smart.autodaily.utils.updateScope
@@ -45,6 +50,16 @@ class App : Application() {
             //.setLogger(EventLogger())
         Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE)
         
+        // 检查通知权限
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (!hasNotificationPermission()) {
+                sharedPreferences.edit().putBoolean(KEY_NOTIFICATION_PERMISSION_CHECKED, false).apply()
+            }
+        }
+        
+        // 启动前台服务
+        startForegroundService()
+        
         partScope.launch {
             //初始化全局设置
             RunScript.initGlobalSet()
@@ -55,6 +70,26 @@ class App : Application() {
             } catch (e: Exception) {
                 updateScope.coroutineContext.cancelChildren()
             }
+        }
+    }
+
+    private fun hasNotificationPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ActivityCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            NotificationManagerCompat.from(this).areNotificationsEnabled()
+        }
+    }
+
+    private fun startForegroundService() {
+        val serviceIntent = Intent(this, ForegroundService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent)
+        } else {
+            startService(serviceIntent)
         }
     }
 
