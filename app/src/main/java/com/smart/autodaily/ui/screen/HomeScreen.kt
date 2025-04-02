@@ -1,6 +1,7 @@
 package com.smart.autodaily.ui.screen
 
 import android.content.Intent
+import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -50,8 +51,8 @@ import com.smart.autodaily.constant.ResponseCode
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.resp.Response
-import com.smart.autodaily.handler.RunScript
 import com.smart.autodaily.handler.isRunning
+import com.smart.autodaily.service.ForegroundService
 import com.smart.autodaily.ui.conponent.RowScriptInfo
 import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.SnackbarUtil.CustomSnackbarHost
@@ -132,9 +133,6 @@ fun HomeScreen(
                         onClick = {
                             runScope.launch {
                                 homeViewModel.appViewModel.setIsRunning(2)
-                                /*RunScript.initGlobalSet()
-                                homeViewModel.appViewModel.runScript()
-                                homeViewModel.appViewModel.setIsRunning(2)*/
                                 if(isLogin(homeViewModel.context, user)){
                                     val res : Response<String>
                                     try {
@@ -149,13 +147,17 @@ fun HomeScreen(
                                         return@launch
                                     }
                                     if(scriptCheckResHand(res =res)){
-                                        RunScript.initGlobalSet()
-                                        homeViewModel.appViewModel.runScript()
-                                        if (isRunning.intValue == 0){
-                                            SnackbarUtil.show("shizuku服务异常!")
+                                        // 启动前台服务来运行脚本
+                                        val serviceIntent = Intent(appCtx, ForegroundService::class.java).apply {
+                                            action = ForegroundService.ACTION_RUN_SCRIPT
+                                        }
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                            appCtx.startForegroundService(serviceIntent)
+                                        } else {
+                                            appCtx.startService(serviceIntent)
                                         }
                                     }else{
-                                        SnackbarUtil.show("检测脚本状态异常!")
+                                        //SnackbarUtil.show("检测脚本状态异常!")
                                         homeViewModel.appViewModel.setIsRunning(0)
                                     }
                                 }else{
@@ -402,7 +404,6 @@ private fun scriptCheckResHand(res : Response<String>) : Boolean{
         return true
     }
     res.message?.let {
-        print(it)
         SnackbarUtil.show(it)
     }
     return false

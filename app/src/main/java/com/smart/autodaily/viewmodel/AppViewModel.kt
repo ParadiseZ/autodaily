@@ -8,10 +8,6 @@ import com.smart.autodaily.api.RemoteApi
 import com.smart.autodaily.constant.MODEL_BIN
 import com.smart.autodaily.constant.MODEL_PARAM
 import com.smart.autodaily.constant.ResponseCode
-import com.smart.autodaily.constant.WORK_TYPE00
-import com.smart.autodaily.constant.WORK_TYPE01
-import com.smart.autodaily.constant.WORK_TYPE02
-import com.smart.autodaily.constant.WORK_TYPE03
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.DownloadState
 import com.smart.autodaily.data.entity.ScriptActionInfo
@@ -20,12 +16,9 @@ import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.data.entity.request.Request
 import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.handler.ERROR
-import com.smart.autodaily.handler.RunScript
 import com.smart.autodaily.handler.isRunning
 import com.smart.autodaily.utils.DownloadManager
 import com.smart.autodaily.utils.Lom
-import com.smart.autodaily.utils.ServiceUtil
-import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.cancelChildrenJob
 import com.smart.autodaily.utils.deleteFile
@@ -119,44 +112,6 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
 
     fun setIsRunning(state : Int){
         isRunning.intValue = state
-    }
-
-    suspend fun runScript(){
-        workType.value = RunScript.globalSetMap.value[8]?.setValue ?:""
-        workType.value.let {
-            when(it) {
-                WORK_TYPE00 ->{
-                    SnackbarUtil.show("未设置工作模式！")
-                    isRunning.intValue = 0
-                }
-                WORK_TYPE01 -> {
-                    isRunning.intValue = 0
-                }
-                WORK_TYPE02 -> {
-                    //_isRunning.value = 2//启动服务
-                    ServiceUtil.runUserService(appCtx)
-                    RunScript.initScriptData(appDb.scriptInfoDao.getAllScriptByChecked())
-                    ServiceUtil.waitShizukuService()
-                    if(ShizukuUtil.grant && ShizukuUtil.iUserService != null){
-                        isRunning.intValue = 1//运行中
-                        RunScript.runScriptByAdb()
-                        isRunning.intValue = 0
-                    }else{
-                        isRunning.intValue = 0//启动服务失败
-                        SnackbarUtil.show("请检查shizuku服务！")
-                        return
-                    }
-                    //(manActivityCtx as MainActivity).requestOverlayPermission()
-                }
-
-                WORK_TYPE03 -> {
-                    isRunning.intValue = 0
-                }
-                else-> {
-                    isRunning.intValue = 0
-                }
-            }
-        }
     }
 
     fun stopRunScript(){

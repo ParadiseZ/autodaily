@@ -51,11 +51,7 @@ class App : Application() {
         Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE)
         
         // 检查通知权限
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (!hasNotificationPermission()) {
-                sharedPreferences.edit().putBoolean(KEY_NOTIFICATION_PERMISSION_CHECKED, false).apply()
-            }
-        }
+        hasNotificationPermission()
         
         // 启动前台服务
         startForegroundService()

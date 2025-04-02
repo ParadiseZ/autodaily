@@ -19,6 +19,10 @@ import com.smart.autodaily.command.adbStartApp
 import com.smart.autodaily.constant.ActionString
 import com.smart.autodaily.constant.MODEL_BIN
 import com.smart.autodaily.constant.MODEL_PARAM
+import com.smart.autodaily.constant.WORK_TYPE00
+import com.smart.autodaily.constant.WORK_TYPE01
+import com.smart.autodaily.constant.WORK_TYPE02
+import com.smart.autodaily.constant.WORK_TYPE03
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.ConfigData
 import com.smart.autodaily.data.entity.DetectResult
@@ -31,6 +35,8 @@ import com.smart.autodaily.data.entity.ScriptSetRunStatus
 import com.smart.autodaily.navpkg.AutoDaily
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.ScreenCaptureUtil
+import com.smart.autodaily.utils.ServiceUtil
+import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.getMd5Hash
 import com.smart.autodaily.utils.getPicture
@@ -38,6 +44,7 @@ import com.smart.autodaily.utils.isBetweenHour
 import com.smart.autodaily.utils.partScope
 import com.smart.autodaily.utils.rgbToHsv
 import com.smart.autodaily.utils.runScope
+import com.smart.autodaily.viewmodel.workType
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -85,6 +92,43 @@ object  RunScript {
         }
     }
 
+    suspend fun runScript(){
+        workType.value = RunScript.globalSetMap.value[8]?.setValue ?:""
+        workType.value.let {
+            when(it) {
+                WORK_TYPE00 ->{
+                    SnackbarUtil.show("未设置工作模式！")
+                    isRunning.intValue = 0
+                }
+                WORK_TYPE01 -> {
+                    isRunning.intValue = 0
+                }
+                WORK_TYPE02 -> {
+                    //_isRunning.value = 2//启动服务
+                    ServiceUtil.runUserService(appCtx)
+                    initScriptData(appDb.scriptInfoDao.getAllScriptByChecked())
+                    ServiceUtil.waitShizukuService()
+                    if(ShizukuUtil.grant && ShizukuUtil.iUserService != null){
+                        isRunning.intValue = 1//运行中
+                        runScriptByAdb()
+                        isRunning.intValue = 0
+                    }else{
+                        isRunning.intValue = 0//启动服务失败
+                        SnackbarUtil.show("请检查shizuku服务！")
+                        return
+                    }
+                    //(manActivityCtx as MainActivity).requestOverlayPermission()
+                }
+
+                WORK_TYPE03 -> {
+                    isRunning.intValue = 0
+                }
+                else-> {
+                    isRunning.intValue = 0
+                }
+            }
+        }
+    }
     private fun initConfData(){
         conf = ConfigData(
             _globalSetMap.value[3]?.setValue?.toFloat()?.times(1000)?.toLong()?:1500L,
