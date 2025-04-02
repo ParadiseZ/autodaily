@@ -6,21 +6,17 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
-import android.content.pm.PackageManager
 import android.os.Build
-import android.os.Process
-import android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE
-import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationManagerCompat
 import com.jakewharton.threetenabp.AndroidThreeTen
 import com.jeremyliao.liveeventbus.LiveEventBus
 import com.smart.autodaily.config.AppConfig.channelIdDownload
 import com.smart.autodaily.handler.RunScript
 import com.smart.autodaily.service.ForegroundService
 import com.smart.autodaily.utils.checkScriptUpdate
+import com.smart.autodaily.utils.hasNotificationPermission
 import com.smart.autodaily.utils.partScope
 import com.smart.autodaily.utils.updateScope
+import com.smart.autodaily.viewmodel.LicenseViewModel
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -28,16 +24,10 @@ import me.weishu.reflection.Reflection
 import splitties.systemservices.notificationManager
 
 class App : Application() {
-    companion object {
-        private const val PREFS_NAME = "notification_prefs"
-        internal const val KEY_NOTIFICATION_PERMISSION_CHECKED = "notification_permission_checked"
-        internal lateinit var sharedPreferences: SharedPreferences
-    }
-
+    private val licenseViewModel = LicenseViewModel(this)
     override fun onCreate() {
         super.onCreate()
-        sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-        
+
         //初始化时区
         AndroidThreeTen.init(this)
         //Thread.setDefaultUncaughtExceptionHandler(ExceptionHandler(this))
@@ -48,13 +38,12 @@ class App : Application() {
             .enableLogger(true)
             //.enableLogger(BuildConfig.DEBUG)
             //.setLogger(EventLogger())
-        Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE)
+        //Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE)
         
         // 检查通知权限
-        hasNotificationPermission()
-        
-        // 启动前台服务
-        startForegroundService()
+        if (hasNotificationPermission()) {
+            startForegroundService()
+        }
         
         partScope.launch {
             //初始化全局设置
@@ -63,20 +52,9 @@ class App : Application() {
                 // 延迟检查更新
                 delay(1000)
                 checkScriptUpdate()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 updateScope.coroutineContext.cancelChildren()
             }
-        }
-    }
-
-    private fun hasNotificationPermission(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ActivityCompat.checkSelfPermission(
-                this,
-                android.Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            NotificationManagerCompat.from(this).areNotificationsEnabled()
         }
     }
 

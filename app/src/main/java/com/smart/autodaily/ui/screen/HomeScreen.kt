@@ -71,6 +71,7 @@ fun HomeScreen(
     nhc: NavHostController,
     homeViewModel : HomeViewModel = viewModel()
 ) {
+    UpdateScreen()
     //删除弹窗
     val openDialog = remember { mutableStateOf(false) }
     //更新弹窗

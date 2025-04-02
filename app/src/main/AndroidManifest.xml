@@ -23,23 +23,13 @@
         android:theme="@style/Theme.AutoDaily"
         android:exported="true">
         <activity
-            android:name=".LicensesActivity"
-            android:exported="true"
-            android:noHistory="true"
-            android:theme="@style/Theme.AutoDaily">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:theme="@style/Theme.AutoDaily">
             <intent-filter>
-                <action android:name="android.intent.action.HOME" />
-                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
@@ -78,15 +68,6 @@
             android:theme="@style/Theme.AutoDaily">
             <intent-filter>
                 <action android:name="android.intent.action.KEY RECORD" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name=".LicenseShowActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.LICENSESHOW" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>

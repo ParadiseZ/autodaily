@@ -19,7 +19,11 @@ enum class Screen {
     LOG,
     HOME,
     SETTING,
-    PERSONAL
+    PERSONAL,
+
+    LICENSE,
+    LICENSESHOW,
+    NOTIFICATION
 }
 
 object ScreenText {
@@ -37,7 +41,12 @@ sealed class NavigationItem(val route: String, val icon: ImageVector,val selecte
     data object SETTING : NavigationItem(Screen.SETTING.name, Icons.Outlined.Settings, Icons.Filled.Settings, ScreenText.SETTING_SCREEN)
     data object PERSON : NavigationItem(Screen.PERSONAL.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
 
+    data object LICENSE : NavigationItem(Screen.LICENSE.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
+    data object LICENSESHOW : NavigationItem(Screen.LICENSESHOW.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
+    data object NOTIFICATION : NavigationItem(Screen.NOTIFICATION.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
+
+
     companion object {
-        val allItems = listOf(SEARCH, LOG, HOME, SETTING, PERSON)
+        val showItem = listOf(SEARCH, LOG, HOME, SETTING, PERSON)
     }
 }
