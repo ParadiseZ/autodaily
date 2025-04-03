@@ -16,7 +16,6 @@ import com.smart.autodaily.utils.checkScriptUpdate
 import com.smart.autodaily.utils.hasNotificationPermission
 import com.smart.autodaily.utils.partScope
 import com.smart.autodaily.utils.updateScope
-import com.smart.autodaily.viewmodel.LicenseViewModel
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -24,7 +23,6 @@ import me.weishu.reflection.Reflection
 import splitties.systemservices.notificationManager
 
 class App : Application() {
-    private val licenseViewModel = LicenseViewModel(this)
     override fun onCreate() {
         super.onCreate()
 

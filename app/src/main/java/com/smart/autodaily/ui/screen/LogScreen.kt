@@ -62,6 +62,7 @@ fun LogScreen(
         viewModel.loadLogs()
     }
     Scaffold (
+        modifier = Modifier,
         topBar = {
             TopAppBar(
                 title = {

@@ -38,7 +38,6 @@ fun LicenseShowScreen(
         }
     }
     Scaffold (
-        modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
                 title = {
@@ -56,7 +55,7 @@ fun LicenseShowScreen(
         },
         content ={
             AndroidView(
-                modifier = modifier.padding(it),
+                modifier = modifier.fillMaxSize().padding(it),
                 factory = { context ->
                     WebView(context).apply {
                         layoutParams = ViewGroup.LayoutParams(
@@ -64,7 +63,9 @@ fun LicenseShowScreen(
                             ViewGroup.LayoutParams.WRAP_CONTENT
                         )
                         webViewClient = WebViewClient()
-                        loadUrl("file:///android_asset/$fileName")
+                        val htmlContent = context.assets.open(fileName).bufferedReader().use { it.readText() }
+                        loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
+                        //loadUrl("file:///android_asset/$fileName")
                     }
                 }
             )

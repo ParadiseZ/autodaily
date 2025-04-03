@@ -4,13 +4,12 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -39,18 +38,26 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val licenseViewModel = LicenseViewModel(application)
         super.onCreate(savedInstanceState)
-        // 检查通知权限
+        enableEdgeToEdge()
         setContent {
-            var target = NavigationItem.HOME.route;
-            LaunchedEffect(Unit){
+            val privacyAccepted by licenseViewModel.hasAccept.collectAsState(initial = false)
+            /*LaunchedEffect(Unit){
                 licenseViewModel.getPrivacyRes()
                 if (!licenseViewModel.hasAccept.value){
                     target = NavigationItem.LICENSE.route
                 }else if(!hasNotificationPermission()){
                     target = NavigationItem.NOTIFICATION.route
                 }
-            }
+            }*/
             AutoDailyTheme {
+                val target = if (!privacyAccepted){
+                        NavigationItem.LICENSE.route
+                }else if(!hasNotificationPermission()){
+                    NavigationItem.NOTIFICATION.route
+                }else{
+                    NavigationItem.HOME.route
+                }
+
                 // A surface container using the 'background' color from the theme
                 val navController = rememberNavController()
                 MainScreen(navController = navController, startDestination = target)
@@ -81,19 +88,14 @@ fun MainScreen(
     navController: NavHostController,
     startDestination: String = NavigationItem.HOME.route
 ){
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        Scaffold (
-            bottomBar = {
-                BottomNavBar(navController = navController)
-            },
-            snackbarHost = {
-                SnackbarUtil.CustomSnackbarHost()
-            }
-        ){
-            AppNavHost( modifier = Modifier.padding(it), navController = navController ,startDestination = startDestination)
+    Scaffold (
+        bottomBar = {
+            BottomNavBar(navController = navController)
+        },
+        snackbarHost = {
+            SnackbarUtil.CustomSnackbarHost()
         }
+    ){
+        AppNavHost( modifier = Modifier.padding(it), navController = navController ,startDestination = startDestination)
     }
 }

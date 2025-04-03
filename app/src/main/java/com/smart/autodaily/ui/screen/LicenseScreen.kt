@@ -40,6 +40,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.smart.autodaily.constant.NavigationItem
+import com.smart.autodaily.constant.Screen
 import com.smart.autodaily.utils.hasNotificationPermission
 import com.smart.autodaily.viewmodel.LicenseViewModel
 import kotlinx.coroutines.launch
@@ -121,7 +122,7 @@ fun LicenseScreen(
                         modifier = Modifier
                             .clickable{
                                 val data = "PRIVACY"
-                                navController.navigate(NavigationItem.LICENSESHOW.route + "/$data")
+                                navController.navigate(Screen.LICENSESHOW.name + "/$data")
                             },
                         text = privacy,
                         style = TextStyle(textDecoration = TextDecoration.Underline),
@@ -131,7 +132,7 @@ fun LicenseScreen(
                         modifier = Modifier
                             .clickable{
                                 val data = "TERMS_OF_USE"
-                                navController.navigate(NavigationItem.LICENSESHOW.route + "/$data")
+                                navController.navigate(Screen.LICENSESHOW.name + "/$data")
                             },
                         text = termsUse,
                         style = TextStyle(textDecoration = TextDecoration.Underline),
@@ -153,7 +154,7 @@ fun LicenseScreen(
                     Text(
                         modifier = Modifier.clickable{
                             val data = "PRIVACY"
-                            navController.navigate(NavigationItem.LICENSESHOW.route + "/$data")
+                            navController.navigate(Screen.LICENSESHOW.name + "/$data")
                         },
                         text = privacy,
                         style = MaterialTheme.typography.bodyMedium
@@ -172,7 +173,7 @@ fun LicenseScreen(
                     Text(
                         modifier = Modifier.clickable{
                             val data = "TERMS_OF_USE"
-                            navController.navigate(NavigationItem.LICENSESHOW.route + "/$data")
+                            navController.navigate(Screen.LICENSESHOW.name + "/$data")
                         },
                         text = termsUse,
                         style = MaterialTheme.typography.bodyMedium

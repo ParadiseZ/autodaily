@@ -101,7 +101,7 @@ fun HomeScreen(
     }
     
     Scaffold (
-        modifier = modifier,
+        modifier = Modifier,
         snackbarHost = {
             CustomSnackbarHost()
         },

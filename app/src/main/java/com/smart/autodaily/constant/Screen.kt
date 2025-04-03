@@ -45,7 +45,6 @@ sealed class NavigationItem(val route: String, val icon: ImageVector,val selecte
     data object LICENSESHOW : NavigationItem(Screen.LICENSESHOW.name+"/{data}", Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
     data object NOTIFICATION : NavigationItem(Screen.NOTIFICATION.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
 
-
     companion object {
         val showItem = listOf(SEARCH, LOG, HOME, SETTING, PERSON)
     }

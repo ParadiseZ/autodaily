@@ -17,6 +17,15 @@ import com.smart.autodaily.constant.Screen
 /**
  * 底部导航栏组件
  */
+val showBottomBarList by lazy {
+    listOf(
+        Screen.SEARCH.name,
+        Screen.LOG.name,
+        Screen.HOME.name,
+        Screen.SETTING.name,
+        Screen.PERSONAL.name
+    )
+}
 @Composable
 fun BottomNavBar(navController: NavController) {
     // 定义底部导航栏项目
@@ -25,17 +34,11 @@ fun BottomNavBar(navController: NavController) {
     val currentDestination = navBackStackEntry?.destination
 
     // 只在主要导航目标显示底部导航栏
-    val showBottomBar = currentDestination?.route in listOf(
-        Screen.SEARCH.name,
-        Screen.LOG.name,
-        Screen.HOME.name,
-        Screen.SETTING.name,
-        Screen.PERSONAL.name
-    )
-
+    val showBottomBar = currentDestination?.route in showBottomBarList
     if (showBottomBar) {
         NavigationBar {
             NavigationItem.showItem.forEach { item ->
+                // 增加空值检查和错误处理
                 val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
 
                 NavigationBarItem(
@@ -54,15 +57,21 @@ fun BottomNavBar(navController: NavController) {
                     selected = selected,
                     onClick = {
                         if (currentDestination?.route != item.route) {
-                            navController.navigate(item.route) {
-                                // 弹出到导航图的起始目的地，避免在返回栈上构建大量目的地
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                            try {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                // 避免在按下导航项时创建同一目的地的多个副本
-                                launchSingleTop = true
-                                // 恢复状态，如果之前设置了saveState = true
-                                restoreState = true
+                            } catch (e: Exception) {
+                                // 导航失败时的处理
+                                navController.navigate(item.route) {
+                                    popUpTo(NavigationItem.HOME.route) {
+                                        inclusive = true
+                                    }
+                                }
                             }
                         }
                     }
