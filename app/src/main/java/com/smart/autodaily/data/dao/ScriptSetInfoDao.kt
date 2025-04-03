@@ -39,7 +39,7 @@ interface ScriptSetInfoDao {
     fun getGlobalSetValueBySetId(setId : Int) : String
 
     //获取全局设置
-    @Query("select * from script_set_info where script_id=0 and is_show=1 order by sort")
+    @Query("select * from script_set_info where script_id=0 order by sort")
     fun getGlobalSet() : List<ScriptSetInfo>
 
     //获取脚本全局设置

@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -62,12 +64,25 @@ fun NotificationRequest(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "需要通知权限",
+            text = "重要：关闭电池优化",
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "为了保持应用在后台正常运行,请关闭电池优化。小米澎湃参考：设置 → 应用设置，选择AutoDaily → 电量消耗 → 无限制，其他参考：设置→应用程序→AutoDaily→不优化。",
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Text(
+            text = "重要：需要通知权限",
             style = MaterialTheme.typography.headlineMedium,
             textAlign = TextAlign.Center
         )
@@ -94,5 +109,6 @@ fun NotificationRequest(
         ) {
             Text(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) "授予权限" else "去设置")
         }
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }

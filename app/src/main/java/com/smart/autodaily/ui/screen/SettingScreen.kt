@@ -87,7 +87,7 @@ fun SettingScreen(
         }
     )
     Scaffold(
-        modifier = modifier,
+        modifier = Modifier,
         topBar = {
             TopAppBar(
                 title = { Text(text = AppBarTitle.SETTING_SCREEN) },
@@ -298,7 +298,7 @@ fun SettingScreen(
                         enabled = newDialog.value,
                         onClick = {
                             newDialog.value = false
-
+                            SnackbarUtil.show("正在更新，请稍作等待！")
                             settingViewModel.viewModelScope.launch{
                                 if(isRunning.intValue == 1){
                                     settingViewModel.appViewModel.stopRunScript()

@@ -27,7 +27,7 @@ object Lom {
     private val dateFormat = DateTimeFormatter.ofPattern("yy-MM-dd HH:mm:ss")
     private val logChannel = Channel<String>(256)
     private var enableLog = false
-    private var enableConsole = true
+    private var enableConsole = false
 
     fun d(category: String, message: String) {
         logPrint(category,message)

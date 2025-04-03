@@ -10,8 +10,6 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.smart.autodaily.R
 import com.smart.autodaily.handler.RunScript
-import com.smart.autodaily.handler.isRunning
-import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.runScope
 import kotlinx.coroutines.launch
 
@@ -31,14 +29,9 @@ class ForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_RUN_SCRIPT -> {
-                if(isRunning.intValue == 0){
-                    runScope.launch {
-                        RunScript.initGlobalSet()
-                        RunScript.runScript()
-                        if (isRunning.intValue == 0){
-                            SnackbarUtil.show("shizuku服务异常!")
-                        }
-                    }
+                runScope.launch {
+                    RunScript.initGlobalSet()
+                    RunScript.runScript()
                 }
             }
         }

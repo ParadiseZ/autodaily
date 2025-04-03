@@ -57,7 +57,6 @@ import com.smart.autodaily.ui.conponent.RowScriptInfo
 import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.SnackbarUtil.CustomSnackbarHost
 import com.smart.autodaily.utils.isLogin
-import com.smart.autodaily.utils.runScope
 import com.smart.autodaily.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
 import splitties.init.appCtx
@@ -132,7 +131,7 @@ fun HomeScreen(
                     FloatingActionButton (
                         shape = MaterialTheme.shapes.medium.copy(CornerSize(percent = 50)),
                         onClick = {
-                            runScope.launch {
+                            homeViewModel.viewModelScope.launch {
                                 homeViewModel.appViewModel.setIsRunning(2)
                                 if(isLogin(homeViewModel.context, user)){
                                     val res : Response<String>
@@ -353,7 +352,7 @@ fun HomeScreen(
                         enabled = newDialog.value,
                         onClick = {
                             newDialog.value = false
-                            SnackbarUtil.show("正在更新，请勿重复点击！")
+                            SnackbarUtil.show("正在更新，请稍作等待！")
                             homeViewModel.viewModelScope.launch {
                                 try {
                                     currentScriptInfo.value?.let {

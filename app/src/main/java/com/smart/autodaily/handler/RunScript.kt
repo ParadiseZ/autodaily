@@ -489,13 +489,23 @@ object  RunScript {
             txtLabels.any {
                 it.containsAll(expect)  && it.size < expect.size*3
             }
-        }
-        else return false
+        } else return false
         // 检查 txtExcLabelSet 条件
         val txtExc = if(txt) sai.txtExcLabelSet.all { except->
             txtLabels.none { it.containsAll(except) }
         }else return false
-
+        /*if (sai.id == 18){
+            print(int)
+            print(intExc)
+            print(txt)
+            println(txtExc)
+            txtLabels.forEach {
+                println(it)
+            }
+            sai.txtLabel?.forEach {
+                println(it)
+            }
+        }*/
         // 如果所有条件都满足
         return txtExc
         //return  int && intExc && txt

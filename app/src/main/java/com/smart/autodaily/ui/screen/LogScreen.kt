@@ -84,14 +84,12 @@ fun LogScreen(
         }
     ){ padding->
         Box(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .pullRefresh(refreshState),
         ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-            ) {
+            LazyColumn {
                 if (logs.itemCount==0){
                     item{
                         if (logEnable){
