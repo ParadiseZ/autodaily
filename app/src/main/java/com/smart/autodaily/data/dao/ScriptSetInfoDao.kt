@@ -17,7 +17,7 @@ interface ScriptSetInfoDao {
     fun insert(scriptSetInfo: ScriptSetInfo)
 
     //展示
-    @Query("select * from script_set_info where script_id = :scriptId and is_show = 1 order by sort LIMIT :pageSize OFFSET :starIndex")
+    @Query("select * from script_set_info where script_id = :scriptId and is_show = 1 order by script_id,sort LIMIT :pageSize OFFSET :starIndex")
     fun queryScriptSetInfo(scriptId: Int, pageSize: Int, starIndex: Int) : List<ScriptSetInfo>
 
     @Query("select count(script_id) from script_set_info where script_id = :scriptId")
@@ -39,7 +39,7 @@ interface ScriptSetInfoDao {
     fun getGlobalSetValueBySetId(setId : Int) : String
 
     //获取全局设置
-    @Query("select * from script_set_info where script_id=0 order by sort")
+    @Query("select * from script_set_info where script_id=0 order by script_id,sort")
     fun getGlobalSet() : List<ScriptSetInfo>
 
     //获取脚本全局设置
@@ -50,7 +50,7 @@ interface ScriptSetInfoDao {
     @Query("select * from script_set_info where script_id=:scriptId and checked_flag=1 and is_max_level = :isMaxLevel and flow_id>=:curFlowId and flow_parent_id not like '0%'")
     fun getScriptSetByScriptId(scriptId: Int,curFlowId : Int, isMaxLevel : Int) :MutableList<ScriptSetInfo>
     //去掉隐藏的，这里提供给用户查看
-    @Query("select * from script_set_info where script_id=:scriptId and is_show= 1 order by sort")
+    @Query("select * from script_set_info where script_id=:scriptId and is_show= 1 order by script_id,sort")
     fun getScriptSetByScriptId(scriptId: Int) : Flow<List<ScriptSetInfo>>
 
     @Query("select count(1) from script_set_info where script_id=:scriptId and checked_flag=1 and flow_id in (:flowIds)")
