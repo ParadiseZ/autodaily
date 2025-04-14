@@ -3,6 +3,7 @@ package com.smart.autodaily.constant
 object ActionString {
 
     const val CLICK = "click"
+    const val CLICKC = "clickc"
     const val SLEEP = "sleep"
     const val SKIP = "skip"
     const val FINISH = "finish"

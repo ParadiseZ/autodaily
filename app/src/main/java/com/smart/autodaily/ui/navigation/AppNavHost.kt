@@ -2,6 +2,7 @@ package com.smart.autodaily.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -9,6 +10,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.smart.autodaily.constant.NavigationItem
+import com.smart.autodaily.ui.screen.LoginScreen
+import com.smart.autodaily.ui.screen.RegisterScreen
+import com.smart.autodaily.ui.screen.ResetPasswordScreen
 import com.smart.autodaily.ui.screen.HomeScreen
 import com.smart.autodaily.ui.screen.LicenseScreen
 import com.smart.autodaily.ui.screen.LicenseShowScreen
@@ -47,6 +51,16 @@ fun AppNavHost(
             PersonScreen(modifier, navController)
         }
 
+        composable (NavigationItem.LOGIN.route ){
+            LoginScreen(modifier, navController)
+        }
+        composable (NavigationItem.LOGIN.route ){
+            RegisterScreen(modifier, navController)
+        }
+        composable (NavigationItem.LOGIN.route ){
+            ResetPasswordScreen(modifier, navController)
+        }
+
 
         composable(NavigationItem.LICENSE.route){
             LicenseScreen(navController)
@@ -66,7 +80,7 @@ fun AppNavHost(
     }
 }
 
-fun NavHostController.navSingleTopTo(route: String) =
+fun NavController.navSingleTopTo(route: String) {
     this.navigate(route) {
         popUpTo(
             this@navSingleTopTo.graph.findStartDestination().id
@@ -76,3 +90,4 @@ fun NavHostController.navSingleTopTo(route: String) =
         launchSingleTop = true
         restoreState = true
     }
+}

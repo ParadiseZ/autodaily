@@ -204,7 +204,8 @@ unsigned char CrnnNet::colorMapping(short h, short s, short v) {
     } else if( s <= 30) {
         return 2; //White
     } else {
-        return h_category[h];
+        //return h_category[h];
+        return (int)h/3;
     }
 }
 

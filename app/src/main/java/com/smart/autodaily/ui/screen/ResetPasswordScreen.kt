@@ -1,10 +1,6 @@
-package com.smart.autodaily.ui
+package com.smart.autodaily.ui.screen
 
 import android.content.Context
-import android.content.Intent
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,38 +26,29 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.smart.autodaily.constant.ResponseCode
+import com.smart.autodaily.constant.Screen
 import com.smart.autodaily.ui.conponent.LockScreenLoading
+import com.smart.autodaily.ui.navigation.navSingleTopTo
 import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.ValidUtil
-import com.smart.autodaily.viewmodel.RegisterViewModel
+import com.smart.autodaily.viewmodel.ResetPasswordViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class RegisterActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            Scaffold(
-                snackbarHost = {
-                    SnackbarUtil.CustomSnackbarHost()
-                }
-            ) {
-                RegisterScreen(modifier = Modifier.padding(it))
-            }
-        }
-    }
-}
-
 @Composable
-fun RegisterScreen(modifier: Modifier) {
-    val registerViewModel : RegisterViewModel = viewModel()
+fun ResetPasswordScreen(
+    modifier: Modifier,
+    navController: NavController
+) {
+    val resetPwdViewModel : ResetPasswordViewModel = viewModel()
     // You should use proper state-hoisting for real-world scenarios
     var username by remember { mutableStateOf("") }
     var emailCheckCode by remember { mutableStateOf("") }
     var emailCheckButtonEnabled by remember { mutableStateOf(true) }
     var waitTime by remember { mutableIntStateOf(0) }
     var password by remember { mutableStateOf("") }
-    var inviteCodeFather by remember { mutableStateOf("") }
     val isLocked = remember { mutableStateOf(false) }
     LockScreenLoading(
         isLocked =isLocked,
@@ -74,7 +60,7 @@ fun RegisterScreen(modifier: Modifier) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(text = "注册AutoDaily", style = MaterialTheme.typography.bodyLarge)
+                Text(text = "重置密码", style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
@@ -89,7 +75,6 @@ fun RegisterScreen(modifier: Modifier) {
                 Row (
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
                 ){
                     OutlinedTextField(
                         value = emailCheckCode,
@@ -105,19 +90,17 @@ fun RegisterScreen(modifier: Modifier) {
                     Button(
                         enabled = emailCheckButtonEnabled,
                         onClick = {
-                            if(registerCheck(username,registerViewModel.context)){
+                            if(resetCheck(username,resetPwdViewModel.context)){
                                 emailCheckButtonEnabled = false
-                                registerViewModel.viewModelScope.launch {
-                                    val result = registerViewModel.sendEmailCode(username, 0)
-                                    if (result.code == 200){
+                                resetPwdViewModel.viewModelScope.launch {
+                                    val result = resetPwdViewModel.sendEmailCode(username,1)
+                                    if (result.code== 200){
                                         for (i in 1..60){
                                             waitTime = 60 - i
                                             delay(1000)
                                         }
                                     }else{
-                                        result.message?.let {
-                                            SnackbarUtil.show(it)
-                                        }
+                                        SnackbarUtil.show(result.message.toString())
                                     }
                                     emailCheckButtonEnabled = true
                                 }
@@ -139,20 +122,10 @@ fun RegisterScreen(modifier: Modifier) {
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("密码") },
+                    label = { Text("新密码") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = inviteCodeFather,
-                    onValueChange = { inviteCodeFather = it },
-                    label = { Text("邀请码(选填)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -163,10 +136,7 @@ fun RegisterScreen(modifier: Modifier) {
                 ){
                     Button(
                         onClick = {
-                            registerViewModel.context.startActivity(
-                                Intent("android.intent.action.LOGIN")
-                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            )
+                            navController.navSingleTopTo(Screen.LOGIN.name)
                         },
                         modifier = Modifier.weight(1f)
                     ) {
@@ -175,27 +145,21 @@ fun RegisterScreen(modifier: Modifier) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            if(registerCheck(username, password, registerViewModel.context)){
-                                registerViewModel.viewModelScope.launch {
+                            if(resetCheck(username, password, resetPwdViewModel.context)){
+                                resetPwdViewModel.viewModelScope.launch {
                                     isLocked.value = true
-                                    val registerResult = registerViewModel.registerByEmail(username,emailCheckCode, password, inviteCodeFather)
+                                    val resetResult = resetPwdViewModel.resetPwdByEmail(username,emailCheckCode, password)
                                     isLocked.value = false
-                                    registerResult.message?.let {
-                                        SnackbarUtil.show(it)
-                                    }
-                                    if (registerResult.code == 200){
-                                        SnackbarUtil.show("注册成功！")
-                                        registerViewModel.context.startActivity(
-                                            Intent("android.intent.action.LOGIN")
-                                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                        )
+                                    SnackbarUtil.show(resetResult.message.toString())
+                                    if (resetResult.code== ResponseCode.SUCCESS.code){
+                                        navController.navSingleTopTo(Screen.LOGIN.name)
                                     }
                                 }
                             }
                         },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(text = "注册")
+                        Text(text = "重置密码")
                     }
                 }
 
@@ -205,7 +169,7 @@ fun RegisterScreen(modifier: Modifier) {
 
 }
 
-private fun registerCheck(username: String, password: String,context: Context):Boolean{
+private fun resetCheck(username: String, password: String,context: Context):Boolean{
     if( username.isEmpty() || password.isEmpty() ) {
         SnackbarUtil.show("邮箱或密码不能为空")
         return false
@@ -222,7 +186,7 @@ private fun registerCheck(username: String, password: String,context: Context):B
     return false
 }
 
-private fun registerCheck(username: String,context: Context):Boolean{
+private fun resetCheck(username: String,context: Context):Boolean{
     if( username.isEmpty()) {
         SnackbarUtil.show("邮箱不能为空")
     }

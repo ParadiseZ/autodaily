@@ -1,10 +1,8 @@
 package com.smart.autodaily.retrofit2
 
-import android.content.Intent
 import com.smart.autodaily.utils.TokenManager
 import okhttp3.Interceptor
 import okhttp3.Response
-import splitties.init.appCtx
 
 class AuthInterceptor : Interceptor {
     // 不需要登录验证的API路径白名单
@@ -28,10 +26,10 @@ class AuthInterceptor : Interceptor {
         val token = TokenManager.getToken()
         if (token == null) {
             // 如果没有token，跳转到登录页面
-            val intent = Intent("android.intent.action.LOGIN")
+            /*val intent = Intent("android.intent.action.LOGIN")
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            appCtx.startActivity(intent)
-            //throw IllegalStateException("未登录")
+            appCtx.startActivity(intent)*/
+            throw IllegalStateException("未登录")
         }
         
         val newRequest = originalRequest.newBuilder()

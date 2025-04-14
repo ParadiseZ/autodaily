@@ -48,14 +48,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.smart.autodaily.constant.AppBarTitle
 import com.smart.autodaily.constant.BorderDirection
+import com.smart.autodaily.constant.Screen
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.ui.conponent.MyButton
 import com.smart.autodaily.ui.conponent.SingleBorderBox
+import com.smart.autodaily.ui.navigation.navSingleTopTo
 import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.gotoExchange
 import com.smart.autodaily.utils.gotoUserKeyRecord
 import com.smart.autodaily.utils.isLogin
-import com.smart.autodaily.utils.startActivity
 import com.smart.autodaily.viewmodel.PersonViewModel
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalDateTime
@@ -79,14 +80,15 @@ fun PersonScreen(modifier: Modifier,
             SnackbarUtil.CustomSnackbarHost()
         }
     ){
-        ChildScreen(modifier = Modifier.padding(it))
+        ChildScreen(modifier = Modifier.padding(it), navController = nhc)
     }
 }
 @SuppressLint("DefaultLocale")
 @Composable
 fun ChildScreen(
     modifier: Modifier,
-    personViewModel: PersonViewModel = viewModel()
+    personViewModel: PersonViewModel = viewModel(),
+    navController : NavHostController
 ) {
     //Text(text = "Hello PersonalScreen！")
     val user by  personViewModel.appViewModel.user.collectAsState()
@@ -157,7 +159,7 @@ fun ChildScreen(
             TextButton(
                 onClick = {
                     if (user == null){
-                        startActivity(action = "android.intent.action.LOGIN")
+                        navController.navSingleTopTo(Screen.LOGIN.name)
                     }else{
                         personViewModel.logout(user!!)
                     }
@@ -212,11 +214,15 @@ fun ChildScreen(
         PersonRowFirst(textLabel = "兑换码", imageVector = Icons.Outlined.ShoppingCart){
             if(isLogin(personViewModel.context, user)){
                 openDialog.value = true
+            }else{
+                navController.navSingleTopTo(Screen.LOGIN.name)
             }
         }
         PersonRowFirst(textLabel = "兑换记录", imageVector = Icons.AutoMirrored.Outlined.List){
             if(isLogin(personViewModel.context, user)){
                 gotoUserKeyRecord(personViewModel.context)
+            }else{
+                navController.navSingleTopTo(Screen.LOGIN.name)
             }
         }
         user?.let {
@@ -239,6 +245,8 @@ fun ChildScreen(
 
                     }
 
+                }else{
+                    navController.navSingleTopTo(Screen.LOGIN.name)
                 }
             }
 

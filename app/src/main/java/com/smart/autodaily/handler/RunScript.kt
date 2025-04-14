@@ -26,6 +26,7 @@ import com.smart.autodaily.constant.WORK_TYPE03
 import com.smart.autodaily.data.appDb
 import com.smart.autodaily.data.entity.ConfigData
 import com.smart.autodaily.data.entity.DetectResult
+import com.smart.autodaily.data.entity.Point
 import com.smart.autodaily.data.entity.Rect
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
@@ -417,6 +418,10 @@ object  RunScript {
                                         return exeRes
                                     }
                                 }
+                                //点击中央
+                                2 -> {
+                                    cmd.exec(sai)
+                                }
                             }
                         }
                         is Return -> {
@@ -583,6 +588,11 @@ object  RunScript {
                 when(action){
                     ActionString.CLICK-> {
                         scriptActionInfo.command.add (Operation( 1, AdbClick()) )
+                    }
+                    ActionString.CLICKC-> {
+                        val x = (ScreenCaptureUtil.getDisplayMetrics(appCtx).widthPixels/2).toFloat()+ conf.random
+                        val y = (ScreenCaptureUtil.getDisplayMetrics(appCtx).heightPixels/2).toFloat() + conf.random
+                        scriptActionInfo.command.add (Operation( 2, AdbClick(Point(x,y))) )
                     }
                     ActionString.FINISH ->{
                         scriptActionInfo.command.add (Return(ActionString.FINISH))

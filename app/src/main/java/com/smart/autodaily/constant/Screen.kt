@@ -23,7 +23,11 @@ enum class Screen {
 
     LICENSE,
     LICENSESHOW,
-    NOTIFICATION
+    NOTIFICATION,
+
+    LOGIN,
+    REGISTER,
+    RESETPWD
 }
 
 object ScreenText {
@@ -40,6 +44,10 @@ sealed class NavigationItem(val route: String, val icon: ImageVector,val selecte
     data object HOME : NavigationItem(Screen.HOME.name, Icons.Outlined.Home, Icons.Filled.Home, ScreenText.HOME_SCREEN)
     data object SETTING : NavigationItem(Screen.SETTING.name, Icons.Outlined.Settings, Icons.Filled.Settings, ScreenText.SETTING_SCREEN)
     data object PERSON : NavigationItem(Screen.PERSONAL.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
+
+    data object LOGIN : NavigationItem(Screen.LOGIN.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
+    data object REGISTER : NavigationItem(Screen.REGISTER.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
+    data object RESETPWD : NavigationItem(Screen.RESETPWD.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
 
     data object LICENSE : NavigationItem(Screen.LICENSE.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
     data object LICENSESHOW : NavigationItem(Screen.LICENSESHOW.name+"/{data}", Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)

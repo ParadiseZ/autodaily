@@ -1,10 +1,8 @@
-package com.smart.autodaily.ui
+package com.smart.autodaily.ui.screen
 
 import android.content.Context
 import android.content.Intent
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,9 +13,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -27,40 +25,72 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.smart.autodaily.MainActivity
 import com.smart.autodaily.constant.ResponseCode
+import com.smart.autodaily.constant.Screen
 import com.smart.autodaily.ui.conponent.LockScreenLoading
+import com.smart.autodaily.ui.navigation.navSingleTopTo
 import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.ValidUtil
 import com.smart.autodaily.viewmodel.LoginViewModel
 import kotlinx.coroutines.launch
 
-class LoginActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            Scaffold(
-                snackbarHost = {
-                    SnackbarUtil.CustomSnackbarHost()
-                }
-            ) {
-                LoginScreen(modifier = Modifier.padding(it))
-            }
-        }
-    }
-}
-
 @Composable
-fun LoginScreen(modifier: Modifier) {
+fun LoginScreen(
+    modifier: Modifier,
+    navController : NavController
+) {
     val loginViewMode : LoginViewModel = viewModel()
     // You should use proper state-hoisting for real-world scenarios
+    var acceptPrivacy by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val isLocked = remember { mutableStateOf(false) }
+    val privacy = buildAnnotatedString {
+        //append("我已阅读并同意")
+        pushStringAnnotation(
+            tag = "PRIVACY",
+            annotation = "PRIVACY"
+        )
+        withStyle(
+            style = SpanStyle(
+                color = Color(0xFF0E9FF2),
+                fontWeight = FontWeight.Bold,
+
+                )
+        ) {
+            append("《隐私政策》")
+        }
+        pop()
+    }
+    val termsUse = buildAnnotatedString {
+        //append("我已阅读并同意")
+        pushStringAnnotation(
+            tag = "TERMS_OF_USE",
+            annotation = "TERMS_OF_USE"
+        )
+        withStyle(
+            style = SpanStyle(
+                color = Color(0xFF0E9FF2),
+                fontWeight = FontWeight.Bold
+            )
+        ) {
+            append("《使用条款》")
+        }
+        pop()
+    }
     LockScreenLoading(
         isLocked =isLocked,
         content = {
@@ -94,16 +124,44 @@ fun LoginScreen(modifier: Modifier) {
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
-
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ){
+                    Checkbox(
+                        checked = acceptPrivacy,
+                        onCheckedChange = {
+                            acceptPrivacy = it
+                        }
+                    )
+                    Text(text = "我已阅读并同意")
+                    Text(
+                        modifier = Modifier
+                            .clickable{
+                                val data = "PRIVACY"
+                                navController.navigate(Screen.LICENSESHOW.name + "/$data")
+                            },
+                        text = privacy,
+                        style = TextStyle(textDecoration = TextDecoration.Underline),
+                    )
+                    Text(text = "以及")
+                    Text(
+                        modifier = Modifier
+                            .clickable{
+                                val data = "TERMS_OF_USE"
+                                navController.navigate(Screen.LICENSESHOW.name + "/$data")
+                            },
+                        text = termsUse,
+                        style = TextStyle(textDecoration = TextDecoration.Underline),
+                    )
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ){
                     Button(
                         onClick = {
-                            loginViewMode.context.startActivity(
-                                Intent("android.intent.action.REGISTER").setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                            )
+                            navController.navSingleTopTo(Screen.REGISTER.name)
                         },
                         modifier = Modifier.weight(1f)
                     ) {
@@ -112,7 +170,7 @@ fun LoginScreen(modifier: Modifier) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            if(loginCheck(username, password, loginViewMode.context)){
+                            if(acceptPrivacy && loginCheck(username, password, loginViewMode.context)){
                                 loginViewMode.viewModelScope.launch {
                                     isLocked.value = true
                                     val loginResult = loginViewMode.loginByEmail(username, password)
@@ -140,9 +198,7 @@ fun LoginScreen(modifier: Modifier) {
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = {
-                        loginViewMode.context.startActivity(
-                            Intent("android.intent.action.ResetPassword").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        )
+                        navController.navSingleTopTo(Screen.RESETPWD.name)
                     }) {
                         Text(text = "忘记密码？")
                     }

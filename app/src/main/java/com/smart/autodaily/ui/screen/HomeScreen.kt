@@ -48,12 +48,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.smart.autodaily.constant.AppBarTitle
 import com.smart.autodaily.constant.ResponseCode
+import com.smart.autodaily.constant.Screen
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.handler.isRunning
 import com.smart.autodaily.service.ForegroundService
 import com.smart.autodaily.ui.conponent.RowScriptInfo
+import com.smart.autodaily.ui.navigation.navSingleTopTo
 import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.SnackbarUtil.CustomSnackbarHost
 import com.smart.autodaily.utils.isLogin
@@ -162,6 +164,7 @@ fun HomeScreen(
                                     }
                                 }else{
                                     homeViewModel.appViewModel.setIsRunning(0)
+                                    nhc.navSingleTopTo(Screen.LOGIN.name)
                                 }
                             }
                         }
