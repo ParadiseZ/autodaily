@@ -10,6 +10,7 @@ object RetrofitCreate {
     //private const val MEDIA_TYPE = "application/json"
     //private const val BASE_URL = "https://www.wanandroid.com/"
     //private val  okHttpClient = OkHttpClient.Builder().build()
+
     private val okHttpClient = OkHttpClient.Builder()
         .callTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
         .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)

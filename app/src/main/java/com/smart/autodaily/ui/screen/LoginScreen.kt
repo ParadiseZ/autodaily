@@ -1,13 +1,10 @@
 package com.smart.autodaily.ui.screen
 
-import android.content.Context
-import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,12 +35,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.smart.autodaily.MainActivity
 import com.smart.autodaily.constant.ResponseCode
 import com.smart.autodaily.constant.Screen
 import com.smart.autodaily.ui.conponent.LockScreenLoading
 import com.smart.autodaily.ui.navigation.navSingleTopTo
-import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.ValidUtil
 import com.smart.autodaily.viewmodel.LoginViewModel
 import kotlinx.coroutines.launch
@@ -54,10 +50,11 @@ fun LoginScreen(
 ) {
     val loginViewMode : LoginViewModel = viewModel()
     // You should use proper state-hoisting for real-world scenarios
-    var acceptPrivacy by remember { mutableStateOf(false) }
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    var acceptPrivacy by rememberSaveable { mutableStateOf(false) }
+    var username by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
     val isLocked = remember { mutableStateOf(false) }
+    val notification = remember { mutableStateOf("") }
     val privacy = buildAnnotatedString {
         //append("我已阅读并同意")
         pushStringAnnotation(
@@ -95,9 +92,7 @@ fun LoginScreen(
         isLocked =isLocked,
         content = {
             Column(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
+                modifier = Modifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -106,17 +101,24 @@ fun LoginScreen(
 
                 OutlinedTextField(
                     value = username,
-                    onValueChange = { username = it },
+                    onValueChange = {
+                        username = it
+                        notification.value = "" },
                     label = { Text("邮箱") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
+                if (notification.value.isNotBlank()){
+                    Text(modifier = Modifier.fillMaxWidth(),text = notification.value, color = Color.Red)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
 
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it },
+                    onValueChange = { password = it
+                        notification.value = "" },
                     label = { Text("密码") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -125,14 +127,18 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth()
+                        .clickable{
+                            acceptPrivacy = !acceptPrivacy
+                            notification.value = ""
+                        },
                     verticalAlignment = Alignment.CenterVertically
                 ){
                     Checkbox(
                         checked = acceptPrivacy,
                         onCheckedChange = {
                             acceptPrivacy = it
-                        }
+                            notification.value = ""},
                     )
                     Text(text = "我已阅读并同意")
                     Text(
@@ -170,20 +176,32 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            if(acceptPrivacy && loginCheck(username, password, loginViewMode.context)){
-                                loginViewMode.viewModelScope.launch {
-                                    isLocked.value = true
-                                    val loginResult = loginViewMode.loginByEmail(username, password)
-                                    isLocked.value = false
-                                    if (loginResult.code== ResponseCode.SUCCESS.code){
-                                        loginViewMode.context.startActivity(
-                                            Intent(loginViewMode.context, MainActivity::class.java)
-                                                .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-                                        )
-                                    }else{
-                                        loginResult.message?.let {
-                                            SnackbarUtil.show(it)
-                                        }
+                            notification.value = ""
+                            if(!acceptPrivacy){
+                                notification.value = "请先阅读并同意隐私政策"
+                                return@Button
+                            }
+                            if(username.isEmpty() || password.isEmpty()){
+                                notification.value = "邮箱或密码不能为空"
+                                return@Button
+                            }
+                            if (!ValidUtil.isValidEmail(username)){
+                                notification.value = "邮箱不符合规范"
+                                return@Button
+                            }
+                            if (!ValidUtil.isValidPassword(password)){
+                                notification.value = "密码不符合规范（8位以上非空字符）"
+                                return@Button
+                            }
+                            loginViewMode.viewModelScope.launch {
+                                isLocked.value = true
+                                val loginResult = loginViewMode.loginByEmail(username, password)
+                                isLocked.value = false
+                                if (loginResult.code== ResponseCode.SUCCESS.code){
+                                    navController.navSingleTopTo(Screen.HOME.name)
+                                }else{
+                                    loginResult.message?.let {
+                                        notification.value = it
                                     }
                                 }
                             }
@@ -206,20 +224,4 @@ fun LoginScreen(
             }
         }
     )
-}
-
-private fun loginCheck(username: String, password: String,context: Context):Boolean{
-    if( username.isEmpty() || password.isEmpty() ) {
-        SnackbarUtil.show("邮箱或密码不能为空")
-    }
-    if ( ValidUtil.isValidEmail(username) ){
-        return true
-    }else{
-        if( ValidUtil.isNumeric(username) ){
-            return true
-        }else{
-            SnackbarUtil.show("邮箱不符合规范")
-        }
-    }
-    return false
 }

@@ -21,7 +21,6 @@ enum class Screen {
     SETTING,
     PERSONAL,
 
-    LICENSE,
     LICENSESHOW,
     NOTIFICATION,
 
@@ -29,6 +28,13 @@ enum class Screen {
     REGISTER,
     RESETPWD
 }
+
+data class  BottomNavItem(
+    val route: String,
+    val icon: ImageVector,
+    val selectedIcon : ImageVector,
+    val text: String,
+)
 
 object ScreenText {
     const val SEARCH_SCREEN ="搜索"
@@ -38,22 +44,12 @@ object ScreenText {
     const val PERSON_SCREEN ="我的"
 }
 
-sealed class NavigationItem(val route: String, val icon: ImageVector,val selectedIcon: ImageVector, val text: String) {
-    data object SEARCH : NavigationItem(Screen.SEARCH.name, Icons.Outlined.Search, Icons.Filled.Search, ScreenText.SEARCH_SCREEN)
-    data object LOG : NavigationItem(Screen.LOG.name, Icons.AutoMirrored.Outlined.List, Icons.AutoMirrored.Filled.List, ScreenText.LOG_SCREEN)
-    data object HOME : NavigationItem(Screen.HOME.name, Icons.Outlined.Home, Icons.Filled.Home, ScreenText.HOME_SCREEN)
-    data object SETTING : NavigationItem(Screen.SETTING.name, Icons.Outlined.Settings, Icons.Filled.Settings, ScreenText.SETTING_SCREEN)
-    data object PERSON : NavigationItem(Screen.PERSONAL.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
-
-    data object LOGIN : NavigationItem(Screen.LOGIN.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
-    data object REGISTER : NavigationItem(Screen.REGISTER.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
-    data object RESETPWD : NavigationItem(Screen.RESETPWD.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
-
-    data object LICENSE : NavigationItem(Screen.LICENSE.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
-    data object LICENSESHOW : NavigationItem(Screen.LICENSESHOW.name+"/{data}", Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
-    data object NOTIFICATION : NavigationItem(Screen.NOTIFICATION.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN)
-
-    companion object {
-        val showItem = listOf(SEARCH, LOG, HOME, SETTING, PERSON)
-    }
+object NavigationItem{
+    val showItem = listOf(
+        BottomNavItem(Screen.SEARCH.name, Icons.Outlined.Search, Icons.Filled.Search, ScreenText.SEARCH_SCREEN),
+        BottomNavItem(Screen.LOG.name, Icons.AutoMirrored.Outlined.List, Icons.AutoMirrored.Filled.List, ScreenText.LOG_SCREEN),
+        BottomNavItem(Screen.HOME.name, Icons.Outlined.Home, Icons.Filled.Home, ScreenText.HOME_SCREEN),
+        BottomNavItem(Screen.SETTING.name, Icons.Outlined.Settings, Icons.Filled.Settings, ScreenText.SETTING_SCREEN),
+        BottomNavItem(Screen.PERSONAL.name, Icons.Outlined.Person, Icons.Filled.Person, ScreenText.PERSON_SCREEN),
+    )
 }

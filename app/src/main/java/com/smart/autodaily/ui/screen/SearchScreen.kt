@@ -25,6 +25,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.smart.autodaily.R
 import com.smart.autodaily.constant.AppBarTitle
@@ -32,6 +33,7 @@ import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.ui.conponent.RowScriptInfo
 import com.smart.autodaily.ui.conponent.SearchTopAppBar
 import com.smart.autodaily.ui.conponent.SwipeRefreshList
+import com.smart.autodaily.ui.navigation.BottomNavBar
 import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.viewmodel.SearchViewModel
 import kotlinx.coroutines.launch
@@ -41,6 +43,7 @@ import kotlin.random.Random
 @Composable
 fun SearchScreen(
     modifier: Modifier,
+    nhc : NavHostController,
     searchViewModel: SearchViewModel = viewModel(),
 ){
     val netSearScriptList = searchViewModel.remoteScriptList.collectAsLazyPagingItems()
@@ -50,6 +53,9 @@ fun SearchScreen(
         searchViewModel.getRemoteScriptList(localScriptList)
     }
     Scaffold (
+        bottomBar = {
+            BottomNavBar(navController = nhc)
+        },
         topBar = {
             SearchTopAppBar(searchButtonText = AppBarTitle.SEARCH_SCREEN, onSearchClick = {
                 searchViewModel.changeSearchText(it)

@@ -52,6 +52,7 @@ import com.smart.autodaily.constant.Screen
 import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.ui.conponent.MyButton
 import com.smart.autodaily.ui.conponent.SingleBorderBox
+import com.smart.autodaily.ui.navigation.BottomNavBar
 import com.smart.autodaily.ui.navigation.navSingleTopTo
 import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.gotoExchange
@@ -69,6 +70,9 @@ fun PersonScreen(modifier: Modifier,
                  nhc: NavHostController,){
     Scaffold (
         modifier = Modifier,
+        bottomBar = {
+            BottomNavBar(navController = nhc)
+        },
         topBar = {
             TopAppBar(
                 title = {
@@ -244,7 +248,6 @@ fun ChildScreen(
                         SnackbarUtil.show("已复制分享信息到剪切板！")
 
                     }
-
                 }else{
                     navController.navSingleTopTo(Screen.LOGIN.name)
                 }
@@ -270,6 +273,15 @@ fun ChildScreen(
             //properties = DialogProperties(),
             onDismissRequest = {
                 openDialog.value = false
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        openDialog.value = false
+                    }
+                ){
+                    Text(text = "取消")
+                }
             },
             confirmButton = {
                 OutlinedButton(

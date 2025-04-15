@@ -11,12 +11,6 @@ fun isLogin(context: Context = appCtx, user: UserInfo?) : Boolean {
     }
     return true
 }
-fun startActivity(context: Context = appCtx, action: String) {
-    context.startActivity(
-        Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    )
-}
-
 
 fun gotoExchange(context: Context = appCtx){
     context.startActivity(

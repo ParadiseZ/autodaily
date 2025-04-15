@@ -7,8 +7,13 @@ object ValidUtil {
     }
 
     fun isValidPassword(password: String): Boolean {
-        val passwordRegex = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$"
-        return password.matches(passwordRegex.toRegex())
+        val regex = "^\\S{8,}\$"
+        //val regex = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$"
+        return password.matches(regex.toRegex())
+    }
+    fun isValidEmailCode(str: String): Boolean {
+        val regex = "^\\S{6}\$"
+        return str.matches(regex.toRegex())
     }
     fun isNumeric(str: String): Boolean {
         return str.matches("\\d+".toRegex())

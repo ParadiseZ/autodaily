@@ -17,7 +17,6 @@ import com.smart.autodaily.utils.hasNotificationPermission
 import com.smart.autodaily.utils.partScope
 import com.smart.autodaily.utils.updateScope
 import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.weishu.reflection.Reflection
 import splitties.systemservices.notificationManager
@@ -48,7 +47,7 @@ class App : Application() {
             RunScript.initGlobalSet()
             try {
                 // 延迟检查更新
-                delay(1000)
+                //delay(5000)
                 checkScriptUpdate()
             } catch (_: Exception) {
                 updateScope.coroutineContext.cancelChildren()

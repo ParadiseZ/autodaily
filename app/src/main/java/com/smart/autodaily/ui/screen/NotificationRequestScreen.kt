@@ -24,7 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.smart.autodaily.constant.NavigationItem
+import com.smart.autodaily.constant.Screen
+import com.smart.autodaily.ui.navigation.navSingleTopTo
 import com.smart.autodaily.utils.hasNotificationPermission
 import splitties.init.appCtx
 import kotlin.system.exitProcess
@@ -39,10 +40,7 @@ fun NotificationRequest(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { granted ->
             if (granted){
-                nav.navigate(NavigationItem.HOME.route){
-                    popUpTo(NavigationItem.NOTIFICATION.route) { inclusive = true }
-                    launchSingleTop = true
-                }
+                nav.navSingleTopTo(Screen.HOME.name)
             }else{
                 exitProcess(0)
             }
@@ -52,10 +50,7 @@ fun NotificationRequest(
         contract = ActivityResultContracts.StartActivityForResult(),
         onResult = {
             if (hasNotificationPermission()){
-                nav.navigate(NavigationItem.HOME.route){
-                    popUpTo(NavigationItem.NOTIFICATION.route) { inclusive = true }
-                    launchSingleTop = true
-                }
+                nav.navSingleTopTo(Screen.HOME.name)
             }else{
                 exitProcess(0)
             }

@@ -90,10 +90,15 @@
 
 # 保留 EventBus 相关
 -keepattributes *Annotation*
--keepclassmembers class * {
-    @org.greenrobot.eventbus.Subscribe <methods>;
-}
--keep enum org.greenrobot.eventbus.ThreadMode { *; }
+#-keepclassmembers class * {
+#    @org.greenrobot.eventbus.Subscribe <methods>;
+#}
+#-keep enum org.greenrobot.eventbus.ThreadMode { *; }
+
+-dontwarn com.jeremyliao.liveeventbus.**
+-keep class com.jeremyliao.liveeventbus.** { *; }
+-keep class androidx.lifecycle.** { *; }
+-keep class androidx.arch.core.** { *; }
 
 # OkHttp GraalVM 相关警告处理
 -dontwarn com.oracle.svm.core.annotate.Delete
@@ -397,7 +402,4 @@
 -keep class com.baidu.**{*;}
 
 -dontwarn com.smart.autodaily.service.**
--keep class com.smart.autodaily.service.**{*;}
-
--dontwarn com.smart.autodaily..**
 -keep class com.smart.autodaily.service.**{*;}

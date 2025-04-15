@@ -1,7 +1,10 @@
 package com.smart.autodaily.retrofit2
 
+
+import com.jeremyliao.liveeventbus.LiveEventBus
 import com.smart.autodaily.utils.TokenManager
 import okhttp3.Interceptor
+import okhttp3.Protocol
 import okhttp3.Response
 
 class AuthInterceptor : Interceptor {
@@ -29,7 +32,16 @@ class AuthInterceptor : Interceptor {
             /*val intent = Intent("android.intent.action.LOGIN")
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             appCtx.startActivity(intent)*/
-            throw IllegalStateException("未登录")
+
+            LiveEventBus
+                .get("loginCheck", String::class.java)
+                .postAcrossApp("loginCheck")
+            return Response.Builder()
+                .request(originalRequest)
+                .protocol(Protocol.HTTP_1_1)
+                .code(401)
+                .message("未登录！")
+                .build()
         }
         
         val newRequest = originalRequest.newBuilder()

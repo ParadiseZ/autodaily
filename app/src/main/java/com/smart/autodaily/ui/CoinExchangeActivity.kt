@@ -3,7 +3,9 @@ package com.smart.autodaily.ui
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -40,12 +42,10 @@ import com.smart.autodaily.constant.Ui
 import com.smart.autodaily.data.entity.KeyTypeExchange
 import com.smart.autodaily.ui.conponent.MyButton
 import com.smart.autodaily.ui.theme.AutoDailyTheme
-import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.gotoCoinDetail
 import com.smart.autodaily.viewmodel.person.CoinExchangeViewModel
 import kotlinx.coroutines.launch
-import splitties.init.appCtx
 
 class CoinExchangeActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -91,20 +91,24 @@ fun CoinExchange(
     LaunchedEffect(key1 = true) {
         viewModel.getKeyTypeList()
     }
-    val displayMetrics = ScreenCaptureUtil.getDisplayMetrics(appCtx)
-    val cols = if(displayMetrics.widthPixels < displayMetrics.heightPixels){2}else{3}
+    //val displayMetrics = ScreenCaptureUtil.getDisplayMetrics(appCtx)
+    //val cols = if(displayMetrics.widthPixels < displayMetrics.heightPixels){2}else{3}
     val exchangeDialog = remember {
         mutableStateOf(false)
     }
     LazyVerticalGrid(
-        columns = GridCells.Fixed(cols),
-        modifier = modifier
+        columns = GridCells.Fixed(2),
+        modifier = modifier,
+        contentPadding = PaddingValues(8.dp), // Optional: Add padding around the grid content area
+        verticalArrangement = Arrangement.spacedBy(8.dp), // Optional: Add spacing between rows
+        horizontalArrangement = Arrangement.spacedBy(8.dp) // Optional: Add spacing between columns
         ) {
         item {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(vertical = (-2).dp)
-            ){
+                modifier = Modifier.padding(8.dp), // Optional: Add padding *inside* the cell if desired
+                verticalArrangement = Arrangement.Center,    // Center children vertically within the Column
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(text = "剩余：" + (user?.virtualCoin?.toString() ?: "0"),fontSize = TextUnit(24f, TextUnitType.Sp))
                 MyButton(text ="详情", onclick = {gotoCoinDetail(viewModel.context)})
             }
@@ -174,7 +178,9 @@ fun KeyTypeItem(
     keyType: KeyTypeExchange, onClick: () -> Unit
 ){
     Column (
-        modifier = Modifier.padding(bottom = 20.dp)
+        modifier = Modifier.padding(8.dp), // Optional: Add padding *inside* the cell if desired
+        verticalArrangement = Arrangement.Center,    // Center children vertically within the Column
+        horizontalAlignment = Alignment.CenterHorizontally
     ){
         Text(text = keyType.typeName+"赞助"+keyType.vipLevel,fontSize = TextUnit(16f, TextUnitType.Sp))
         Text(text = "单次额外运行："+keyType.canRunNum,fontSize = TextUnit(12f, TextUnitType.Sp))

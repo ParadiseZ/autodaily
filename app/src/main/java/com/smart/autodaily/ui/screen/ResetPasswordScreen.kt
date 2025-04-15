@@ -1,6 +1,5 @@
 package com.smart.autodaily.ui.screen
 
-import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
@@ -50,6 +50,7 @@ fun ResetPasswordScreen(
     var waitTime by remember { mutableIntStateOf(0) }
     var password by remember { mutableStateOf("") }
     val isLocked = remember { mutableStateOf(false) }
+    val notification = remember { mutableStateOf("") }
     LockScreenLoading(
         isLocked =isLocked,
         content = {
@@ -65,12 +66,18 @@ fun ResetPasswordScreen(
 
                 OutlinedTextField(
                     value = username,
-                    onValueChange = { username = it },
+                    onValueChange = { username = it
+                        notification.value = ""},
                     label = { Text("邮箱") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+                if (notification.value.isNotBlank()){
+                    Text(modifier = Modifier.fillMaxWidth(),text = notification.value, color = Color.Red)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
 
                 Row (
                     modifier = Modifier.fillMaxWidth(),
@@ -78,9 +85,11 @@ fun ResetPasswordScreen(
                 ){
                     OutlinedTextField(
                         value = emailCheckCode,
-                        onValueChange = { emailCheckCode = it },
+                        onValueChange = { emailCheckCode = it
+                            notification.value = ""},
                         label = { Text("验证码") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
                             .weight(3f)
                             .alignByBaseline(),
                         singleLine = true
@@ -90,26 +99,30 @@ fun ResetPasswordScreen(
                     Button(
                         enabled = emailCheckButtonEnabled,
                         onClick = {
-                            if(resetCheck(username,resetPwdViewModel.context)){
-                                emailCheckButtonEnabled = false
-                                resetPwdViewModel.viewModelScope.launch {
-                                    val result = resetPwdViewModel.sendEmailCode(username,1)
-                                    if (result.code== 200){
-                                        for (i in 1..60){
-                                            waitTime = 60 - i
-                                            delay(1000)
-                                        }
-                                    }else{
-                                        SnackbarUtil.show(result.message.toString())
+                            if (username.isEmpty() || !ValidUtil.isValidEmail(username)){
+                                notification.value = "邮箱不符合规范"
+                                return@Button
+                            }
+                            emailCheckButtonEnabled = false
+                            resetPwdViewModel.viewModelScope.launch {
+                                val result = resetPwdViewModel.sendEmailCode(username,1)
+                                if (result.code== 200){
+                                    for (i in 1..60){
+                                        waitTime = 60 - i
+                                        delay(1000)
                                     }
-                                    emailCheckButtonEnabled = true
+                                }else{
+                                    SnackbarUtil.show(result.message.toString())
                                 }
+                                emailCheckButtonEnabled = true
                             }
                         },
-                        modifier = Modifier.weight(1.5f).alignByBaseline()
+                        modifier = Modifier
+                            .weight(1.5f)
+                            .alignByBaseline()
                     ) {
                         if(waitTime == 0){
-                            Text(text = "验证码")
+                            Text(text = "获取")
                         }else{
                             Text(text = waitTime.toString())
                         }
@@ -121,7 +134,8 @@ fun ResetPasswordScreen(
 
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it },
+                    onValueChange = { password = it
+                        notification.value = ""},
                     label = { Text("新密码") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -145,15 +159,30 @@ fun ResetPasswordScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            if(resetCheck(username, password, resetPwdViewModel.context)){
-                                resetPwdViewModel.viewModelScope.launch {
-                                    isLocked.value = true
-                                    val resetResult = resetPwdViewModel.resetPwdByEmail(username,emailCheckCode, password)
-                                    isLocked.value = false
-                                    SnackbarUtil.show(resetResult.message.toString())
-                                    if (resetResult.code== ResponseCode.SUCCESS.code){
-                                        navController.navSingleTopTo(Screen.LOGIN.name)
-                                    }
+                            if(username.isEmpty() || password.isEmpty()){
+                                notification.value = "邮箱或密码不能为空"
+                                return@Button
+                            }
+                            if (!ValidUtil.isValidEmail(username)){
+                                notification.value = "邮箱不符合规范"
+                                return@Button
+                            }
+                            if (!ValidUtil.isValidPassword(password)){
+                                notification.value = "密码不符合规范（8位以上非空字符）"
+                                return@Button
+                            }
+                            if (!ValidUtil.isValidEmailCode(emailCheckCode)) {
+                                notification.value = "验证码不符合规范（6位）"
+                                return@Button
+                            }
+                            resetPwdViewModel.viewModelScope.launch {
+                                isLocked.value = true
+                                val resetResult = resetPwdViewModel.resetPwdByEmail(username,emailCheckCode, password)
+                                isLocked.value = false
+                                notification.value = resetResult.message.toString()
+                                if (resetResult.code== ResponseCode.SUCCESS.code){
+                                    delay(1000)
+                                    navController.navSingleTopTo(Screen.LOGIN.name)
                                 }
                             }
                         },
@@ -167,37 +196,4 @@ fun ResetPasswordScreen(
         }
     )
 
-}
-
-private fun resetCheck(username: String, password: String,context: Context):Boolean{
-    if( username.isEmpty() || password.isEmpty() ) {
-        SnackbarUtil.show("邮箱或密码不能为空")
-        return false
-    }
-    if ( ValidUtil.isValidEmail(username) ){
-        return true
-    }else{
-        if( ValidUtil.isNumeric(username) ){
-            return true
-        }else{
-            SnackbarUtil.show("邮箱不符合规范")
-        }
-    }
-    return false
-}
-
-private fun resetCheck(username: String,context: Context):Boolean{
-    if( username.isEmpty()) {
-        SnackbarUtil.show("邮箱不能为空")
-    }
-    if ( ValidUtil.isValidEmail(username) ){
-        return true
-    }else{
-        if( ValidUtil.isNumeric(username) ){
-            return true
-        }else{
-            SnackbarUtil.show("邮箱不符合规范")
-        }
-    }
-    return false
 }

@@ -55,6 +55,7 @@ import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.handler.isRunning
 import com.smart.autodaily.service.ForegroundService
 import com.smart.autodaily.ui.conponent.RowScriptInfo
+import com.smart.autodaily.ui.navigation.BottomNavBar
 import com.smart.autodaily.ui.navigation.navSingleTopTo
 import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.SnackbarUtil.CustomSnackbarHost
@@ -103,6 +104,9 @@ fun HomeScreen(
     
     Scaffold (
         modifier = Modifier,
+        bottomBar = {
+            BottomNavBar(navController = nhc)
+        },
         snackbarHost = {
             CustomSnackbarHost()
         },

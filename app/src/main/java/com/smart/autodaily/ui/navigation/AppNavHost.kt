@@ -9,16 +9,15 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.smart.autodaily.constant.NavigationItem
-import com.smart.autodaily.ui.screen.LoginScreen
-import com.smart.autodaily.ui.screen.RegisterScreen
-import com.smart.autodaily.ui.screen.ResetPasswordScreen
+import com.smart.autodaily.constant.Screen
 import com.smart.autodaily.ui.screen.HomeScreen
-import com.smart.autodaily.ui.screen.LicenseScreen
 import com.smart.autodaily.ui.screen.LicenseShowScreen
 import com.smart.autodaily.ui.screen.LogScreen
+import com.smart.autodaily.ui.screen.LoginScreen
 import com.smart.autodaily.ui.screen.NotificationRequest
 import com.smart.autodaily.ui.screen.PersonScreen
+import com.smart.autodaily.ui.screen.RegisterScreen
+import com.smart.autodaily.ui.screen.ResetPasswordScreen
 import com.smart.autodaily.ui.screen.SearchScreen
 import com.smart.autodaily.ui.screen.SettingScreen
 
@@ -26,7 +25,7 @@ import com.smart.autodaily.ui.screen.SettingScreen
 fun AppNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController,
-    startDestination : String = NavigationItem.HOME.route,
+    startDestination : String,
 ) {
     NavHost(
         modifier = modifier,
@@ -35,38 +34,35 @@ fun AppNavHost(
         //startDestination = NavigationItem.PERSON.route,
     ) {
 
-        composable(NavigationItem.SEARCH.route) {
-            SearchScreen(modifier)
+        composable(Screen.SEARCH.name) {
+            SearchScreen(modifier,navController)
         }
-        composable(NavigationItem.LOG.route) {
-            LogScreen(modifier)
+        composable(Screen.LOG.name) {
+            LogScreen(modifier,navController)
         }
-        composable(NavigationItem.HOME.route) {
+        composable(Screen.HOME.name) {
             HomeScreen(modifier, navController)
         }
-        composable(NavigationItem.SETTING.route) {
+        composable(Screen.SETTING.name) {
             SettingScreen(modifier, navController)
         }
-        composable(NavigationItem.PERSON.route){
+        composable(Screen.PERSONAL.name){
             PersonScreen(modifier, navController)
         }
 
-        composable (NavigationItem.LOGIN.route ){
+        composable (Screen.LOGIN.name ){
             LoginScreen(modifier, navController)
         }
-        composable (NavigationItem.LOGIN.route ){
+        composable (Screen.REGISTER.name ){
             RegisterScreen(modifier, navController)
         }
-        composable (NavigationItem.LOGIN.route ){
+        composable (Screen.RESETPWD.name ){
             ResetPasswordScreen(modifier, navController)
         }
 
 
-        composable(NavigationItem.LICENSE.route){
-            LicenseScreen(navController)
-        }
         composable(
-            route = NavigationItem.LICENSESHOW.route,
+            route = Screen.LICENSESHOW.name+"/{data}",
             arguments = listOf(navArgument("data"){type = NavType.StringType})
         ){
             backStackEntry ->
@@ -74,7 +70,7 @@ fun AppNavHost(
                 backStackEntry.arguments?.getString("data").toString()
             )
         }
-        composable(NavigationItem.NOTIFICATION.route){
+        composable(Screen.NOTIFICATION.name){
             NotificationRequest(modifier,navController)
         }
     }

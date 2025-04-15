@@ -29,10 +29,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.smart.autodaily.R
 import com.smart.autodaily.constant.AppBarTitle
 import com.smart.autodaily.constant.Ui
+import com.smart.autodaily.ui.navigation.BottomNavBar
+import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.SnackbarUtil.CustomSnackbarHost
 import com.smart.autodaily.viewmodel.LogViewModel
 import kotlinx.coroutines.launch
@@ -42,6 +45,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun LogScreen(
     modifier: Modifier,
+    nhc : NavHostController,
     viewModel: LogViewModel = viewModel()
 ) {
     val logs = viewModel.logStateFlow.collectAsLazyPagingItems()
@@ -62,7 +66,9 @@ fun LogScreen(
         viewModel.loadLogs()
     }
     Scaffold (
-        modifier = Modifier,
+        bottomBar = {
+            BottomNavBar(navController = nhc)
+        },
         topBar = {
             TopAppBar(
                 title = {
@@ -119,6 +125,7 @@ fun LogScreen(
                     enabled = dialog.value,
                     onClick = {
                         viewModel.deleteLogs()
+                        SnackbarUtil.show("删除成功！")
                         viewModel.loadLogs()
                         dialog.value = false
                     }

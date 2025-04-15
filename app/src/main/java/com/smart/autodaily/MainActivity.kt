@@ -11,10 +11,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.smart.autodaily.constant.NavigationItem
+import com.jeremyliao.liveeventbus.LiveEventBus
+import com.smart.autodaily.constant.Screen
 import com.smart.autodaily.ui.conponent.floatingView
 import com.smart.autodaily.ui.navigation.AppNavHost
-import com.smart.autodaily.ui.navigation.BottomNavBar
+import com.smart.autodaily.ui.navigation.navSingleTopTo
 import com.smart.autodaily.ui.theme.AutoDailyTheme
 import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.SnackbarUtil
@@ -34,18 +35,24 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
         setContent {
             AutoDailyTheme {
                 val target = if(!hasNotificationPermission()){
-                    NavigationItem.NOTIFICATION.route
+                    Screen.NOTIFICATION.name
                 }else{
-                    NavigationItem.HOME.route
+                    Screen.HOME.name
                 }
 
                 // A surface container using the 'background' color from the theme
-                val navController = rememberNavController()
-                MainScreen(navController = navController, startDestination = target)
+                val navHostController = rememberNavController()
+                LiveEventBus
+                    .get("loginCheck", String::class.java)
+                    .observe(this) {
+                        navHostController.navSingleTopTo(Screen.LOGIN.name)
+                    }
+                MainScreen(navController = navHostController, startDestination = target)
             }
         }
     }
@@ -71,12 +78,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
 @Composable
 fun MainScreen(
     navController: NavHostController,
-    startDestination: String = NavigationItem.HOME.route
+    startDestination: String
 ){
     Scaffold (
-        bottomBar = {
-            BottomNavBar(navController = navController)
-        },
         snackbarHost = {
             SnackbarUtil.CustomSnackbarHost()
         }

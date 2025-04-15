@@ -59,6 +59,7 @@ import com.smart.autodaily.ui.conponent.SliderSettingItem
 import com.smart.autodaily.ui.conponent.SwitchSettingItem
 import com.smart.autodaily.ui.conponent.TextFieldSettingItem
 import com.smart.autodaily.ui.conponent.TitleSettingItem
+import com.smart.autodaily.ui.navigation.BottomNavBar
 import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.viewmodel.SettingViewModel
 import kotlinx.coroutines.launch
@@ -88,6 +89,9 @@ fun SettingScreen(
     )
     Scaffold(
         modifier = Modifier,
+        bottomBar = {
+            BottomNavBar(navController = nhc)
+        },
         topBar = {
             TopAppBar(
                 title = { Text(text = AppBarTitle.SETTING_SCREEN) },
