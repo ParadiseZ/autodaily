@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import com.smart.autodaily.command.AdbBack
 import com.smart.autodaily.command.AdbClick
 import com.smart.autodaily.command.AdbPartClick
+import com.smart.autodaily.command.AddPosById
 import com.smart.autodaily.command.NotFlowId
 import com.smart.autodaily.command.Operation
 import com.smart.autodaily.command.Return
@@ -71,6 +72,10 @@ val model by lazy{
     AutoDaily()
 }
 
+val allActionMap : HashMap<Int,ScriptActionInfo> by lazy{
+    hashMapOf()
+}
+
 const val INFO = "info"
 const val ERROR = "error"
 object  RunScript {
@@ -94,7 +99,7 @@ object  RunScript {
     }
 
     suspend fun runScript(){
-        workType.value = RunScript.globalSetMap.value[8]?.setValue ?:""
+        workType.value = globalSetMap.value[8]?.setValue ?:""
         workType.value.let {
             when(it) {
                 WORK_TYPE00 ->{
@@ -155,9 +160,10 @@ object  RunScript {
         _scriptCheckedList.value.forEach scriptForEach@{ si->
             skipFlowIds.clear()
             skipAcIds.clear()
+            allActionMap.clear()
             conf.pkgName = si.packageName
             //保存的所有的action map
-            val allActionMap : HashMap<Int,ScriptActionInfo> = hashMapOf()
+
             if(si.currentRunNum < si.runsMaxNum){
                 Lom.n( INFO, si.scriptName )
                 startApp( conf.pkgName )
@@ -725,6 +731,10 @@ object  RunScript {
                                 val acId = action.substring(   ActionString.RM_SKIP_ACID.length+1, action.length-1   ).toInt()
                                 scriptActionInfo.command.add(RmSkipAcId(acId))
                             }
+                            action.startsWith( ActionString.POS_ADD) ->{
+                                val saiId = action.substring(   ActionString.POS_ADD.length+1, action.length-1   ).toInt()
+                                scriptActionInfo.command.add(AddPosById(saiId))
+                            }
                         }
                     }
                     /*action.startsWith(ActionString.STEP).toString() -> {
@@ -738,7 +748,7 @@ object  RunScript {
                     }*/
                 }
             }
-        }catch (e : Exception){
+        }catch (_ : Exception){
             Lom.d(ERROR, "initActionFun error")
             runScope.coroutineContext.cancelChildren()
             SnackbarUtil.show("初始化action失败，请联系管理员！")

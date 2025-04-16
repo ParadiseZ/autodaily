@@ -5,6 +5,7 @@ import com.smart.autodaily.data.entity.Point
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.handler.ActionHandler
 import com.smart.autodaily.handler.INFO
+import com.smart.autodaily.handler.allActionMap
 import com.smart.autodaily.handler.conf
 import com.smart.autodaily.handler.skipAcIds
 import com.smart.autodaily.handler.skipFlowIds
@@ -162,3 +163,11 @@ class Return(val type : String) : Command{
     }
 }*/
 
+class AddPosById(private val saiId :Int): Command{
+    override fun exec(sai: ScriptActionInfo): Boolean {
+        allActionMap.get(saiId)?.let {
+            it.labelPos += 1
+        }
+        return true
+    }
+}

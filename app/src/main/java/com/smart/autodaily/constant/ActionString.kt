@@ -3,7 +3,7 @@ package com.smart.autodaily.constant
 object ActionString {
 
     const val CLICK = "click"
-    const val CLICKC = "clickc"
+
     const val SLEEP = "sleep"
     const val SKIP = "skip"
     const val FINISH = "finish"
@@ -18,4 +18,8 @@ object ActionString {
     const val SKIP_ACID = "skipacid"
     const val RM_FLOW_ID = "rmflowid"
     const val SKIP_FLOW_ID = "skipflowid"
+
+    //250416
+    const val CLICKC = "clickc"
+    const val POS_ADD = "posadd"
 }

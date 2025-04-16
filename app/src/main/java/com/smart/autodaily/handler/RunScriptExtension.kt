@@ -25,7 +25,7 @@ fun execClick(sai: ScriptActionInfo, detectRes: Array<DetectResult>, cmd : Opera
         // Execute click operation
         when (cmd.operation) {
             is AdbClick -> {
-                if (sai.executeMax > 1) {
+                if (sai.executeMax > 0) {
                     sai.executeCur += 1
                     Lom.d(INFO, "准备第${sai.executeCur}次点击")
                     if (sai.executeCur >= sai.executeMax) {
