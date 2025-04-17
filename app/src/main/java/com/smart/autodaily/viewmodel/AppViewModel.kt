@@ -121,11 +121,17 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     }
 
     //下载
-    suspend fun downScriptByScriptId(scriptInfo : ScriptInfo) {
-        if(scriptInfo.scriptId!=0){
-            downloadModel(scriptInfo)
+    suspend fun downScriptByScriptId(scriptInfo : ScriptInfo) : Boolean {
+        runCatching {
+            if(scriptInfo.scriptId!=0){
+                downloadModel(scriptInfo)
+            }
+            downByScriptId(scriptInfo)
+            return true
+        }.onFailure {
+            return false
         }
-        downByScriptId(scriptInfo)
+        return true
     }
 
     //下载模型

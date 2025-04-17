@@ -109,7 +109,10 @@ fun SearchScreen(
                                 if (scriptInfo.downState.intValue == 0){
                                     searchViewModel.viewModelScope.launch {
                                         scriptInfo.downState.intValue = 2
-                                        searchViewModel.appViewModel.downScriptByScriptId( scriptInfo )
+                                        val res = searchViewModel.appViewModel.downScriptByScriptId( scriptInfo )
+                                        if (!res){
+                                            SnackbarUtil.show("下载失败，请联系管理员！")
+                                        }
                                         //下载中
                                         processShow.value =true
                                     }
