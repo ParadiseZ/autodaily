@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.smart.autodaily.IUserService
 import java.io.BufferedReader
-import java.io.IOException
 import java.io.InputStreamReader
 import kotlin.system.exitProcess
 
@@ -44,24 +43,29 @@ class UserService: IUserService.Stub(){
     }
 
     fun readBitmap(process: Process): Bitmap {
+        //Log.d("UserService", "Reading bitmap from process")
         val inputStream = process.inputStream
         val bitmap = BitmapFactory.decodeStream(inputStream)
         inputStream.close()
         return bitmap
     }
 
-    @Throws(IOException::class, InterruptedException::class)
     fun readResult(process: Process): String {
-        val stringBuilder = StringBuilder()
-        // 读取执行结果
-        val inputStreamReader = InputStreamReader(process.inputStream)
-        val bufferedReader = BufferedReader(inputStreamReader)
-        var line: String?
-        while ((bufferedReader.readLine().also { line = it }) != null) {
-            stringBuilder.append(line).append("\n")
+        try {
+            val stringBuilder = StringBuilder()
+            // 读取执行结果
+            val inputStreamReader = InputStreamReader(process.inputStream)
+            val bufferedReader = BufferedReader(inputStreamReader)
+            var line: String?
+            while ((bufferedReader.readLine().also { line = it }) != null) {
+                stringBuilder.append(line).append("\n")
+            }
+            inputStreamReader.close()
+            process.waitFor()
+            return stringBuilder.toString()
+        }catch (_ : Exception){
+            return ""
         }
-        inputStreamReader.close()
-        process.waitFor()
-        return stringBuilder.toString()
+
     }
 }

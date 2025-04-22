@@ -152,7 +152,7 @@ class Sleep(private var time : Long = 1000L) : Command{
         return true
     }
 }
-class Return(val type : String) : Command{
+class Return(val type : String,val flowId : Int = 0) : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
         return true
     }

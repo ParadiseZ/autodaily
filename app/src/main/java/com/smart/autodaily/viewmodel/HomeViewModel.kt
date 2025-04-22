@@ -11,13 +11,11 @@ import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.request.Request
 import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.utils.deleteFile
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import splitties.init.appCtx
 import java.io.File
 
 class HomeViewModel(application: Application) : BaseViewModel(application = application) {
-    private val updateScriptSetReq =  Channel<Unit>(1)
     init {
         viewModelScope.launch {
             //checkUpdateAll(true)
@@ -27,9 +25,9 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
     fun deleteScript(sc : ScriptInfo){
         try {
             appDb.runInTransaction{
-                appDb.scriptInfoDao.deleteByScriptId(sc.scriptId)
-                appDb.scriptSetInfoDao.deleteScriptSetInfoByScriptId(sc.scriptId)
-                appDb.scriptActionInfoDao.deleteByScriptId(sc.scriptId)
+                //appDb.scriptInfoDao.deleteByScriptId(sc.scriptId)
+                //appDb.scriptSetInfoDao.deleteScriptSetInfoByScriptId(sc.scriptId)
+                //appDb.scriptActionInfoDao.deleteByScriptId(sc.scriptId)
                 val externalParamFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_PARAM)
                 val externalBinFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_BIN)
                 deleteFile(externalBinFile)

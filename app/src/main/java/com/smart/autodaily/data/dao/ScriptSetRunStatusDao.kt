@@ -2,16 +2,17 @@ package com.smart.autodaily.data.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.smart.autodaily.data.entity.ScriptSetRunStatus
 
 @Dao
 interface ScriptSetRunStatusDao {
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(scriptSetRunStatus: ScriptSetRunStatus)
 
-    @Update
+    @Update(onConflict = OnConflictStrategy.REPLACE)
     suspend fun update(scriptSetRunStatus: ScriptSetRunStatus)
 
     @Query("SELECT count(1) FROM script_set_run_status WHERE script_id = :scriptId and flow_id = :flowId AND flow_id_type = :flowIdType and cur_status=2 and date_time =:dateTime")

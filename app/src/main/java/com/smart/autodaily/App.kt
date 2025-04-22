@@ -11,6 +11,7 @@ import com.jakewharton.threetenabp.AndroidThreeTen
 import com.jeremyliao.liveeventbus.LiveEventBus
 import com.smart.autodaily.config.AppConfig.channelIdDownload
 import com.smart.autodaily.handler.RunScript
+import com.smart.autodaily.handler.RunScript.deleteRunStatus
 import com.smart.autodaily.service.ForegroundService
 import com.smart.autodaily.utils.checkScriptUpdate
 import com.smart.autodaily.utils.hasNotificationPermission
@@ -48,6 +49,7 @@ class App : Application() {
             try {
                 // 延迟检查更新
                 //delay(5000)
+                deleteRunStatus()
                 checkScriptUpdate()
             } catch (_: Exception) {
                 updateScope.coroutineContext.cancelChildren()

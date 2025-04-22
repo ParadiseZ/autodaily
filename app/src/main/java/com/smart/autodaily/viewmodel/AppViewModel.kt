@@ -215,6 +215,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                 si.lastVersion?.let {
                     si.scriptVersion = it   //更新（即重新下载）时使用
                 }
+                si.checkedFlag = scriptInfo.checkedFlag
                 si.lastVersion = null //检测更新时使用
                 si.downloadTime = LocalDateTime.now().toString()
                 appDb.scriptInfoDao.insert(si)

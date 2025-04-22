@@ -162,7 +162,7 @@ int Yolo::load(AAssetManager* mgr,const char* modeltype, int _target_size, const
 {
     yolo.clear();
     //0:全部 1:小核 2:大核
-    ncnn::set_cpu_powersave(0);
+    ncnn::set_cpu_powersave(2);
     ncnn::set_omp_num_threads(ncnn::get_big_cpu_count());
 
     yolo.opt = ncnn::Option();

@@ -10,7 +10,7 @@ fun getPicture() : Bitmap?{
     try {
         ShizukuUtil.iUserService?.let {
             return it.execCap(CAPTURE)
-        }?:{throw IllegalStateException()}
+        }
         return null
     }catch (_:Exception){
         runScope.coroutineContext.cancelChildren()

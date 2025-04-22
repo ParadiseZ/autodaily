@@ -27,7 +27,7 @@ int CrnnNet::load(AAssetManager* mgr, int _target_size,short _colorStep, const f
         return -1;
     }
     net.clear();
-    ncnn::set_cpu_powersave(0);
+    ncnn::set_cpu_powersave(2);
     ncnn::set_omp_num_threads(ncnn::get_big_cpu_count());
 
     net.opt = ncnn::Option();
@@ -205,7 +205,7 @@ unsigned char CrnnNet::colorMapping(short h, short s, short v) {
         return 2; //White
     } else {
         //return h_category[h];
-        return (int)h/3;
+        return (int)h/5;
     }
 }
 
