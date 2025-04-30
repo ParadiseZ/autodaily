@@ -75,8 +75,8 @@ static jobject ocrResHandler(JNIEnv *env, TextLine txt){
     //颜色处理begin
     jobject colorSet = env->NewObject(hashSetClass, hashSetCon);
     jint colorLen = (jint)txt.color.size();
-    jshortArray colorArr = env->NewShortArray(colorLen);
-    env->SetShortArrayRegion(colorArr, 0, colorLen, txt.color.data());
+    jintArray colorArr = env->NewIntArray(colorLen);
+    env->SetIntArrayRegion(colorArr, 0, colorLen, txt.color.data());
     //颜色处理end
     jobject res = env->NewObject(ocrResCls, ocrResMethod, hashSet, labelArr, text, colorSet, colorArr);
     // 释放局部引用
@@ -152,7 +152,7 @@ extern "C"
         //OCR
         jclass localOcrResCls = env->FindClass("com/smart/autodaily/data/entity/OcrResult");
         ocrResCls = (jclass)env->NewGlobalRef(localOcrResCls);
-        ocrResMethod = env->GetMethodID(ocrResCls, "<init>", "(Ljava/util/Set;[SLjava/lang/String;Ljava/util/Set;[S)V");
+        ocrResMethod = env->GetMethodID(ocrResCls, "<init>", "(Ljava/util/Set;[SLjava/lang/String;Ljava/util/Set;[I)V");
         env->DeleteLocalRef(localOcrResCls);
 
         jclass localHashSetCls = env->FindClass("java/util/HashSet");

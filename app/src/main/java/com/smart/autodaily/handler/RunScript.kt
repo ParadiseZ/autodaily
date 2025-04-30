@@ -5,11 +5,17 @@ import androidx.compose.runtime.mutableIntStateOf
 import com.smart.autodaily.command.AdbBack
 import com.smart.autodaily.command.AdbClick
 import com.smart.autodaily.command.AdbPartClick
+import com.smart.autodaily.command.AdbSwipe
 import com.smart.autodaily.command.AddPosById
+import com.smart.autodaily.command.DropdownMenuNext
+import com.smart.autodaily.command.FinishFlowId
+import com.smart.autodaily.command.MinusPosById
 import com.smart.autodaily.command.NotFlowId
 import com.smart.autodaily.command.Operation
+import com.smart.autodaily.command.Reboot
 import com.smart.autodaily.command.Return
 import com.smart.autodaily.command.RmSkipAcId
+import com.smart.autodaily.command.RmSkipAcIdList
 import com.smart.autodaily.command.RmSkipFlowId
 import com.smart.autodaily.command.Skip
 import com.smart.autodaily.command.SkipAcId
@@ -138,11 +144,11 @@ object  RunScript {
     private fun initConfData(){
         conf = ConfigData(
             _globalSetMap.value[3]?.setValue?.toFloat()?.times(1000)?.toLong()?:1500L,
-            _globalSetMap.value[59]?.checkedFlag?:false,
+            _globalSetMap.value[59]?.checkedFlag == true,
             _globalSetMap.value[5]?.run { this.setValue?.toFloat() }?:0.5f,
             _globalSetMap.value[4]?.run { this.setValue?.toFloat()?.times(60000)?.toLong() }?: 600000L,
-            _globalSetMap.value[10]?.checkedFlag?:false,
-            _globalSetMap.value[1]?.checkedFlag?:false,
+            _globalSetMap.value[10]?.checkedFlag == true,
+            _globalSetMap.value[1]?.checkedFlag == true,
             globalSetMap.value[9]?.setValue?.toFloat()?:0f,
             _globalSetMap.value[6]?.setValue?.toInt()?.let { it * 32 }?:640,
             remRebootTime = System.currentTimeMillis(),
@@ -152,7 +158,6 @@ object  RunScript {
     }
     //shell运行
     suspend fun runScriptByAdb(){
-        deleteRunStatus()
         Lom.waitWriteLog()
         Lom.n( INFO, "初始化全局设置" )
         initConfData()
@@ -177,7 +182,7 @@ object  RunScript {
                 val scriptSet = getScriptSets(si.scriptId)
                 if (conf.recordStatus){
                     val date = LocalDate.now().toString()
-                    if(appDb.scriptRunStatusDao.countByFlowIdAndType(set.scriptId, scriptSet[0].flowIdType, date) > 0 ){
+                    if(appDb.scriptRunStatusDao.countByFlowIdAndType(si.scriptId, scriptSet[0].flowIdType, date) > 0 ){
                         Lom.n(INFO, "当前时间段已执行，跳过：${si.scriptName}")
                         return@scriptForEach
                     }
@@ -235,11 +240,11 @@ object  RunScript {
                             //Lom.d(INFO,"未识别到内容")
                             continue
                         }
-                        //Lom.d(INFO, "检测标签$detectLabels")
-                        //Lom.d(INFO, "OCR标签${txtLabels.flatMap { it }}")
                         /*for (result in detectRes.filter { it.label == 0 }) {
-                            println(result.ocr?.txt)
-                        }*/
+                            print(result.ocr?.txt+" ")
+                            println(result.ocr?.colorArr?.toList())
+                        }
+                        println(detectLabels.toList())*/
 
                         //conf.curHash = getMd5Hash(capture)
                         when(tryAction(scriptActionArrayList, detectLabels, detectRes, txtLabels)){
@@ -286,7 +291,7 @@ object  RunScript {
         isRunning.intValue = 0
     }
 
-    private suspend fun deleteRunStatus(){
+    suspend fun deleteRunStatus(){
         val d : String = LocalDate.now().minusDays(7).toString()
         appDb.scriptRunStatusDao.deleteStatus(d)
         appDb.scriptSetRunStatusDao.deleteStatus(d)
@@ -379,7 +384,7 @@ object  RunScript {
                     it.hsv = color.split(";").map { rgbStr->
                         val co = rgbStr.split(",").map { rgb-> rgb.toShort() }.toList()
                         val hsv = rgbToHsv(co)
-                        model.hsvToColor(hsv[0], hsv[1], hsv[2]).toShort()
+                        model.hsvToColor(hsv[0], hsv[1], hsv[2])
                     }.toSet()
                 }
                 /*it.rgbExc?.let { color->
@@ -410,7 +415,6 @@ object  RunScript {
                 return@scriptAction
             }
             if (isMatch(sai, detectLabels,txtLabels) && checkColor(sai,detectRes)) {
-
                 conf.remRebootTime = System.currentTimeMillis()
                 sai.pageDesc?.let { Lom.n(INFO, "✔\uFE0F【${it}】") }
                 sai.command.onEach cmdForEach@{ cmd ->
@@ -426,6 +430,23 @@ object  RunScript {
                                 }
                                 //点击中央
                                 2 -> {
+                                    Lom.n(INFO , "点击 ${(cmd.operation as AdbClick).point}")
+                                    cmd.exec(sai)
+                                }
+                                //滑动
+                                3 ->{
+                                    sai.swipePoint?.let {
+                                        Lom.n(INFO , "滑动 ${it.x},${it.y}->${it.width},${it.height}")
+                                    }
+                                    if (sai.executeMax > 0){
+                                        sai.executeCur += 1
+                                        Lom.d(INFO, "第${sai.executeCur}次滑动结束")
+                                        if (sai.executeCur >= sai.executeMax) {
+                                            Lom.d(INFO, "已达到最大滑动次数，设置跳过")
+                                            sai.executeCur = 0
+                                            sai.skipFlag = true
+                                        }
+                                    }
                                     cmd.exec(sai)
                                 }
                             }
@@ -434,17 +455,54 @@ object  RunScript {
                             when (cmd.type) {
                                 ActionString.FINISH -> {
                                     if (conf.recordStatus){
-                                        setScriptSetStatus(set, sai)
+                                        setScriptSetStatus(set, sai, sai.flowId)
                                     }
                                     return 1
                                 }
                             }
+                        }
+                        is FinishFlowId ->{
+                            Lom.n(INFO , "结束流程ID ${cmd.flowId}")
+                            setScriptSetStatus(set, sai, cmd.flowId)
                         }
                         is NotFlowId->{
                             if (set.flowId == cmd.notFlowId){
                                 skipAcIds.add(sai.id)
                                 return@scriptAction
                             }
+                        }
+                        is AddPosById->{
+                            actionList.forEach { tmp ->
+                                if (tmp.id == cmd.saiId){
+                                    Lom.n(INFO , "saiId ${cmd.saiId}点击目标向后递增")
+                                    tmp.labelPos += 1
+                                }
+                            }
+                        }
+                        is DropdownMenuNext->{
+                            partScope.launch {
+                                val set = appDb.scriptSetInfoDao.getScriptSetById(cmd.setId)
+                                if (set!=null && set.setDefaultValue!=null && set.setValue!=null){
+                                    val allSetValue = set.setDefaultValue.split(",")
+                                    val curIdx = allSetValue.indexOf(set.setValue)
+                                    val nextIndex = if (curIdx == -1) 0 else (curIdx + 1) % allSetValue.size
+                                    Lom.n(INFO ,"设置[${set.setName}]由${set.setValue}更改为${allSetValue[nextIndex]}")
+                                    set.setValue = allSetValue[nextIndex]
+                                    appDb.scriptSetInfoDao.update(set)
+                                }
+                            }
+                        }
+                        is MinusPosById->{
+                            actionList.forEach { tmp ->
+                                if (tmp.id == cmd.saiId){
+                                    tmp.labelPos -= 1
+                                }
+
+                            }
+                        }
+                        is Reboot->{
+                            Lom.n(INFO , "重启中...")
+                            cmd.exec(sai)
                         }
                         else -> {
                             //skip、sleep等
@@ -505,7 +563,7 @@ object  RunScript {
         val txtExc = if(txt) sai.txtExcLabelSet.all { except->
             txtLabels.none { it.containsAll(except) }
         }else return false
-        /*if (sai.id == 18){
+        /*if (sai.id == 181){
             print(int)
             print(intExc)
             print(txt)
@@ -547,10 +605,10 @@ object  RunScript {
     /*
     *设置设置运行状态的表，暂未使用
      * */
-    private suspend fun setScriptSetStatus(set : ScriptSetInfo, sai: ScriptActionInfo){
+    private suspend fun setScriptSetStatus(set : ScriptSetInfo, sai: ScriptActionInfo, flowId : Int){
         if (set.backFlag ==0 && appDb.scriptSetRunStatusDao.countByFlowIdAndType(
                 sai.scriptId,
-                sai.flowId,
+                flowId,
                 set.flowIdType,
                 dateTime = LocalDate.now()
                     .toString()
@@ -558,7 +616,7 @@ object  RunScript {
         ) {
             val scriptStatus = ScriptSetRunStatus(
                 scriptId = sai.scriptId,
-                flowId = sai.flowId,
+                flowId = flowId,
                 flowIdType = set.flowIdType,
                 curStatus = 2,
                 dateTime = LocalDate.now()
@@ -567,7 +625,7 @@ object  RunScript {
             appDb.scriptSetRunStatusDao.insert(
                 scriptStatus
             )
-            Lom.d(INFO, "\uD83D\uDCDD完成流程id${sai.flowId}")
+            Lom.d(INFO, "\uD83D\uDCDD完成流程id${flowId}")
         }
     }
 
@@ -590,7 +648,6 @@ object  RunScript {
         try {
             scriptActionInfo.addFlag = true
             scriptActionInfo.actionString.split(";").forEach {  action->
-                //debug("action = ${action}")
                 when(action){
                     ActionString.CLICK-> {
                         scriptActionInfo.command.add (Operation( 1, AdbClick()) )
@@ -615,11 +672,18 @@ object  RunScript {
                     ActionString.BACK ->{
                         scriptActionInfo.command.add(AdbBack())
                     }
+                    ActionString.REBOOT ->{
+                        scriptActionInfo.command.add(Reboot(conf.pkgName))
+                    }
                     else ->{
                         when{
                             action.startsWith(  ActionString.SLEEP  ) -> {
                                 val sleepTime = action.substring(   ActionString.SLEEP.length+1, action.length-1   ).toLong()
                                 scriptActionInfo.command.add(Sleep(sleepTime))
+                            }
+                            action.startsWith(  ActionString.FINISH  ) -> {
+                                val flowId = action.substring(   ActionString.FINISH.length+1, action.length-1   ).toInt()
+                                scriptActionInfo.command.add(FinishFlowId(flowId))
                             }
                             action.startsWith(  ActionString.SKIP_FLOW_ID  ) -> {
                                 val flowId = action.substring(   ActionString.SKIP_FLOW_ID.length+1, action.length-1   ).toInt()
@@ -669,6 +733,7 @@ object  RunScript {
                                         scriptActionInfo.swipePoint = Rect(  (dm.widthPixels/4 * 3).toFloat(), y,  (dm.widthPixels/4).toFloat() , y  )
                                     }
                                 }
+                                scriptActionInfo.command.add(Operation(3, AdbSwipe()))
                             }
                             action.startsWith( ActionString.HOR_SWIPE ) ->{
                                 val type =  action.substring(   ActionString.HOR_SWIPE.length ).toInt()
@@ -707,6 +772,7 @@ object  RunScript {
                                         scriptActionInfo.swipePoint = Rect(  (dm.widthPixels/8 * 5).toFloat(), y,  (dm.widthPixels/8 * 3).toFloat() , y  )
                                     }
                                 }
+                                scriptActionInfo.command.add(Operation(3, AdbSwipe()))
                             }
                             action.startsWith( ActionString.UN_CHECKED )->{
                                 val flowIds = action.substring( ActionString.UN_CHECKED.length+1, action.length-1).split(",").map { it.toInt() }
@@ -735,23 +801,31 @@ object  RunScript {
                                 val saiId = action.substring(   ActionString.POS_ADD.length+1, action.length-1   ).toInt()
                                 scriptActionInfo.command.add(AddPosById(saiId))
                             }
-                        }
-                    }
-                    /*action.startsWith(ActionString.STEP).toString() -> {
-                        val setId = action.substring(ActionString.STEP.length, action.length-1).toInt()
-                        for(element in scriptActionList) {
-                            if (element.setId == setId) {
-                                println("使setId为$setId 停止")
-                                break
+                            action.startsWith( ActionString.POS_MINUS) ->{
+                                val saiId = action.substring(   ActionString.POS_MINUS.length+1, action.length-1   ).toInt()
+                                scriptActionInfo.command.add(MinusPosById(saiId))
+                            }
+                            action.startsWith(ActionString.DROP_SET_NEXT) ->{
+                                val setId = action.substring(ActionString.DROP_SET_NEXT.length+1, action.length-1).toInt()
+                                scriptActionInfo.command.add(DropdownMenuNext(setId))
+                            }
+                            action.startsWith(ActionString.RM_SKIP_ACIDS) ->{
+                                val acIds = mutableIntSetOf()
+                                action.substring(ActionString.RM_SKIP_ACIDS.length+1, action.length-1).split(",").map {
+                                    acIds.add(it.toInt())
+                                }
+                                scriptActionInfo.command.add(RmSkipAcIdList(acIds))
                             }
                         }
-                    }*/
+                    }
                 }
             }
         }catch (_ : Exception){
-            Lom.d(ERROR, "initActionFun error")
+            Lom.n(ERROR, "initActionFun error:${scriptActionInfo}")
+            isRunning.intValue = 0
             runScope.coroutineContext.cancelChildren()
             SnackbarUtil.show("初始化action失败，请联系管理员！")
+            return
         }
     }
 

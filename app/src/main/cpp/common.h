@@ -14,7 +14,7 @@ struct TextLine {
     std::vector<short> label;
     std::string text;
     std::vector<float> charScores;
-    std::vector<short> color;
+    std::vector<int> color;
 };
 struct Object
 {

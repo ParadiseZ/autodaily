@@ -25,15 +25,15 @@ class LogViewModel : ViewModel() {
     private val _logStateFlow = MutableStateFlow<PagingData<String>>(PagingData.empty())
     val logStateFlow: StateFlow<PagingData<String>> = _logStateFlow
 
-    private val _enableLog = MutableStateFlow(false)
-    val enableLog: StateFlow<Boolean> = _enableLog
+    private val _disableLog = MutableStateFlow(true)
+    val disableLog: StateFlow<Boolean> = _disableLog
 
     fun loadLogs(){
         viewModelScope.launch {
             RunScript.initGlobalSet()
             val tempEnable = RunScript.globalSetMap.value[7]?.setValue?:"关闭"
-            _enableLog.value = tempEnable == "关闭"
-            if (!_enableLog.value){
+            _disableLog.value = tempEnable == "关闭"
+            if (_disableLog.value){
                 return@launch
             }
             withContext(Dispatchers.IO){

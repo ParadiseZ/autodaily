@@ -27,7 +27,7 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
             appDb.runInTransaction{
                 //appDb.scriptInfoDao.deleteByScriptId(sc.scriptId)
                 //appDb.scriptSetInfoDao.deleteScriptSetInfoByScriptId(sc.scriptId)
-                //appDb.scriptActionInfoDao.deleteByScriptId(sc.scriptId)
+                appDb.scriptActionInfoDao.deleteByScriptId(sc.scriptId)
                 val externalParamFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_PARAM)
                 val externalBinFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_BIN)
                 deleteFile(externalBinFile)

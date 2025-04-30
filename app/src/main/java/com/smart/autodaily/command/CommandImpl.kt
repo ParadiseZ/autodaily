@@ -1,17 +1,19 @@
 package com.smart.autodaily.command
 
 import android.annotation.SuppressLint
+import androidx.collection.IntSet
 import com.smart.autodaily.data.entity.Point
 import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.handler.ActionHandler
 import com.smart.autodaily.handler.INFO
-import com.smart.autodaily.handler.allActionMap
 import com.smart.autodaily.handler.conf
 import com.smart.autodaily.handler.skipAcIds
 import com.smart.autodaily.handler.skipFlowIds
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.ShizukuUtil
+import com.smart.autodaily.utils.partScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 const val TAP = "input tap "
 const val START = "am start -n "
@@ -68,7 +70,7 @@ class NotFlowId(val notFlowId: Int) : Command{
     }
 }
 
-open class AdbClick(private var point: Point? = null) : Command{
+open class AdbClick(var point: Point? = null) : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
         var res = false
         when{
@@ -152,7 +154,12 @@ class Sleep(private var time : Long = 1000L) : Command{
         return true
     }
 }
-class Return(val type : String,val flowId : Int = 0) : Command{
+class Return(val type : String) : Command{
+    override fun exec(sai: ScriptActionInfo): Boolean {
+        return true
+    }
+}
+class FinishFlowId(val flowId : Int = 0) : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
         return true
     }
@@ -163,11 +170,34 @@ class Return(val type : String,val flowId : Int = 0) : Command{
     }
 }*/
 
-class AddPosById(private val saiId :Int): Command{
+class AddPosById(internal val saiId :Int): Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
-        allActionMap.get(saiId)?.let {
-            it.labelPos += 1
+        return true
+    }
+}
+class DropdownMenuNext(internal val setId :Int): Command{
+    override fun exec(sai: ScriptActionInfo): Boolean {
+        return true
+    }
+}
+class MinusPosById(internal val saiId :Int): Command{
+    override fun exec(sai: ScriptActionInfo): Boolean {
+        return true
+    }
+}
+
+class Reboot(internal val pkgName : String): Command{
+    override fun exec(sai: ScriptActionInfo): Boolean {
+        partScope.launch {
+            adbRebootApp(pkgName)
         }
+        return true
+    }
+}
+
+class RmSkipAcIdList(private val acids : IntSet): Command{
+    override fun exec(sai: ScriptActionInfo): Boolean {
+        skipAcIds.removeAll(acids)
         return true
     }
 }

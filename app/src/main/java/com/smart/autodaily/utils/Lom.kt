@@ -85,9 +85,11 @@ object Lom {
         logScope.launch {
             var fileWriter = FileWriter(logFile, true)
             try {
+                fileWriter.write("\n\n\n")
+                fileWriter.flush()
                 while (true) {
-                    val message = logChannel.receive() // 挂起点，可能被取消
-                    fileWriter.write("$message\n")
+                    val msg = logChannel.receive() // 挂起点，可能被取消
+                    fileWriter.write("$msg\n")
                     fileWriter.flush()
                     limitFileSize(fileWriter,logFile)?.let {
                         fileWriter = it

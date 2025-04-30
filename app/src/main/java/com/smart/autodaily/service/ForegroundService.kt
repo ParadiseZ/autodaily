@@ -65,7 +65,7 @@ class ForegroundService : Service() {
             .setContentTitle("AutoDaily")
             .setContentText("正在运行中")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setAutoCancel(false)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)

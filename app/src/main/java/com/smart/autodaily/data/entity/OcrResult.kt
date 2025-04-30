@@ -4,8 +4,8 @@ data class OcrResult(
     var label : Set<Short>,
     val labelArr : ShortArray,
     val txt : String,
-    var colorSet : Set<Short>,
-    val colorArr : ShortArray
+    var colorSet : Set<Int>,
+    val colorArr : IntArray
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

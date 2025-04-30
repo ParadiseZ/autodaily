@@ -49,7 +49,7 @@ fun LogScreen(
     viewModel: LogViewModel = viewModel()
 ) {
     val logs = viewModel.logStateFlow.collectAsLazyPagingItems()
-    val logEnable by viewModel.enableLog.collectAsState()
+    val logDisable by viewModel.disableLog.collectAsState()
     val refreshFlag = remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val dialog = remember { mutableStateOf(false) }
@@ -98,7 +98,7 @@ fun LogScreen(
             LazyColumn {
                 if (logs.itemCount==0){
                     item{
-                        if (logEnable){
+                        if (!logDisable){
                             Text(text = "暂无日志，请先运行后查看")
                         }else{
                             Text(text = "若想查看运行情况，请到设置页开启日志")
@@ -107,7 +107,7 @@ fun LogScreen(
                 }
                 items(logs.itemCount) { idx ->
                     logs[idx]?.let {
-                        Text(text = it)
+                        Text(text = it,style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }

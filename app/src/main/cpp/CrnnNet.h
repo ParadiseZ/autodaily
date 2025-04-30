@@ -14,7 +14,7 @@ public:
 		TextLine getTextLine(cv::Mat& src,cv::Rect rect);
         TextLine scoreToTextLine(const std::vector<float>& outputData, int h, int w);
         static TextLine getColors(TextLine textLine, cv::Mat& src) ;
-        static unsigned  char colorMapping(short  h, short s, short v);
+        static int colorMapping(short  h, short s, short v);
 private:
 		std::vector<std::string> keys;
         int keySize = 0;

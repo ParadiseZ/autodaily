@@ -1,8 +1,8 @@
 
 #include "CrnnNet.h"
 #include <android/asset_manager_jni.h>
-#include <unordered_map>
 #include <mutex>
+#include <unordered_set>
 
 CrnnNet::CrnnNet() {
     blob_pool_allocator.set_size_compare_ratio(0.f);
@@ -157,23 +157,43 @@ TextLine CrnnNet::scoreToTextLine(const std::vector<float>& outputData, int h, i
 }
 
 TextLine  CrnnNet::getColors(TextLine textLine, cv::Mat & src) {
-    cv::cvtColor(src, src, cv::COLOR_RGB2HSV);
-    // 统计颜色频率，并应用颜色合并
-    std::unordered_map<short, int> colorFrequency;
-    for (int r = 0; r < 5; ++r) {
-        for (int c = 0; c < 5; ++c) {
-            cv::Vec3b pixel = src.at<cv::Vec3b>(r, c);
-            short color = colorMapping(pixel[0], pixel[1], pixel[2]);
-            colorFrequency[color]++;  // 统计颜色频率
-            // 关键修改：当 localFreq 大小达到 55时，强制外层循环终止
-            if (colorFrequency.size() >= 3) {
-                r = 5;  // 将 r 设为 range.end-1，外层循环的 ++r 会使其超过范围
-                break;              // 退出内层循环
-            }
-        }
+    std::mutex mutex;
+    //std::atomic<bool> should_stop(false);
+    int width = src.cols;
+    int height = src.rows;
+    if (width > height){
+        width = height/3;
+    }else{
+        height = width/3;
     }
-    for (auto color: colorFrequency) {
-        textLine.color.emplace_back(color.first);
+    cv::Mat roi = src(cv::Rect(0,0,width, height));
+    //cv::resize(roi,roi, cv::Size(width/2, height/2));
+    cv::cvtColor(roi, roi, cv::COLOR_RGB2HSV);
+
+    std::unordered_set<int> allColors;
+    cv::parallel_for_(cv::Range(0, roi.rows), [&](const cv::Range& range) {
+        std::unordered_set<int> local_colors;
+        for (int row = range.start; row < range.end; ++row) {
+            const cv::Vec3b* ptr = roi.ptr<cv::Vec3b>(row);
+            for (int col = 0; col < roi.cols; ++col) {
+                cv::Vec3b pixel = ptr[col];
+                int color = colorMapping(pixel[0], pixel[1], pixel[2]);
+                local_colors.insert(color);
+                /*if (local_colors.size() >= 2) {
+                    should_stop = true;
+                    break;
+                }*/
+            }
+            //if (should_stop) break;
+        }
+
+        // 合并局部统计到全局（需加锁）
+        std::lock_guard<std::mutex> lock(mutex);
+        allColors.insert(local_colors.begin(), local_colors.end());
+    });
+
+    for (auto color: allColors) {
+        textLine.color.emplace_back(color);
     }
     return textLine;
 }
@@ -196,7 +216,7 @@ static const unsigned char h_category[181] = {
         // 156-180:3 (Red)25
         3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3
 };
-unsigned char CrnnNet::colorMapping(short h, short s, short v) {
+int CrnnNet::colorMapping(short h, short s, short v) {
     if (v <= 46) {
         return 0;//Black;
     } else if ( s <= 43 && v <= 220 ) {
@@ -204,8 +224,13 @@ unsigned char CrnnNet::colorMapping(short h, short s, short v) {
     } else if( s <= 30) {
         return 2; //White
     } else {
-        //return h_category[h];
-        return (int)h/5;
+        //return h_category[h];、
+        int a = 3 + h/10;
+        int b = (s - 30)/75;
+        int c = (v - 46) / 70;
+        b = (a+b)*(a+b+1)/2 + b;
+        //return a * 484 + b * 22 + c;
+        return (b+c)*(b+c+1)/2 + c;
     }
 }
 

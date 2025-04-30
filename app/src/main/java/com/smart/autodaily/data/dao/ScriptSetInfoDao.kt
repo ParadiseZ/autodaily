@@ -32,6 +32,9 @@ interface ScriptSetInfoDao {
     @Query("update script_set_info set result_flag = :resultFlag where set_id = :setId")
     fun updateResultFlag(setId : Int, resultFlag : Boolean)
 
+    @Query("update script_set_info set set_value = :setValue where set_id=:setId")
+    fun updateSetBySetId(setId : Int, setValue : String)
+
     @Query("select result_flag from script_set_info where set_id = :setId")
     fun getResultFlag(setId : Int) : Boolean
 

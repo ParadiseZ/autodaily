@@ -22,4 +22,8 @@ object ActionString {
     //250416
     const val CLICKC = "clickc"
     const val POS_ADD = "posadd"
+    const val POS_MINUS = "posminus"
+    const val DROP_SET_NEXT = "dropsetnext"
+    const val REBOOT = "reboot"
+    const val RM_SKIP_ACIDS = "mrmacids"
 }

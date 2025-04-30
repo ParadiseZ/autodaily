@@ -8,6 +8,7 @@ import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.getMd5Hash
 import com.smart.autodaily.utils.getPicture
+import kotlin.math.roundToInt
 
 fun execClick(sai: ScriptActionInfo, detectRes: Array<DetectResult>, cmd : Operation) : Int {
     if (!sai.operTxt){
@@ -34,7 +35,7 @@ fun execClick(sai: ScriptActionInfo, detectRes: Array<DetectResult>, cmd : Opera
                         sai.skipFlag = true
                     }
                 }
-                Lom.d(INFO, "点击${sai.point}")
+                Lom.d(INFO, "点击${sai.point?:cmd.operation.point}")
                 cmd.exec(sai)
             }
         }
@@ -77,31 +78,36 @@ fun checkColor(sai: ScriptActionInfo,ocrRes : Array<DetectResult>) : Boolean{
 }
 
 private fun matchColorAndSetPoints(sai: ScriptActionInfo,ocrRes : Array<DetectResult>) : Boolean{
-    val firFilter = ocrRes.filter { it.label == 0 && it.ocr!!.label.containsAll(sai.txtFirstLab) }
+    var firFilter = ocrRes.filter { item ->
+        if (item.ocr == null) {
+            false
+        } else {
+            val labelMatch = item.ocr.label.containsAll(sai.txtFirstLab)
+            val colorMatch = sai.hsv.isEmpty() || item.ocr.colorSet.containsAll(sai.hsv)
+            labelMatch && colorMatch
+        }
+    }
     if (firFilter.isEmpty()) {
-        Lom.d(ERROR, "颜色匹配失败${sai.id} ${sai.txtLabel}")
+        Lom.d(ERROR, "saiId:${sai.id},颜色匹配,目标${sai.hsv}")
         return false
     }
-    val secFilter: List<DetectResult>
-    if(firFilter.size > 1){
+    //val secFilter: List<DetectResult>
+    if(firFilter.size > 1) {
         val minSize = firFilter.minOf { it.ocr!!.label.size }
-        secFilter = firFilter.filter {
+        firFilter = firFilter.filter {
             it.ocr!!.label.size == minSize
         }
-    }else{
-        secFilter = firFilter
     }
     //非第一个，排序
-    if (sai.labelPos>0){
-        secFilter.sortedWith(
+    if (sai.labelPos>0 && firFilter.size > 1){
+        firFilter = firFilter.sortedWith(
             compareBy(
-                {it.yCenter} ,{ it.xCenter}
+                { (it.yCenter / 10).roundToInt()} ,{ (it.xCenter / 10).roundToInt() }
             )
         )
-        val idx = (sai.labelPos-1).coerceAtMost(secFilter.size-1)
-        secFilter[idx].let {
-            Lom.d(INFO, "目标色 ${sai.id}" ,sai.hsv)
-            Lom.d(INFO, "图像色 ${sai.id}" ,it.ocr!!.colorSet)
+        val idx = (sai.labelPos-1).coerceAtMost(firFilter.size-1)
+        firFilter[idx].let {
+            Lom.d(INFO, "i ${idx},num ${firFilter.size},saiId ${sai.id},目标色${sai.hsv},图像色${it.ocr!!.colorSet}")
             if (it.ocr.colorSet.containsAll(sai.hsv)){
                 sai.point = getPoint(it)
                 return true
@@ -109,9 +115,8 @@ private fun matchColorAndSetPoints(sai: ScriptActionInfo,ocrRes : Array<DetectRe
         }
     }else{
         //默认第一个
-        secFilter[0].let {
-            Lom.d(INFO, "目标 ${sai.id}" ,sai.hsv)
-            Lom.d(INFO, "图像 ${sai.id}" ,it.ocr!!.colorSet)
+        firFilter[0].let {
+            Lom.d(INFO, "saiId ${sai.id},目标色${sai.hsv},图像色${it.ocr!!.colorSet}")
             if (it.ocr.colorSet.containsAll(sai.hsv)){
                 sai.point = getPoint(it)
                 return true
@@ -122,7 +127,7 @@ private fun matchColorAndSetPoints(sai: ScriptActionInfo,ocrRes : Array<DetectRe
 }
 
 fun setPointsByLabel(sai: ScriptActionInfo, detectRes: Array<DetectResult>){
-    val firFilter = detectRes.filter {
+    var firFilter = detectRes.filter {
         it.label == sai.intFirstLab
     }
     if (firFilter.isEmpty()){
@@ -130,12 +135,13 @@ fun setPointsByLabel(sai: ScriptActionInfo, detectRes: Array<DetectResult>){
         return
     }
     if (sai.labelPos>0){
-        firFilter.sortedWith(
+        firFilter = firFilter.sortedWith(
             compareBy(
-                {it.yCenter} ,{ it.xCenter}
+                { (it.yCenter / 20).roundToInt()} ,{ (it.xCenter / 20).roundToInt() }
             )
         )
-        val idx = sai.labelPos.coerceAtMost(firFilter.size-1)
+        val idx = (sai.labelPos-1).coerceAtMost(firFilter.size-1)
+        Lom.d(INFO, "i ${idx},num ${firFilter.size},saiId ${sai.id}")
         firFilter[idx].let {
             sai.point = getPoint(it)
         }

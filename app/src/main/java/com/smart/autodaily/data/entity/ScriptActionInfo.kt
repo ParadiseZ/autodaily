@@ -47,7 +47,7 @@ data class ScriptActionInfo(
     @Ignore
     var txtFirstLab : Set<Short> = setOf()
     @Ignore
-    var hsv : Set<Short> = setOf()
+    var hsv : Set<Int> = setOf()
     //@Ignore
     //var hsvExc : Set<Short> = setOf()
     @Ignore
