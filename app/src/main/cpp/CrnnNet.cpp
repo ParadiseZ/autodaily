@@ -27,16 +27,17 @@ int CrnnNet::load(AAssetManager* mgr, int _target_size,short _colorStep, const f
         return -1;
     }
     net.clear();
-    ncnn::set_cpu_powersave(2);
+    ncnn::set_cpu_powersave(1);
     ncnn::set_omp_num_threads(ncnn::get_big_cpu_count());
 
     net.opt = ncnn::Option();
     net.opt.lightmode = true;
+    net.opt.openmp_blocktime = 0;
 #if NCNN_VULKAN
     if (ncnn::get_gpu_count() != 0)
         net.opt.use_vulkan_compute = use_gpu;
 #endif
-    net.opt.num_threads = ncnn::get_big_cpu_count();
+    net.opt.num_threads = ncnn::get_cpu_powersave();
     net.opt.blob_allocator = &blob_pool_allocator;
     net.opt.workspace_allocator = &workspace_pool_allocator;
     char parampath[100];
@@ -163,8 +164,10 @@ TextLine  CrnnNet::getColors(TextLine textLine, cv::Mat & src) {
     int height = src.rows;
     if (width > height){
         width = height/3;
+        height = height/2;
     }else{
         height = width/3;
+        width = width/2;
     }
     cv::Mat roi = src(cv::Rect(0,0,width, height));
     //cv::resize(roi,roi, cv::Size(width/2, height/2));
