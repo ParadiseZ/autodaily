@@ -4,7 +4,7 @@
 
 #include <opencv2/core.hpp>
 #include <net.h>
-#include "common.h"
+#include "CrnnNet.h"
 
 class Yolo
 {
@@ -14,7 +14,7 @@ public:
 
     int load(FILE * paramFile,FILE * modelFile, int _target_size, const float* _norm_vals, bool use_gpu = false);
 
-    void detect(const cv::Mat& rgb, std::vector<Object>& objects, int num_classes, float prob_threshold = 0.25f, float nms_threshold = 0.45f);
+    void detect(const cv::Mat& rgb, std::vector<Object>& objects,std::vector<TextLine>& txt,CrnnNet *& g_crnn, int num_classes, float prob_threshold = 0.25f, float nms_threshold = 0.45f);
 
     static int draw(cv::Mat& bgr,cv::Mat& image, const std::vector<Object>& objects);
 
@@ -26,4 +26,4 @@ private:
     ncnn::UnlockedPoolAllocator blob_pool_allocator;
     ncnn::PoolAllocator workspace_pool_allocator;
 };
-#endif // NANODET_H
+#endif // YOLO_H

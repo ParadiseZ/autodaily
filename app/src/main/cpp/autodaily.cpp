@@ -49,14 +49,7 @@ bool loadOcrModel(JNIEnv *env,jobject assetManager, jint lang, jboolean useGpu,j
         if (!g_crnn)
             g_crnn = new CrnnNet;
 #if NCNN_VULKAN
-        if (ncnn::get_gpu_count() == 0)
-        {
-            g_crnn->load(mgr, 48,colorStep, rec_mean_vals, rec_norm_vals, false,lang, getColor);
-        }
-        else
-        {
-            g_crnn->load(mgr, 48,colorStep, rec_mean_vals, rec_norm_vals,useGpu,lang, getColor);
-        }
+        g_crnn->load(mgr, 48,colorStep, rec_mean_vals, rec_norm_vals, useGpu,lang, getColor);
 #else
         g_crnn->load(mgr, 48,colorStep, rec_mean_vals, rec_norm_vals, false,lang, getColor);
 #endif
@@ -88,38 +81,53 @@ static jobject ocrResHandler(JNIEnv *env, TextLine txt){
     return  res;
 }
 //Detect
-static jobjectArray transformResult(JNIEnv *env, const std::vector<Object> &objects, cv::Mat & src)
+static jobjectArray transformResult(JNIEnv *env,std::vector<Object> &objects,std::vector<TextLine> &textLines)
 {
+    if(needOcr && g_crnn != nullptr && !textLines.empty()){
+        g_crnn -> getTextLines(textLines);
+    }
     // 创建Java对象数组
-    jobjectArray resultArray = env->NewObjectArray(static_cast<jsize>(objects.size()), detectResCls, nullptr);
-    for (size_t i = 0; i < objects.size(); ++i)
-    {
-        Object obj = objects[i];
+    jobjectArray resultArray = env->NewObjectArray(static_cast<jsize>(objects.size() + textLines.size()), detectResCls, nullptr);
+
+    // Collect results and build resultArray
+    int idx = objects.size();
+    for (size_t i = 0; i < idx; ++i) {
+        const Object& obj = objects[i];
         jobject rect = env->NewObject(rectCls,
                                       rectCon,
-                                      obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height);
+                                      objects[i].rect.x, obj.rect.y, obj.rect.width, obj.rect.height);
         jobject ocrRes = nullptr;
-        if(obj.label == 0 && needOcr){
-            if( g_crnn != nullptr){
-                try{
-                    TextLine textLine = g_crnn->getTextLine(src,obj.rect);
-                    if (textLine.text.empty()){
-                        env->DeleteLocalRef(rect);
-                        continue;
-                    }
-                    ocrRes = ocrResHandler(env, textLine);
-                }catch(const std::exception& e) {
-                    __android_log_print(ANDROID_LOG_ERROR, "CRNN", "ocr eeror at %zu,%s", i ,e.what());
-                    continue;
-                }
-            }
-        }
         jobject detectRes = env->NewObject(detectResCls, detectResCon,
                                            obj.label, obj.prob, rect, (obj.rect.x + obj.rect.width / 2), obj.rect.y + obj.rect.height / 2, ocrRes);
         env->SetObjectArrayElement(resultArray, i, detectRes);
+
         env->DeleteLocalRef(rect);
-        env->DeleteLocalRef(ocrRes);
         env->DeleteLocalRef(detectRes);
+    }
+#pragma omp parallel
+    {
+#pragma omp for
+        for (const auto & txt : textLines)
+        {
+            if(txt.text.empty()){
+                continue;
+            }
+            jobject rect = env->NewObject(rectCls,
+                                          rectCon,
+                                          txt.obj.rect.x, txt.obj.rect.y, txt.obj.rect.width, txt.obj.rect.height);
+            jobject ocrRes = nullptr;
+            ocrRes = ocrResHandler(env, txt);
+            jobject detectRes = env->NewObject(detectResCls, detectResCon,
+                                               txt.obj.label, txt.obj.prob, rect, (txt.obj.rect.x + txt.obj.rect.width / 2), txt.obj.rect.y + txt.obj.rect.height / 2, ocrRes);
+            {
+                ncnn::MutexLockGuard ocr(lock);
+                env->SetObjectArrayElement(resultArray, idx, detectRes);
+                idx +=1;
+            }
+            env->DeleteLocalRef(rect);
+            env->DeleteLocalRef(ocrRes);
+            env->DeleteLocalRef(detectRes);
+        }
     }
     return resultArray;
 }
@@ -182,7 +190,6 @@ extern "C"
 
         {
             ncnn::MutexLockGuard g(lock);
-            ncnn::MutexLockGuard ocr(lock);
             #if NCNN_VULKAN
                 ncnn::destroy_gpu_instance();
             #endif
@@ -251,14 +258,7 @@ extern "C"
                 g_yolo = new Yolo;
             }
             #if NCNN_VULKAN
-            if (ncnn::get_gpu_count() == 0)
-            {
-                g_yolo->load(paramFile, modelFile, target_size, norm_vals[0], false);
-            }
-            else
-            {
-                g_yolo->load(paramFile, modelFile, target_size, norm_vals[0], use_gpu);
-            }
+            g_yolo->load(paramFile, modelFile, target_size, norm_vals[0], use_gpu);
             #else
                 g_yolo->load(paramFile, modelFile, target_size, norm_vals[0], false);
             #endif
@@ -288,25 +288,26 @@ extern "C"
             __android_log_print(ANDROID_LOG_ERROR, "NCNN", "error to bitmapToMat");
             return nullptr;
         }
-        cv::Mat dst;
-        cv::cvtColor(image, dst, cv::COLOR_RGBA2RGB);
-        image.release();
+        cv::cvtColor(image, image, cv::COLOR_RGBA2RGB);
+        //image.release();
         // 调用detect方法
         std::vector<Object> objects;
+        std::vector<TextLine> textLines;
         try {
-            ncnn::MutexLockGuard g(lock);
-            g_yolo->detect(dst, objects, numClasses, threshold, nmsThreshold);
+            //ncnn::MutexLockGuard g(lock);
+            g_yolo->detect(image, objects,textLines, g_crnn, numClasses, threshold, nmsThreshold);
         } catch (const std::exception& e) {
             __android_log_print(ANDROID_LOG_ERROR, "NCNN", "Detection error: %s", e.what());
-            dst.release();
+            image.release();
             return nullptr;
         }
-        
+        image.release();
+        //__android_log_print(ANDROID_LOG_ERROR, "NCNN", "objects: %zu ,txtSize: %zu",objects.size(),textLines.size());
         // 创建并返回结果数组
-        jobjectArray result = transformResult(env, objects, dst);
+        jobjectArray result = transformResult(env, objects,textLines);
         
         // 释放资源
-        dst.release();
+        //dst.release();
         return result;
     }
 

@@ -5,7 +5,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitCreate {
-    //private const val BASE_URL = "http://192.168.123.208:8080"
+    //private const val BASE_URL = "http://192.168.123.133:8080"
     private const val BASE_URL = "https://autodaily.icu/"
     //private const val MEDIA_TYPE = "application/json"
     //private const val BASE_URL = "https://www.wanandroid.com/"

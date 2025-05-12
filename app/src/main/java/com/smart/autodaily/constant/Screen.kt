@@ -26,7 +26,8 @@ enum class Screen {
 
     LOGIN,
     REGISTER,
-    RESETPWD
+    RESETPWD,
+    SCRIPTSETDETAIL
 }
 
 data class  BottomNavItem(

@@ -160,11 +160,9 @@ Yolo::Yolo()
 }
 int Yolo::load(AAssetManager* mgr,const char* modeltype, int _target_size, const float* _norm_vals, bool use_gpu)
 {
-    yolo.clear();
-    //0:全部 1:小核 2:大核
-    ncnn::set_cpu_powersave(2);
-    ncnn::set_omp_num_threads(ncnn::get_big_cpu_count());
-
+    /*yolo.clear();
+    ncnn::set_cpu_powersave(0);
+    ncnn::set_omp_num_threads(ncnn::get_little_cpu_count());
     yolo.opt = ncnn::Option();
 #if NCNN_VULKAN
     if (ncnn::get_gpu_count() != 0)
@@ -183,20 +181,23 @@ int Yolo::load(AAssetManager* mgr,const char* modeltype, int _target_size, const
     norm_vals[0] = _norm_vals[0];
     norm_vals[1] = _norm_vals[1];
     norm_vals[2] = _norm_vals[2];
-    return 0;
+    return 0;*/
 }
 int Yolo::load(FILE * paramFile,FILE * modelFile, int _target_size, const float* _norm_vals, bool use_gpu)
 {
+    //0:全部 1:小核 2:大核
     yolo.clear();
-    ncnn::set_cpu_powersave(2);
-    ncnn::set_omp_num_threads(ncnn::get_big_cpu_count());
+    ncnn::set_cpu_powersave(1);
+    ncnn::set_omp_num_threads(ncnn::get_little_cpu_count());
 
     yolo.opt = ncnn::Option();
     yolo.opt.openmp_blocktime = 0;
+    yolo.opt.lightmode = true;
 #if NCNN_VULKAN
-    yolo.opt.use_vulkan_compute = use_gpu;
+    if (ncnn::get_gpu_count() != 0)
+        yolo.opt.use_vulkan_compute = use_gpu;
 #endif
-    yolo.opt.num_threads = ncnn::get_cpu_powersave();
+    yolo.opt.num_threads = ncnn::get_little_cpu_count();
     yolo.opt.blob_allocator = &blob_pool_allocator;
     yolo.opt.workspace_allocator = &workspace_pool_allocator;
     yolo.load_param(paramFile);
@@ -207,7 +208,7 @@ int Yolo::load(FILE * paramFile,FILE * modelFile, int _target_size, const float*
     norm_vals[2] = _norm_vals[2];
     return 0;
 }
-void Yolo::detect(const cv::Mat& bgr, std::vector<Object>& objects, const int num_labels, float prob_threshold, float nms_threshold)
+void Yolo::detect(const cv::Mat& bgr, std::vector<Object>& objects,std::vector<TextLine>& txts,CrnnNet *& g_crnn, const int num_labels, float prob_threshold, float nms_threshold)
 {
     int img_w = bgr.cols;
     int img_h = bgr.rows;
@@ -261,17 +262,16 @@ void Yolo::detect(const cv::Mat& bgr, std::vector<Object>& objects, const int nu
     nms_sorted_bboxes(proposals, picked, nms_threshold);
 
     int count = picked.size();
-
-    objects.resize(count);
+    //objects.resize(count);
     for (int i = 0; i < count; i++)
     {
-        objects[i] = proposals[picked[i]];
+        Object obj = proposals[picked[i]];
 
         // adjust offset to original unpadded
-        float x0 = (objects[i].rect.x - (wpad / 2)) / scale;
-        float y0 = (objects[i].rect.y - (hpad / 2)) / scale;
-        float x1 = (objects[i].rect.x + objects[i].rect.width - (wpad / 2)) / scale;
-        float y1 = (objects[i].rect.y + objects[i].rect.height - (hpad / 2)) / scale;
+        float x0 = (obj.rect.x - (wpad / 2)) / scale;
+        float y0 = (obj.rect.y - (hpad / 2)) / scale;
+        float x1 = (obj.rect.x + obj.rect.width - (wpad / 2)) / scale;
+        float y1 = (obj.rect.y + obj.rect.height - (hpad / 2)) / scale;
 
         // clip
         x0 = std::max(std::min(x0, (float)(img_w - 1)), 0.f);
@@ -279,10 +279,23 @@ void Yolo::detect(const cv::Mat& bgr, std::vector<Object>& objects, const int nu
         x1 = std::max(std::min(x1, (float)(img_w - 1)), 0.f);
         y1 = std::max(std::min(y1, (float)(img_h - 1)), 0.f);
 
-        objects[i].rect.x = x0;
-        objects[i].rect.y = y0;
-        objects[i].rect.width = x1 - x0;
-        objects[i].rect.height = y1 - y0;
+        obj.rect.x = x0;
+        obj.rect.y = y0;
+        obj.rect.width = x1 - x0;
+        obj.rect.height = y1 - y0;
+
+        if(obj.label == 0){
+            float scaleTxt =  48.0f / obj.rect.height;
+            auto dstWidth = int(obj.rect.width * scaleTxt);
+            if (dstWidth > 1056 || dstWidth < 40){//48*22
+                continue;
+            }
+            cv::Mat roi = bgr(obj.rect).clone();
+            cv::resize(roi,roi, cv::Size(dstWidth, g_crnn->target_size));
+            txts.emplace_back(TextLine{roi, {} ,{},{}, {}, obj});
+        } else{
+            objects.push_back(obj);
+        }
     }
 }
 

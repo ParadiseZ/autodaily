@@ -45,7 +45,7 @@ interface ScriptInfoDao {
     @Query("delete from Script_Info where script_id = :scriptId")
     fun deleteByScriptId(scriptId: Int )
 
-    @Query("update Script_Info set last_version = :lastVer,current_status = :currentStatus where script_id = :scriptId and need_app_update = :needAppUpdate")
+    @Query("update Script_Info set last_version = :lastVer,current_status = :currentStatus,need_app_update = :needAppUpdate where script_id = :scriptId")
     fun updateLastVerById(scriptId: Int , lastVer : Int, currentStatus : Int , needAppUpdate : Int)
 
     @Query("select * from Script_Info where current_status!=2 and script_id>0")

@@ -70,4 +70,7 @@ interface ScriptSetInfoDao {
 
     @Query("select *  FROM script_set_info a where a.set_id = :setId")
     fun getScriptSetById(setId: Int) : ScriptSetInfo?
+
+    @Query("delete FROM script_set_info where script_id=:scriptId and set_id not in (:setIds)")
+    fun deleteScriptSetByIds(scriptId: Int,setIds: List<Int>) : Int
 }

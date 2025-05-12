@@ -18,6 +18,7 @@ import com.smart.autodaily.ui.screen.NotificationRequest
 import com.smart.autodaily.ui.screen.PersonScreen
 import com.smart.autodaily.ui.screen.RegisterScreen
 import com.smart.autodaily.ui.screen.ResetPasswordScreen
+import com.smart.autodaily.ui.screen.ScriptSetScreen
 import com.smart.autodaily.ui.screen.SearchScreen
 import com.smart.autodaily.ui.screen.SettingScreen
 
@@ -72,6 +73,12 @@ fun AppNavHost(
         }
         composable(Screen.NOTIFICATION.name){
             NotificationRequest(modifier,navController)
+        }
+        composable(
+            route= Screen.SCRIPTSETDETAIL.name+"/{scriptId}",
+            arguments = listOf(navArgument("scriptId"){type = NavType.IntType})
+            ){ bse->
+            ScriptSetScreen(modifier, nhc=navController,selectId = bse.arguments?.getInt("scriptId"))
         }
     }
 }

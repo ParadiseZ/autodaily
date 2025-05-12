@@ -182,6 +182,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
         val result = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptInfo.scriptId)
         var scriptAction = Response<List<ScriptActionInfo>>()
         //var globalScriptSetResult = Response<List<ScriptSetInfo>>()
+        var setIds : List<Int> = emptyList()
         if(scriptInfo.scriptId !=0){
             scriptAction = RemoteApi.searchDownRetrofit.downloadActionInfoByScriptId(scriptInfo.scriptId)
             val localScriptSetGlobal = appDb.scriptSetInfoDao.countScriptSetByScriptId(0)
@@ -200,8 +201,10 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                         si.downloadTime = LocalDateTime.now().toString()
                         appDb.scriptInfoDao.insert(si)
                     }
-                    setGlobal.data?.let {
-                        updateScriptSet(it)
+                    setGlobal.data?.let { setList->
+                        updateScriptSet(setList)
+                        setIds = setList.map { it.setId }
+                        appDb.scriptSetInfoDao.deleteScriptSetByIds(0,setIds)
                     }
                 }
             }
@@ -234,8 +237,10 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                 scriptInfo.process.intValue = -1
             }
             //ScriptSet 设置
-            result.data?.let {
-                updateScriptSet(it)
+            result.data?.let { setList->
+                updateScriptSet(setList)
+                setIds = setList.map { it.setId }
+                appDb.scriptSetInfoDao.deleteScriptSetByIds(setList[0].scriptId,setIds)
             }
         }
     }

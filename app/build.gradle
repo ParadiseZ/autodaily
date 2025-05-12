@@ -13,8 +13,8 @@ android {
         applicationId "com.smart.autodaily"
         minSdk 25
         targetSdk 35
-        versionCode 250313
-        versionName "1.0"
+        versionCode 250512
+        versionName "1.0.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

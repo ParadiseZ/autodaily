@@ -27,7 +27,7 @@ int CrnnNet::load(AAssetManager* mgr, int _target_size,short _colorStep, const f
         return -1;
     }
     net.clear();
-    ncnn::set_cpu_powersave(1);
+    ncnn::set_cpu_powersave(2);
     ncnn::set_omp_num_threads(ncnn::get_big_cpu_count());
 
     net.opt = ncnn::Option();
@@ -37,7 +37,7 @@ int CrnnNet::load(AAssetManager* mgr, int _target_size,short _colorStep, const f
     if (ncnn::get_gpu_count() != 0)
         net.opt.use_vulkan_compute = use_gpu;
 #endif
-    net.opt.num_threads = ncnn::get_cpu_powersave();
+    net.opt.num_threads = ncnn::get_big_cpu_count();
     net.opt.blob_allocator = &blob_pool_allocator;
     net.opt.workspace_allocator = &workspace_pool_allocator;
     char parampath[100];
@@ -100,41 +100,26 @@ bool CrnnNet::readKeysFromAssets(AAssetManager *mgr,const char *filename)
     return true;
 }
 
-TextLine CrnnNet::getTextLine(cv::Mat& src,cv::Rect rect)
-{
-    cv::Mat roi = src(rect).clone();
-    float scale = (float)target_size / (float)roi.rows;
-    auto dstWidth = short((float)roi.cols * scale);
-    if (dstWidth > 1056 || dstWidth < 40){//48*22
-        return {};
-    }
-    cv::resize(roi, roi, cv::Size(dstWidth, target_size));
-    //if you use PP-OCRv3 you should change PIXEL_RGB to PIXEL_RGB2BGR
-    ncnn::Mat input = ncnn::Mat::from_pixels(roi.data, ncnn::Mat::PIXEL_RGB, roi.cols, roi.rows);
-    //ncnn::Mat input = ncnn::Mat::from_pixels(srcResize.data, ncnn::Mat::PIXEL_RGB2BGR, srcResize.cols, srcResize.rows);
-
-    input.substract_mean_normalize(mean_vals, norm_vals);
-
-    ncnn::Extractor extractor = net.create_extractor();
-    extractor.input("in0", input);
-
-    ncnn::Mat out;
-    extractor.extract("out0", out);
-    auto* floatArray = (float*)out.data;
-    std::vector<float> outputData(floatArray, floatArray + out.h * out.w);
-    TextLine res = scoreToTextLine(outputData, out.h, out.w);
-    if(res.text.empty()){
-        roi.release();
-        return {};
-    }
-    if(getColor){
-        res = getColors(res, roi);
-    }
-    roi.release();
-    return res;
+void CrnnNet::getTextLines(std::vector<TextLine>& textLines){
+/*#pragma omp parallel
+    {
+#pragma omp for*/
+        for (auto & textLine : textLines)
+        {
+            ncnn::Extractor ex = net.create_extractor();
+            ncnn::Mat in  = ncnn::Mat::from_pixels(textLine.roi.data, ncnn::Mat::PIXEL_RGB, textLine.roi.cols, textLine.roi.rows);
+            in.substract_mean_normalize( mean_vals, norm_vals);
+            ex.input("in0", in);
+            ncnn::Mat out;
+            ex.extract("out0", out);
+            auto* floatArray = (float*)out.data;
+            std::vector<float> outputData(floatArray, floatArray + out.h * out.w);
+            scoreToTextLine(outputData, out.h, out.w,textLine);
+        }
+    //}
 }
 
-TextLine CrnnNet::scoreToTextLine(const std::vector<float>& outputData, int h, int w)
+void CrnnNet::scoreToTextLine(const std::vector<float>& outputData, int h, int w, TextLine & textLine)
 {
     std::string strRes;
     std::vector<float> scores;
@@ -142,7 +127,6 @@ TextLine CrnnNet::scoreToTextLine(const std::vector<float>& outputData, int h, i
     int lastIndex = 0;
     int maxIndex=0;
     float maxValue;
-
     for (int i = 0; i < h; i++)
     {
         maxIndex = int(argmax(outputData.begin() + i * w, outputData.begin() + i * w + w));
@@ -154,7 +138,15 @@ TextLine CrnnNet::scoreToTextLine(const std::vector<float>& outputData, int h, i
         }
         lastIndex = maxIndex;
     }
-    return { label,strRes, scores };
+    if(strRes.empty()){
+        return;
+    }
+    textLine.label.insert( textLine.label.end(), label.begin(), label.end());
+    textLine.text = strRes;
+    textLine.charScores.insert(textLine.charScores.end(), scores.begin(), scores.end());
+    if(getColor){
+        textLine = getColors(textLine, textLine.roi);
+    }
 }
 
 TextLine  CrnnNet::getColors(TextLine textLine, cv::Mat & src) {

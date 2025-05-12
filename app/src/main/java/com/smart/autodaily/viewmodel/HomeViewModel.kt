@@ -22,11 +22,13 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
         }
     }
     //删除数据
-    fun deleteScript(sc : ScriptInfo){
+    fun deleteScript(sc : ScriptInfo, type : Int){
         try {
             appDb.runInTransaction{
-                //appDb.scriptInfoDao.deleteByScriptId(sc.scriptId)
-                //appDb.scriptSetInfoDao.deleteScriptSetInfoByScriptId(sc.scriptId)
+                if (type == 1){//删除
+                    appDb.scriptInfoDao.deleteByScriptId(sc.scriptId)
+                    appDb.scriptSetInfoDao.deleteScriptSetInfoByScriptId(sc.scriptId)
+                }
                 appDb.scriptActionInfoDao.deleteByScriptId(sc.scriptId)
                 val externalParamFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_PARAM)
                 val externalBinFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_BIN)

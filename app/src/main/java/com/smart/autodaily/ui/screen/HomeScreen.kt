@@ -204,11 +204,7 @@ fun HomeScreen(
                             IconButton(
                                 onClick = {
                                     currentScriptInfo.value = scriptInfo
-                                    appCtx.startActivity(
-                                        Intent("android.intent.action.SCRIPT SET DETAIL")
-                                            .putExtra("CUR_SCRIPT_ID", scriptInfo.scriptId)
-                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    )
+                                    nhc.navSingleTopTo(Screen.SCRIPTSETDETAIL.name+"/${scriptInfo.scriptId}")
                                 }
                             ){
                                 Icon(
@@ -314,7 +310,7 @@ fun HomeScreen(
                         enabled = openDialog.value,
                         onClick = {
                             currentScriptInfo.value?.let { scriptInfo->
-                                homeViewModel.deleteScript(scriptInfo)
+                                homeViewModel.deleteScript(scriptInfo,1)
                             }
                             openDialog.value = false
                             SnackbarUtil.show("删除成功！")
@@ -363,7 +359,7 @@ fun HomeScreen(
                             homeViewModel.viewModelScope.launch {
                                 try {
                                     currentScriptInfo.value?.let {
-                                        homeViewModel.deleteScript(it)
+                                        homeViewModel.deleteScript(it,0)
                                         homeViewModel.appViewModel.downScriptByScriptId(it)
                                         SnackbarUtil.show("更新成功！")
                                     }?:{

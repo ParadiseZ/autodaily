@@ -10,18 +10,21 @@ struct TextBox {
     std::vector<cv::Point> boxPoint;
     float score;
 };
+struct Object
+{
+    cv::Rect_<float> rect;
+    int label{};
+    float prob{};
+};
 struct TextLine {
+    cv::Mat roi;
     std::vector<short> label;
     std::string text;
     std::vector<float> charScores;
     std::vector<int> color;
+    Object obj;
 };
-struct Object
-{
-    cv::Rect_<float> rect;
-    int label;
-    float prob;
-};
+
 
 std::vector<cv::Point> getMinBoxes(const std::vector<cv::Point>& inVec, float& minSideLen, float& allEdgeSize);
 float boxScoreFast(const cv::Mat& inMat, const std::vector<cv::Point>& inBox);
