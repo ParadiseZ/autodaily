@@ -37,6 +37,7 @@ autodaily是一个为安卓端开发的游戏脚本框架，意在解决想玩�
 * [opencv-mobile](https://github.com/nihui/opencv-mobile)
 * [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR)
 * [ncnn_paddleocr](https://github.com/FeiGeChuanShu/ncnn_paddleocr)
+* [ultralytics](https://github.com/ultralytics/ultralytics)
 
 ## 问题反馈
 
