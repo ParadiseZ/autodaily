@@ -31,13 +31,17 @@ int CrnnNet::load(AAssetManager* mgr, int _target_size,short _colorStep, const f
     ncnn::set_omp_num_threads(ncnn::get_big_cpu_count());
 
     net.opt = ncnn::Option();
-    net.opt.lightmode = true;
+
+    /*net.opt.lightmode = true;
     net.opt.openmp_blocktime = 0;
+    net.opt.num_threads = ncnn::get_big_cpu_count();*/
+
 #if NCNN_VULKAN
     if (ncnn::get_gpu_count() != 0)
         net.opt.use_vulkan_compute = use_gpu;
 #endif
-    net.opt.num_threads = ncnn::get_big_cpu_count();
+
+
     net.opt.blob_allocator = &blob_pool_allocator;
     net.opt.workspace_allocator = &workspace_pool_allocator;
     char parampath[100];

@@ -240,15 +240,21 @@ object  RunScript {
                             //Lom.d(INFO,"未识别到内容")
                             continue
                         }
-                        /*if(Lom.enableConsole){
+                        if(Lom.enableConsole){
                             for (result in detectRes.filter { it.label == 0 }) {
-                                Log.e("Text",result.ocr?.txt+" ")
-                                Log.e("Label", result.ocr?.label?.toList()?.plus(" ").toString())
-                                Log.e("Color", result.ocr?.colorArr?.toList().toString())
+                                print(result.ocr?.txt+" ")
+                                print(result.ocr?.label?.toList())
+                                println(result.ocr?.colorArr?.toList())
                             }
                             println(detectLabels.toList())
-                        }*/
-
+                        }
+                        /*if(enableLog && logSet.value=="详细"){
+                            for (result in detectRes.filter { it.label == 0 }) {
+                                Lom.d("Text:",result.ocr?.txt+",Label:"+result.ocr?.label?.toList()?.plus(" ").toString() + ",Color:"+result.ocr?.colorArr?.toList().toString())
+                            }
+                            Lom.d("DetectLabel","${detectLabels.toList()}")
+                        }
+*/
 
                         //conf.curHash = getMd5Hash(capture)
                         when(tryAction(scriptActionArrayList, detectLabels, detectRes, txtLabels)){

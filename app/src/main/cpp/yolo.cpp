@@ -191,13 +191,15 @@ int Yolo::load(FILE * paramFile,FILE * modelFile, int _target_size, const float*
     ncnn::set_omp_num_threads(ncnn::get_little_cpu_count());
 
     yolo.opt = ncnn::Option();
-    yolo.opt.openmp_blocktime = 0;
+
+    /*yolo.opt.openmp_blocktime = 0;
     yolo.opt.lightmode = true;
+    yolo.opt.num_threads = ncnn::get_little_cpu_count();*/
 #if NCNN_VULKAN
     if (ncnn::get_gpu_count() != 0)
         yolo.opt.use_vulkan_compute = use_gpu;
 #endif
-    yolo.opt.num_threads = ncnn::get_little_cpu_count();
+
     yolo.opt.blob_allocator = &blob_pool_allocator;
     yolo.opt.workspace_allocator = &workspace_pool_allocator;
     yolo.load_param(paramFile);

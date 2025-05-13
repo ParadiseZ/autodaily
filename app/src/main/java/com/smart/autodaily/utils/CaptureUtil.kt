@@ -11,6 +11,9 @@ fun getPicture() : Bitmap?{
         ShizukuUtil.iUserService?.let {
             return it.execCap(CAPTURE)
         }
+        /*appCtx.assets.open("0184.jpg").use { inputStream ->
+            return BitmapFactory.decodeStream(inputStream)
+        }*/
         return null
     }catch (_:Exception){
         runScope.coroutineContext.cancelChildren()

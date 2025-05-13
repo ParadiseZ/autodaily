@@ -26,7 +26,7 @@ object Lom {
     private const val MAX_LOG_SIZE = 512 * 1024L// 2MB 2 * 1024 * 1024L
     private val dateFormat = DateTimeFormatter.ofPattern("yy-MM-dd HH:mm:ss")
     private val logChannel = Channel<String>(256)
-    private var enableLog = false
+    var enableLog = false
     var enableConsole = false
 
     fun d(category: String, message: String) {
