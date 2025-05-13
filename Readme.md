@@ -4,7 +4,7 @@
 
 ## 下载
 
-[123盘主](https://www.123684.com/s/dVEDVv-27NWh) [123盘备](https://www.123912.com/s/dVEDVv-27NWh) [天翼云](https://cloud.189.cn/t/jiiYnuYZfq6v) 访问码：tjw4
+[Release](https://github.com/ParadiseZ/autodaily/releases) [123盘主](https://www.123684.com/s/dVEDVv-27NWh) [123盘备](https://www.123912.com/s/dVEDVv-27NWh) [天翼云](https://cloud.189.cn/t/jiiYnuYZfq6v) 访问码：tjw4
 
 ## 简介
 
