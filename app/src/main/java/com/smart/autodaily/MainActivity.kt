@@ -15,7 +15,6 @@ import com.jeremyliao.liveeventbus.LiveEventBus
 import com.smart.autodaily.constant.Screen
 import com.smart.autodaily.ui.conponent.floatingView
 import com.smart.autodaily.ui.navigation.AppNavHost
-import com.smart.autodaily.ui.navigation.navSingleTopTo
 import com.smart.autodaily.ui.theme.AutoDailyTheme
 import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.SnackbarUtil
@@ -50,7 +49,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 LiveEventBus
                     .get("loginCheck", String::class.java)
                     .observe(this) {
-                        navHostController.navSingleTopTo(Screen.LOGIN.name)
+                        navHostController.navigate(Screen.LOGIN.name){
+                            launchSingleTop = true
+                            popUpTo(0) {
+                                inclusive = true // 或 true，看是否需要重建起始页
+                            }
+                        }
                     }
                 MainScreen(navController = navHostController, startDestination = target)
             }

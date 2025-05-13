@@ -13,7 +13,7 @@ android {
         applicationId "com.smart.autodaily"
         minSdk 25
         targetSdk 35
-        versionCode 250512
+        versionCode 250513
         versionName "1.0.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

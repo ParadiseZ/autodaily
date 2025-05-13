@@ -25,7 +25,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.smart.autodaily.constant.Screen
-import com.smart.autodaily.ui.navigation.navSingleTopTo
 import com.smart.autodaily.utils.hasNotificationPermission
 import splitties.init.appCtx
 import kotlin.system.exitProcess
@@ -40,7 +39,12 @@ fun NotificationRequest(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { granted ->
             if (granted){
-                nav.navSingleTopTo(Screen.HOME.name)
+                nav.navigate(Screen.HOME.name){
+                    launchSingleTop = true
+                    popUpTo(0) {
+                        inclusive = true // 或 true，看是否需要重建起始页
+                    }
+                }
             }else{
                 exitProcess(0)
             }
@@ -50,7 +54,12 @@ fun NotificationRequest(
         contract = ActivityResultContracts.StartActivityForResult(),
         onResult = {
             if (hasNotificationPermission()){
-                nav.navSingleTopTo(Screen.HOME.name)
+                nav.navigate(Screen.HOME.name){
+                    launchSingleTop = true
+                    popUpTo(0) {
+                        inclusive = true // 或 true，看是否需要重建起始页
+                    }
+                }
             }else{
                 exitProcess(0)
             }

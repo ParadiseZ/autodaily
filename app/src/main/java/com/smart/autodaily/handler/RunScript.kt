@@ -240,11 +240,15 @@ object  RunScript {
                             //Lom.d(INFO,"未识别到内容")
                             continue
                         }
-                        /*for (result in detectRes.filter { it.label == 0 }) {
-                            print(result.ocr?.txt+" ")
-                            println(result.ocr?.colorArr?.toList())
-                        }
-                        println(detectLabels.toList())*/
+                        /*if(Lom.enableConsole){
+                            for (result in detectRes.filter { it.label == 0 }) {
+                                Log.e("Text",result.ocr?.txt+" ")
+                                Log.e("Label", result.ocr?.label?.toList()?.plus(" ").toString())
+                                Log.e("Color", result.ocr?.colorArr?.toList().toString())
+                            }
+                            println(detectLabels.toList())
+                        }*/
+
 
                         //conf.curHash = getMd5Hash(capture)
                         when(tryAction(scriptActionArrayList, detectLabels, detectRes, txtLabels)){
