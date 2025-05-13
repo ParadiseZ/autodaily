@@ -4,7 +4,7 @@
 
 ## 下载
 
-[123盘主](https://www.123684.com/s/dVEDVv-27NWh) [123盘备](https://www.123912.com/s/dVEDVv-27NWh) [天翼云](https://cloud.189.cn/t/jiiYnuYZfq6v) 访问码：tjw4
+[Release](https://github.com/ParadiseZ/autodaily/releases) [123盘主](https://www.123684.com/s/dVEDVv-27NWh) [123盘备](https://www.123912.com/s/dVEDVv-27NWh) [天翼云](https://cloud.189.cn/t/jiiYnuYZfq6v) 访问码：tjw4
 
 ## 简介
 
@@ -37,6 +37,7 @@ autodaily是一个为安卓端开发的游戏脚本框架，意在解决想玩�
 * [opencv-mobile](https://github.com/nihui/opencv-mobile)
 * [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR)
 * [ncnn_paddleocr](https://github.com/FeiGeChuanShu/ncnn_paddleocr)
+* [ultralytics](https://github.com/ultralytics/ultralytics)
 
 ## 问题反馈
 
