@@ -13,8 +13,8 @@ android {
         applicationId "com.smart.autodaily"
         minSdk 25
         targetSdk 35
-        versionCode 250513
-        versionName "1.0.3"
+        versionCode 250515
+        versionName "1.0.4"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -23,8 +23,9 @@ android {
 
         externalNativeBuild {
             ndk {
-                //abiFilters 'arm64-v8a','armeabi-v7a'
-                abiFilters 'x86_64'
+                abiFilters 'arm64-v8a','x86_64'
+                //abiFilters 'arm64-v8a'
+                //abiFilters 'x86_64'
             }
             cmake {
                 cppFlags ''
