@@ -33,7 +33,7 @@ fun updateScriptSet(ssi : List<ScriptSetInfo>){
                 checkedFlag = local.checkedFlag,
                 setValue = if (it.setDefaultValue?.contains(local.setValue.toString()) == true) local.setValue else it.setValue
             )
-            appDb.scriptSetInfoDao.update(merge)
+            appDb.scriptSetInfoDao.insert(merge)
         }
     }
 }
