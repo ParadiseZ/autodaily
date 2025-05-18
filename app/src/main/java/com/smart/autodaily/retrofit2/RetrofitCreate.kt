@@ -3,17 +3,18 @@ package com.smart.autodaily.retrofit2
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 object RetrofitCreate {
     //private const val BASE_URL = "http://192.168.123.133:8080"
     private const val BASE_URL = "https://autodaily.icu/"
     //private const val MEDIA_TYPE = "application/json"
-    //private const val BASE_URL = "https://www.wanandroid.com/"
-    //private val  okHttpClient = OkHttpClient.Builder().build()
 
     private val okHttpClient = OkHttpClient.Builder()
-        .callTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
-        .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+        .callTimeout(150, TimeUnit.SECONDS)
+        .connectTimeout(15,TimeUnit.SECONDS)
+        .readTimeout(2, TimeUnit.MINUTES)    // 读取响应数据
+        .writeTimeout(30, TimeUnit.SECONDS)   // 发送请求数据
         .addInterceptor(AuthInterceptor())
         .build()
 
