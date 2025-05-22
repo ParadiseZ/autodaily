@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.Index
 import com.google.gson.annotations.SerializedName
-import com.smart.autodaily.command.Command
+import com.smart.autodaily.feature.scripting.domain.command.Command // Updated import
 
 @Entity(tableName = "script_action_info", primaryKeys = ["id"], indices = [Index(value = ["script_id", "flow_id"])])
 data class ScriptActionInfo(

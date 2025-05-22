@@ -15,8 +15,10 @@ import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.data.entity.request.Request
 import com.smart.autodaily.data.entity.resp.Response
+import com.smart.autodaily.feature.scripting.domain.state.ScriptExecutionState
+import com.smart.autodaily.feature.scripting.domain.usecase.*
 import com.smart.autodaily.handler.ERROR
-import com.smart.autodaily.handler.isRunning
+// import com.smart.autodaily.handler.isRunning // Replaced by GetOverallScriptingStateUseCase
 import com.smart.autodaily.utils.DownloadManager
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.SnackbarUtil
@@ -29,7 +31,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.threeten.bp.LocalDateTime
@@ -40,25 +45,57 @@ val workType by lazy {
     mutableStateOf("")
 }
 
-class AppViewModel (application: Application) : AndroidViewModel(application){
+class AppViewModel (
+    application: Application,
+    // Assuming these use cases are provided via DI (e.g., Hilt) or a ViewModel factory.
+    // For this refactor, direct default instantiation is not shown as it depends on service/repo availability.
+    private val startScriptUseCase: StartScriptUseCase,
+    private val stopScriptUseCase: StopScriptUseCase,
+    private val getScriptExecutionStateUseCase: GetScriptExecutionStateUseCase,
+    private val getOverallScriptingStateUseCase: GetOverallScriptingStateUseCase,
+    private val initializeGlobalScriptConfigUseCase: InitializeGlobalScriptConfigUseCase,
+    private val deleteOldRunStatusUseCase: DeleteOldRunStatusUseCase
+) : AndroidViewModel(application){
+
+    // Expose overall scripting state
+    val isAnyScriptRunning: StateFlow<Boolean> = getOverallScriptingStateUseCase.execute()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    // Keep track of the primary script being managed by UI, if any
+    private val _currentManagedScriptId = MutableStateFlow<Int?>(null)
+    val currentManagedScriptId: StateFlow<Int?> = _currentManagedScriptId
+
+    // Expose state for a specific script (e.g., the one started via UI)
+    // This can be collected by UI when currentManagedScriptId is not null.
+    fun getManagedScriptState(): StateFlow<ScriptExecutionState?> {
+        return currentManagedScriptId.value?.let { scriptId ->
+            getScriptExecutionStateUseCase.execute(scriptId)
+        } ?: MutableStateFlow(null) // Return a flow with null if no script is managed
+    }
+
+
     //本地脚本列表
     private val _localScriptAll = MutableStateFlow<List<ScriptInfo>>(emptyList())
     val localScriptListAll: StateFlow<List<ScriptInfo>> = _localScriptAll
-    //加载本地数据的标志
     //本地用户
-    private val _user  = MutableStateFlow<UserInfo?>(null)
+    private val _user = MutableStateFlow<UserInfo?>(null)
     val user : StateFlow<UserInfo?> get() = _user
 
-    //加载用户
     init {
         viewModelScope.launch {
+            // Perform initial setup tasks that were in App.kt
+            initializeAppDefaults()
             updateAndLoadUserInfo()
             loadScriptAll()
         }
     }
 
+    private suspend fun initializeAppDefaults() {
+        initializeGlobalScriptConfigUseCase.execute()
+        deleteOldRunStatusUseCase.execute()
+    }
 
-    private fun updateAndLoadUserInfo(){
+    private fun updateAndLoadUserInfo() {
         viewModelScope.launch {
             withContext(Dispatchers.IO){
                 loadUserInfo()
@@ -110,15 +147,39 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
         }
     }
 
-    fun setIsRunning(state : Int){
-        isRunning.intValue = state
+    // Removed setIsRunning as state is now driven by ScriptStateManager via use cases
+
+    fun startScript(script: ScriptInfo) {
+        viewModelScope.launch {
+            // Potentially set this script as the "managed" one by UI
+            _currentManagedScriptId.value = script.scriptId
+            // Actual start logic
+            startScriptUseCase.execute(script)
+        }
     }
 
-    fun stopRunScript(){
-        runScope.coroutineContext.cancelChildren()
-        logScope.coroutineContext.cancelChildren()
-        isRunning.intValue = 0
+    fun stopCurrentScript() { // Renamed for clarity, stops the "managed" script
+        viewModelScope.launch {
+            _currentManagedScriptId.value?.let { scriptId ->
+                stopScriptUseCase.execute(scriptId)
+                // Optionally clear currentManagedScriptId or wait for state to become Idle/Finished
+            } ?: Lom.w("AppViewModel", "stopCurrentScript called but no currentManagedScriptId set.")
+            // Old cancellation of runScope/logScope might not be needed if they were specific to RunScript
+            // runScope.coroutineContext.cancelChildren()
+            // logScope.coroutineContext.cancelChildren()
+        }
     }
+
+    // If a generic "stop any script by ID" is needed from elsewhere:
+    fun stopScriptById(scriptId: Int) {
+        viewModelScope.launch {
+            stopScriptUseCase.execute(scriptId)
+            if (_currentManagedScriptId.value == scriptId) {
+                // If the stopped script was the one managed by UI, update UI state if necessary
+            }
+        }
+    }
+
 
     //下载
     suspend fun downScriptByScriptId(scriptInfo : ScriptInfo) : Boolean {

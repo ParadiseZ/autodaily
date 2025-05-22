@@ -7,13 +7,18 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.lifecycle.ViewModelProvider // Potentially for AppViewModel if not using Hilt
+import androidx.lifecycle.ViewModelStore // Potentially for AppViewModel
+import androidx.lifecycle.ViewModelStoreOwner // Potentially for AppViewModel
 import com.jakewharton.threetenabp.AndroidThreeTen
 import com.jeremyliao.liveeventbus.LiveEventBus
 import com.smart.autodaily.config.AppConfig.channelIdDownload
-import com.smart.autodaily.handler.RunScript
-import com.smart.autodaily.handler.RunScript.deleteRunStatus
+// import com.smart.autodaily.handler.RunScript // No longer directly needed here
+// import com.smart.autodaily.handler.RunScript.deleteRunStatus // Replaced by use case in AppViewModel
 import com.smart.autodaily.service.ForegroundService
 import com.smart.autodaily.utils.checkScriptUpdate
+// Import AppViewModel if explicit initialization is desired, though init block should handle it.
+// import com.smart.autodaily.viewmodel.AppViewModel 
 import com.smart.autodaily.utils.hasNotificationPermission
 import com.smart.autodaily.utils.partScope
 import com.smart.autodaily.utils.updateScope
@@ -44,12 +49,12 @@ class App : Application() {
         }
         
         partScope.launch {
-            //初始化全局设置
-            RunScript.initGlobalSet()
+            //初始化全局设置 - This is now handled by AppViewModel's init block
+            // RunScript.initGlobalSet() 
             try {
                 // 延迟检查更新
                 //delay(5000)
-                deleteRunStatus()
+                // deleteRunStatus() // This is now handled by AppViewModel's init block
                 checkScriptUpdate()
             } catch (_: Exception) {
                 updateScope.coroutineContext.cancelChildren()

@@ -71,9 +71,15 @@ object Lom {
     fun waitWriteLog(){
         logScope.coroutineContext.cancelChildren()
         enableLog = false
-        logSet.value =  RunScript.globalSetMap.value[7]?.setValue?:"关闭"
-        n(INFO , "日志设置：${logSet.value}")
-        if ("关闭" != logSet.value){
+        // logSet.value =  RunScript.globalSetMap.value[7]?.setValue?:"关闭" // Removed: RunScript is obsolete
+        // The value of logSet (and enableLog) should now be configured externally,
+        // for example, by AppViewModel or a dedicated settings manager after fetching from ScriptConfigRepository.
+        // For now, logSet will retain its default value ("关闭") or last externally set value.
+        // n(INFO , "日志设置：${logSet.value}") // Also removed as it depends on the above line.
+        
+        // Assuming that if logSet.value is not "关闭", file logging should be enabled.
+        // This part of the logic can remain, but logSet.value needs to be updated externally.
+        if ("关闭" != logSet.value){ // This condition will depend on the default/externally set value of logSet
             enableLog = true
             writeLogToFile()
         }

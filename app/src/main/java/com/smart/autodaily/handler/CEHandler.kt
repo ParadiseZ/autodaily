@@ -15,7 +15,10 @@ val globalCEHandler = CoroutineExceptionHandler { context, exception ->
             exception.printStackTrace()
         }
         "runScope" -> {
-            isRunning.intValue = 0
+            // isRunning.intValue = 0 // Obsolete: isRunning is no longer used.
+            // Consider if any other general cleanup for runScope is needed,
+            // or if runScope itself will be deprecated.
+            Lom.w("CEHandler", "Coroutine 'runScope' encountered an exception. Old 'isRunning' flag would have been reset.")
         }
         else -> Log.e("${context[CoroutineName]}", "$exception，${exception.message}")
     }
