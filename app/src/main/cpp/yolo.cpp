@@ -158,43 +158,22 @@ Yolo::Yolo()
     workspace_pool_allocator.set_size_compare_ratio(0.f);
     target_size = 640;
 }
-int Yolo::load(AAssetManager* mgr,const char* modeltype, int _target_size, const float* _norm_vals, bool use_gpu)
-{
-    /*yolo.clear();
-    ncnn::set_cpu_powersave(0);
-    ncnn::set_omp_num_threads(ncnn::get_little_cpu_count());
-    yolo.opt = ncnn::Option();
-#if NCNN_VULKAN
-    if (ncnn::get_gpu_count() != 0)
-        yolo.opt.use_vulkan_compute = use_gpu;
-#endif
-    yolo.opt.num_threads = ncnn::get_big_cpu_count();
-    yolo.opt.blob_allocator = &blob_pool_allocator;
-    yolo.opt.workspace_allocator = &workspace_pool_allocator;
-    char parampath[100];
-    char modelpath[100];
-    sprintf(parampath, "%s.param", modeltype);
-    sprintf(modelpath, "%s.bin", modeltype);
-    yolo.load_param(mgr,parampath);
-    yolo.load_model(mgr,modelpath);
-    target_size = _target_size;
-    norm_vals[0] = _norm_vals[0];
-    norm_vals[1] = _norm_vals[1];
-    norm_vals[2] = _norm_vals[2];
-    return 0;*/
-}
 int Yolo::load(FILE * paramFile,FILE * modelFile, int _target_size, const float* _norm_vals, bool use_gpu)
 {
     //0:全部 1:小核 2:大核
     yolo.clear();
+
     ncnn::set_cpu_powersave(1);
-    ncnn::set_omp_num_threads(ncnn::get_little_cpu_count());
+    int thread = ncnn::get_cpu_count() - 4;
+    if(thread <= 0 ){
+        thread =  ncnn::get_cpu_count() - 1;
+    }
+    ncnn::set_omp_num_threads(thread);
 
     yolo.opt = ncnn::Option();
-
-    /*yolo.opt.openmp_blocktime = 0;
+    yolo.opt.openmp_blocktime = 0;
     yolo.opt.lightmode = true;
-    yolo.opt.num_threads = ncnn::get_little_cpu_count();*/
+    yolo.opt.num_threads = thread;
 #if NCNN_VULKAN
     if (ncnn::get_gpu_count() != 0)
         yolo.opt.use_vulkan_compute = use_gpu;
@@ -238,7 +217,7 @@ void Yolo::detect(const cv::Mat& bgr, std::vector<Object>& objects,std::vector<T
     ncnn::Mat in_pad;
     ncnn::copy_make_border(in, in_pad, hpad / 2, hpad - hpad / 2, wpad / 2, wpad - wpad / 2, ncnn::BORDER_CONSTANT, 114.f);
     //const float norm_vals[3] = { 1 / 255.f, 1 / 255.f, 1 / 255.f };
-    in_pad.substract_mean_normalize(0, norm_vals);
+    in_pad.substract_mean_normalize(nullptr, norm_vals);
     ncnn::Extractor ex = yolo.create_extractor();
     ex.input("in0", in_pad);
 
@@ -292,74 +271,14 @@ void Yolo::detect(const cv::Mat& bgr, std::vector<Object>& objects,std::vector<T
             if (dstWidth > 1056 || dstWidth < 40){//48*22
                 continue;
             }
+            cv::Vec3b pixel = bgr.ptr<cv::Vec3b>(int(obj.rect.y))[std::max(int(obj.rect.x)-5, 0)];
+            int color = CrnnNet::colorMapping(pixel[0],pixel[1],pixel[2]);
+
             cv::Mat roi = bgr(obj.rect).clone();
             cv::resize(roi,roi, cv::Size(dstWidth, g_crnn->target_size));
-            txts.emplace_back(TextLine{roi, {} ,{},{}, {}, obj});
+            txts.emplace_back(TextLine{roi, {} ,{},{}, {color}, obj});
         } else{
             objects.push_back(obj);
         }
     }
-}
-
-int Yolo::draw(cv::Mat& bgr, cv::Mat& image,const std::vector<Object>& objects)
-{
-    static const unsigned char colors[19][3] = {
-            {54, 67, 244},
-            {99, 30, 233},
-            {176, 39, 156},
-            {183, 58, 103},
-            {181, 81, 63},
-            {243, 150, 33},
-            {244, 169, 3},
-            {212, 188, 0},
-            {136, 150, 0},
-            {80, 175, 76},
-            {74, 195, 139},
-            {57, 220, 205},
-            {59, 235, 255},
-            {7, 193, 255},
-            {0, 152, 255},
-            {34, 87, 255},
-            {72, 85, 121},
-            {158, 158, 158},
-            {139, 125, 96}
-    };
-    int color_index = 0;
-
-    image = bgr.clone();
-
-    for (const auto & obj : objects)
-    {
-        const unsigned char* color = colors[color_index % 19];
-        color_index++;
-
-        cv::Scalar cc(color[0], color[1], color[2]);
-
-        fprintf(stderr, "%d = %.5f at %.2f %.2f %.2f x %.2f\n", obj.label, obj.prob,
-                obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height);
-
-        cv::rectangle(image, obj.rect, cc, 2);
-
-        char text[256];
-        //sprintf(text, "%s %.1f%%", obj.label, obj.prob * 100);
-        sprintf(text, "idx:%d %.1f%%", obj.label, obj.prob * 100);
-
-        int baseLine = 0;
-        cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
-
-        int x = obj.rect.x;
-        int y = obj.rect.y - label_size.height - baseLine;
-        if (y < 0)
-            y = 0;
-        if (x + label_size.width > image.cols)
-            x = image.cols - label_size.width;
-
-        cv::rectangle(image, cv::Rect(cv::Point(x, y), cv::Size(label_size.width, label_size.height + baseLine)),
-                      cc, -1);
-
-        cv::putText(image, text, cv::Point(x, y + label_size.height),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255));
-    }
-    //cv_show("result", image);
-    return 0;
 }

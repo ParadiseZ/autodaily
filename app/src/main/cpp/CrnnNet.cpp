@@ -27,29 +27,28 @@ int CrnnNet::load(AAssetManager* mgr, int _target_size,short _colorStep, const f
         return -1;
     }
     net.clear();
+
     ncnn::set_cpu_powersave(2);
-    ncnn::set_omp_num_threads(ncnn::get_big_cpu_count());
+    int thread = ncnn::get_cpu_count() - 4;
+    if(thread <= 0 ){
+        thread =  ncnn::get_cpu_count() - 1;
+    }
+    ncnn::set_omp_num_threads(thread);
 
     net.opt = ncnn::Option();
-
-    /*net.opt.lightmode = true;
+    net.opt.lightmode = true;
     net.opt.openmp_blocktime = 0;
-    net.opt.num_threads = ncnn::get_big_cpu_count();*/
-
-#if NCNN_VULKAN
-    if (ncnn::get_gpu_count() != 0)
-        net.opt.use_vulkan_compute = use_gpu;
-#endif
-
+    net.opt.num_threads = 1;
+    net.opt.use_vulkan_compute = false;
 
     net.opt.blob_allocator = &blob_pool_allocator;
     net.opt.workspace_allocator = &workspace_pool_allocator;
-    char parampath[100];
-    char modelpath[100];
-    sprintf(parampath, "%s.param", modelPath);
-    sprintf(modelpath, "%s.bin", modelPath);
-    net.load_param(mgr,parampath);
-    net.load_model(mgr,modelpath);
+    char paramPath[100];
+    char mPath[100];
+    sprintf(paramPath, "%s.param", modelPath);
+    sprintf(mPath, "%s.bin", modelPath);
+    net.load_param(mgr,paramPath);
+    net.load_model(mgr,mPath);
     target_size = _target_size;
     colorStep = _colorStep;
     norm_vals[0] = _norm_vals[0];
@@ -68,7 +67,7 @@ bool CrnnNet::readKeysFromAssets(AAssetManager *mgr,const char *filename)
     }
     char *buffer;
 
-    auto *asset = AAssetManager_open(mgr, filename, AASSET_MODE_UNKNOWN);
+    auto *asset = AAssetManager_open(mgr, filename, AASSET_MODE_BUFFER);
     if (asset == nullptr) {
         return false;
     }
@@ -91,12 +90,27 @@ bool CrnnNet::readKeysFromAssets(AAssetManager *mgr,const char *filename)
     if(!keys.empty()){
         keys.clear();
     }
-    std::istringstream inStr(buffer);
+    // 处理可能的UTF-8 BOM标记
+    char* startPos = buffer;
+    if (bufferSize >= 3 && (unsigned char)buffer[0] == 0xEF &&
+        (unsigned char)buffer[1] == 0xBB && (unsigned char)buffer[2] == 0xBF) {
+        // 跳过UTF-8 BOM标记
+        startPos += 3;
+    }
+
+    std::string content(startPos);
+    std::istringstream inStr(content);
     std::string line;
     int size = 0;
     while (getline(inStr, line)) {
-        keys.emplace_back(line);
-        size++;
+        // 移除可能的回车符
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
+        if (!line.empty()) {
+            keys.emplace_back(line);
+            size++;
+        }
     }
     keySize = static_cast<jsize>(keys.size());
     free(buffer);
@@ -106,21 +120,20 @@ bool CrnnNet::readKeysFromAssets(AAssetManager *mgr,const char *filename)
 
 void CrnnNet::getTextLines(std::vector<TextLine>& textLines){
 /*#pragma omp parallel
+    {*/
+    #pragma omp for schedule(dynamic)
+    for (auto & textLine : textLines)
     {
-#pragma omp for*/
-        for (auto & textLine : textLines)
-        {
-            ncnn::Extractor ex = net.create_extractor();
-            ncnn::Mat in  = ncnn::Mat::from_pixels(textLine.roi.data, ncnn::Mat::PIXEL_RGB, textLine.roi.cols, textLine.roi.rows);
-            in.substract_mean_normalize( mean_vals, norm_vals);
-            ex.input("in0", in);
-            ncnn::Mat out;
-            ex.extract("out0", out);
-            auto* floatArray = (float*)out.data;
-            std::vector<float> outputData(floatArray, floatArray + out.h * out.w);
-            scoreToTextLine(outputData, out.h, out.w,textLine);
-        }
-    //}
+        ncnn::Extractor ex = net.create_extractor();
+        ncnn::Mat in  = ncnn::Mat::from_pixels(textLine.roi.data, ncnn::Mat::PIXEL_RGB, textLine.roi.cols, textLine.roi.rows);
+        in.substract_mean_normalize( mean_vals, norm_vals);
+        ex.input("in0", in);
+        ncnn::Mat out;
+        ex.extract("out0", out);
+        auto* floatArray = (float*)out.data;
+        std::vector<float> outputData(floatArray, floatArray + out.h * out.w);
+        scoreToTextLine(outputData, out.h, out.w,textLine);
+    }
 }
 
 void CrnnNet::scoreToTextLine(const std::vector<float>& outputData, int h, int w, TextLine & textLine)
@@ -148,73 +161,8 @@ void CrnnNet::scoreToTextLine(const std::vector<float>& outputData, int h, int w
     textLine.label.insert( textLine.label.end(), label.begin(), label.end());
     textLine.text = strRes;
     textLine.charScores.insert(textLine.charScores.end(), scores.begin(), scores.end());
-    if(getColor){
-        textLine = getColors(textLine, textLine.roi);
-    }
 }
 
-TextLine  CrnnNet::getColors(TextLine textLine, cv::Mat & src) {
-    std::mutex mutex;
-    //std::atomic<bool> should_stop(false);
-    int width = src.cols;
-    int height = src.rows;
-    if (width > height){
-        width = height/3;
-        height = height/2;
-    }else{
-        height = width/3;
-        width = width/2;
-    }
-    cv::Mat roi = src(cv::Rect(0,0,width, height));
-    //cv::resize(roi,roi, cv::Size(width/2, height/2));
-    cv::cvtColor(roi, roi, cv::COLOR_RGB2HSV);
-
-    std::unordered_set<int> allColors;
-    cv::parallel_for_(cv::Range(0, roi.rows), [&](const cv::Range& range) {
-        std::unordered_set<int> local_colors;
-        for (int row = range.start; row < range.end; ++row) {
-            const cv::Vec3b* ptr = roi.ptr<cv::Vec3b>(row);
-            for (int col = 0; col < roi.cols; ++col) {
-                cv::Vec3b pixel = ptr[col];
-                int color = colorMapping(pixel[0], pixel[1], pixel[2]);
-                local_colors.insert(color);
-                /*if (local_colors.size() >= 2) {
-                    should_stop = true;
-                    break;
-                }*/
-            }
-            //if (should_stop) break;
-        }
-
-        // 合并局部统计到全局（需加锁）
-        std::lock_guard<std::mutex> lock(mutex);
-        allColors.insert(local_colors.begin(), local_colors.end());
-    });
-
-    for (auto color: allColors) {
-        textLine.color.emplace_back(color);
-    }
-    return textLine;
-}
-
-static const unsigned char h_category[181] = {
-        // 0-10: 3 (Red)11
-        3,3,3,3,3,3,3,3,3,3,3,
-        // 11-25:4 (Orange)15
-        4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
-        // 26-34:5 (Yellow)9
-        5,5,5,5,5,5,5,5,5,
-        // 35-77:6 (Green)43
-        6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-        // 78-99:7 (Cyan)22
-        7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-        // 100-124:8 (Blue)25
-        8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
-        // 125-155:9 (Purple)31
-        9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
-        // 156-180:3 (Red)25
-        3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3
-};
 int CrnnNet::colorMapping(short h, short s, short v) {
     if (v <= 46) {
         return 0;//Black;
@@ -232,4 +180,3 @@ int CrnnNet::colorMapping(short h, short s, short v) {
         return (b+c)*(b+c+1)/2 + c;
     }
 }
-

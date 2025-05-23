@@ -10,14 +10,9 @@ class Yolo
 {
 public:
     Yolo();
-    int load(AAssetManager* mgr,const char* modeltype, int _target_size, const float* _norm_vals, bool use_gpu = false);
-
     int load(FILE * paramFile,FILE * modelFile, int _target_size, const float* _norm_vals, bool use_gpu = false);
 
     void detect(const cv::Mat& rgb, std::vector<Object>& objects,std::vector<TextLine>& txt,CrnnNet *& g_crnn, int num_classes, float prob_threshold = 0.25f, float nms_threshold = 0.45f);
-
-    static int draw(cv::Mat& bgr,cv::Mat& image, const std::vector<Object>& objects);
-
 
 private:
     ncnn::Net yolo;
