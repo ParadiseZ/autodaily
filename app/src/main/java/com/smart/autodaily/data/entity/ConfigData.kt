@@ -27,8 +27,11 @@ data class ConfigData(
     val retryDelay : Long,
     //最大重试次数
     val maxRetryNum : Int,
+    val minScreen : Int,
+
 ){
     var beforeHash : ByteArray = byteArrayOf()
     var pkgName = ""
     var capture : Bitmap?=null
+    var capScale : Int = 1
 }

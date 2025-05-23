@@ -59,13 +59,16 @@ fun execClick(sai: ScriptActionInfo, detectRes: Array<DetectResult>, cmd : Opera
 
 // Helper function to check for response after click
 private fun hasResponse(): Boolean {
-    val newCapture = getPicture() ?: return false
+    val newCapture = getPicture(conf.capScale) ?: return false
     // Compare with initial screenshot
     val newMd5 = getMd5Hash(newCapture)
     if(newMd5.contentEquals(conf.beforeHash)){
         return false
     }
     conf.beforeHash = newMd5
+        // 先回收旧的Bitmap对象
+    com.smart.autodaily.utils.BitmapPool.recycle(conf.capture)
+    // 设置新的Bitmap对象
     conf.capture = newCapture
     return true
 }

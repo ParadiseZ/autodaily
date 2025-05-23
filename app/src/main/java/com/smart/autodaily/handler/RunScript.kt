@@ -154,6 +154,9 @@ object  RunScript {
             remRebootTime = System.currentTimeMillis(),
             10000L,
             2,
+            ScreenCaptureUtil.getDisplayMetrics(appCtx).run {
+                this.widthPixels.coerceAtMost(this.heightPixels)
+            }
         )
     }
     //shell运行
@@ -161,6 +164,9 @@ object  RunScript {
         Lom.waitWriteLog()
         Lom.n( INFO, "初始化全局设置" )
         initConfData()
+        if(conf.minScreen  > 720){
+            conf.capScale = 2
+        }
         Lom.d("config", conf.toString())
         _scriptCheckedList.value.forEach scriptForEach@{ si->
             skipFlowIds.clear()
@@ -217,8 +223,8 @@ object  RunScript {
                         isToReboot(si.packageName)
                         //截图延迟
                         val capture = if (conf.capture == null || conf.capture!!.isRecycled) {
-                            getPicture()?:continue
-                        }else conf.capture!!
+                                        getPicture(conf.capScale)?:continue
+                                    } else conf.capture!!
                         //Lom.d( INFO, "开始检测 ${capture.height}" )
                         val detectRes = model.detectYolo(capture, si.classesNum).filter { it!=null }//.filter { it.prob > conf.similarScore }
                             .toTypedArray()
@@ -234,7 +240,9 @@ object  RunScript {
                         //MD5计算
                         conf.beforeHash = getMd5Hash(capture)
                         //释放截图
-                        conf.capture?.recycle()
+                        // 使用BitmapPool回收Bitmap对象而不是直接调用recycle
+                        com.smart.autodaily.utils.BitmapPool.recycle(conf.capture)
+                        conf.capture = null
                         //debugPrintScriptActionLabels(detectRes, detectLabels)
                         if (detectLabels.isEmpty() && txtLabels.isEmpty()) {
                             //Lom.d(INFO,"未识别到内容")
@@ -261,7 +269,9 @@ object  RunScript {
                             1 ->{
                                 //finish类
                                 Lom.n(INFO, "结束:${set.setName}")
-                                conf.capture?.recycle()
+                                // 使用BitmapPool回收Bitmap对象而不是直接调用recycle
+                                com.smart.autodaily.utils.BitmapPool.recycle(conf.capture)
+                                conf.capture = null
                                 return@setForEach
                             }
                             2 ->{
@@ -285,7 +295,9 @@ object  RunScript {
                         delay(conf.intervalTime)
                     }
                 }//set for each
-                conf.capture?.recycle()
+                // 使用BitmapPool回收Bitmap对象而不是直接调用recycle
+                com.smart.autodaily.utils.BitmapPool.recycle(conf.capture)
+                conf.capture = null
                 //记录是否完成
                 if (conf.recordStatus){
                     setScriptStatus(set)

@@ -147,9 +147,11 @@ class Sleep(private var time : Long = 1000L) : Command{
                 String.format("%.1f秒", time.toDouble() / 1000.0)
             }}"
         )
-        if (conf.capture?.isRecycled== false){
-            conf.capture?.recycle()
-        }
+        if (conf.capture?.isRecycled == false) {
+        // 使用BitmapPool回收Bitmap对象而不是直接调用recycle
+        com.smart.autodaily.utils.BitmapPool.recycle(conf.capture)
+        conf.capture = null
+    }
         Thread.sleep(time)
         return true
     }
