@@ -1,6 +1,6 @@
 package com.smart.autodaily.data.entity
 
 data class Point(
-    var x : Float,
-    var y : Float
+    var x : Int,
+    var y : Int
 )

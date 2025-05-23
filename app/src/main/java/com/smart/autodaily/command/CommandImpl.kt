@@ -4,32 +4,23 @@ import android.annotation.SuppressLint
 import androidx.collection.IntSet
 import com.smart.autodaily.data.entity.Point
 import com.smart.autodaily.data.entity.ScriptActionInfo
-import com.smart.autodaily.handler.ActionHandler
 import com.smart.autodaily.handler.INFO
 import com.smart.autodaily.handler.conf
 import com.smart.autodaily.handler.skipAcIds
 import com.smart.autodaily.handler.skipFlowIds
 import com.smart.autodaily.utils.Lom
-import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.partScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-const val TAP = "input tap "
-const val START = "am start -n "
-const val CAPTURE = "screencap -p"
-const val BACK = "input keyevent BACK "
-const val STOP = "am force-stop "
-const val SWIPE = "input swipe  "
-
 suspend fun adbRebootApp(packName : String){
-    ShizukuUtil.iUserService?.execVoidComand(STOP +packName.substring(0, packName.indexOf("/")))
+    conf.executor?.execVoidCommand(ShellCommandBuilder.stop(packName.substring(0, packName.indexOf("/"))))
     delay(2000)
     adbStartApp(packName)
 }
 
 fun adbStartApp(packName : String){
-    ShizukuUtil.iUserService?.execLine(START + packName)
+    conf.executor?.execVoidCommand(ShellCommandBuilder.start(packName))
 }
 
 class Operation(val type: Int, val operation : Command) : Command{
@@ -91,15 +82,13 @@ class AdbPartClick(var type :String? = null,var part : Int = 0,var idx : Int = 0
 
 class AdbBack : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
-        ShizukuUtil.iUserService?.execVoidComand(BACK)
+        conf.executor?.execVoidCommand(ShellCommandBuilder.back())
         return true
     }
 }
 
 private fun exeClick(p: Point) {
-    val command = TAP + "${p.x + ActionHandler.randomXRange} ${p.y + ActionHandler.randomYRange}"
-    //println(command)
-    ShizukuUtil.iUserService?.execVoidComand(command)
+    conf.executor?.execVoidCommand(ShellCommandBuilder.tap(p.x,p.y))
 }
 class AdbSumClick(private val point: Point) : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
@@ -119,8 +108,7 @@ class AdbSwipe : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
         var res = true
         sai.swipePoint?.let {
-            val command = "$SWIPE ${it.x} ${it.y} ${it.width} ${it.height} 1000"
-            ShizukuUtil.iUserService?.execVoidComand(command)
+            conf.executor?.execVoidCommand(ShellCommandBuilder.swipe(it.x.toInt(),it.y.toInt(),it.width.toInt(),it.height.toInt(),1000))
         } ?: {
             res = false
         }

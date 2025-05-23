@@ -17,6 +17,9 @@ import com.smart.autodaily.command.Return
 import com.smart.autodaily.command.RmSkipAcId
 import com.smart.autodaily.command.RmSkipAcIdList
 import com.smart.autodaily.command.RmSkipFlowId
+import com.smart.autodaily.command.RootExecutor
+import com.smart.autodaily.command.ShellConfig
+import com.smart.autodaily.command.ShizukuExecutor
 import com.smart.autodaily.command.Skip
 import com.smart.autodaily.command.SkipAcId
 import com.smart.autodaily.command.SkipFlowId
@@ -122,6 +125,11 @@ object  RunScript {
                     ServiceUtil.waitShizukuService()
                     if(ShizukuUtil.grant && ShizukuUtil.iUserService != null){
                         isRunning.intValue = 1//运行中
+                        Lom.waitWriteLog()
+                        Lom.n( INFO, "初始化全局设置" )
+                        initConfData()
+                        ShellConfig.useRoot = false
+                        conf.executor = ShizukuExecutor()
                         runScriptByAdb()
                         isRunning.intValue = 0
                     }else{
@@ -133,6 +141,12 @@ object  RunScript {
                 }
 
                 WORK_TYPE03 -> {
+                    Lom.waitWriteLog()
+                    Lom.n( INFO, "初始化全局设置" )
+                    initConfData()
+                    runScriptByAdb()
+                    ShellConfig.useRoot = true
+                    conf.executor = RootExecutor()
                     isRunning.intValue = 0
                 }
                 else-> {
@@ -156,14 +170,12 @@ object  RunScript {
             2,
             ScreenCaptureUtil.getDisplayMetrics(appCtx).run {
                 this.widthPixels.coerceAtMost(this.heightPixels)
-            }
+            },
+            null
         )
     }
     //shell运行
     suspend fun runScriptByAdb(){
-        Lom.waitWriteLog()
-        Lom.n( INFO, "初始化全局设置" )
-        initConfData()
         if(conf.minScreen  > 720){
             conf.capScale = 2
         }
@@ -221,11 +233,13 @@ object  RunScript {
                     while (isRunning.intValue == 1){
                         //超时重启
                         isToReboot(si.packageName)
+                        val time1 = System.currentTimeMillis()
                         //截图延迟
                         val capture = if (conf.capture == null || conf.capture!!.isRecycled) {
                                         getPicture(conf.capScale)?:continue
                                     } else conf.capture!!
-                        //Lom.d( INFO, "开始检测 ${capture.height}" )
+                        Lom.d( ERROR, "截图耗时${System.currentTimeMillis()-time1}" )
+
                         val detectRes = model.detectYolo(capture, si.classesNum).filter { it!=null }//.filter { it.prob > conf.similarScore }
                             .toTypedArray()
                         val detectLabels = detectRes.filter { it.label> 0 }.map { it.label  }.toSet()
@@ -675,8 +689,8 @@ object  RunScript {
                         scriptActionInfo.command.add (Operation( 1, AdbClick()) )
                     }
                     ActionString.CLICKC-> {
-                        val x = (ScreenCaptureUtil.getDisplayMetrics(appCtx).widthPixels/2).toFloat()+ conf.random
-                        val y = (ScreenCaptureUtil.getDisplayMetrics(appCtx).heightPixels/2).toFloat() + conf.random
+                        val x = (ScreenCaptureUtil.getDisplayMetrics(appCtx).widthPixels/2 + conf.random).toInt()
+                        val y = (ScreenCaptureUtil.getDisplayMetrics(appCtx).heightPixels/2 + conf.random).toInt()
                         scriptActionInfo.command.add (Operation( 2, AdbClick(Point(x,y))) )
                     }
                     ActionString.FINISH ->{

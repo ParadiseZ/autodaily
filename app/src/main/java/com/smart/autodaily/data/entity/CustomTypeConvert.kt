@@ -32,7 +32,7 @@ object CustomTypeConvert {
     }
     @TypeConverter
     fun toPoint(data: String): Point {
-        val (x, y) = data.split(",").map { it.toFloat() }
+        val (x, y) = data.split(",").map { it.toInt() }
         return Point(x, y)
     }
 }

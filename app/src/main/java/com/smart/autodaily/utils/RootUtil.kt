@@ -1,13 +1,92 @@
 package com.smart.autodaily.utils
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Log
+import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.IOException
+import java.io.InputStreamReader
 
 
 object RootUtil {
 
     private const val TAG = "RootUtil"
+    fun execLine(command: String): String? {
+        var result: String? = null
+
+        // 尝试 su -c 方式
+        result = try {
+            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
+            readResult(process)
+        } catch (_: Exception) {
+            null
+        }
+
+        // 如果失败，尝试交互式方式
+        if (result == null) {
+            result = try {
+                val process = Runtime.getRuntime().exec("su")
+                val outputStream = process.outputStream
+                outputStream.write("$command\nexit\n".toByteArray())
+                outputStream.flush()
+                readResult(process)
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        return result
+    }
+
+    fun execVoidCommand(command: String) {
+        try {
+            Runtime.getRuntime().exec(arrayOf("su", "-c", command))
+        } catch (e: Exception) {
+            println("execVoidCommand error: ${e.message}")
+        }
+    }
+
+    fun execArr(command: Array<out String>?): String? {
+        if (command.isNullOrEmpty()) return null
+        val fullCommand = command.joinToString(" ") { escapeArg(it) }
+        return execLine(fullCommand)
+    }
+
+    fun execCap(command: String?,scale : Int): Bitmap {
+        return readBitmap(Runtime.getRuntime().exec(command),scale)
+    }
+
+    private fun escapeArg(arg: String): String {
+        if (arg.contains(' ')) {
+            return "\"$arg\""
+        }
+        return arg
+    }
+    fun readBitmap(process: Process,scale : Int): Bitmap {
+        val inputStream = process.inputStream
+        val bitmap = BitmapFactory.decodeStream(inputStream)
+        inputStream.close()
+        return bitmap
+    }
+
+
+    private fun readResult(process: Process): String {
+        val stringBuilder = StringBuilder()
+        try {
+            val reader = BufferedReader(InputStreamReader(process.inputStream))
+            var line: String?
+            while ((reader.readLine().also { line = it }) != null) {
+                stringBuilder.append(line).append("\n")
+            }
+            reader.close()
+            process.waitFor()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return stringBuilder.toString()
+    }
+
 
     /**
      * 执行需要root权限的命令.

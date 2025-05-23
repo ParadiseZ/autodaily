@@ -154,5 +154,5 @@ fun setPointsByLabel(sai: ScriptActionInfo, detectRes: Array<DetectResult>){
 }
 
 fun getPoint(detect : DetectResult) : Point{
-    return Point(detect.xCenter + conf.random, detect.yCenter + conf.random)
+    return Point((detect.xCenter + conf.random).toInt(), (detect.yCenter + conf.random).toInt())
 }

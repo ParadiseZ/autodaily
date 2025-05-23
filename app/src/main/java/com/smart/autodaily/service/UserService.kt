@@ -3,7 +3,9 @@ package com.smart.autodaily.service
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.smart.autodaily.IUserService
-import com.smart.autodaily.utils.BitmapPool.acquire
+import com.smart.autodaily.utils.BitmapPool
+import com.smart.autodaily.utils.ScreenCaptureUtil
+import splitties.init.appCtx
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import kotlin.system.exitProcess
@@ -43,34 +45,70 @@ class UserService: IUserService.Stub(){
         return readBitmap(Runtime.getRuntime().exec(command),scale)
     }
 
-    fun readBitmap(process: Process,scale: Int): Bitmap {
-        //Log.d("UserService", "Reading bitmap from process")
+    fun readBitmap(process: Process, scale: Int): Bitmap {
+        val screen = ScreenCaptureUtil.getDisplayMetrics(appCtx)
+        val targetWidth = screen.widthPixels / scale
+        val targetHeight = screen.heightPixels / scale
+
         val inputStream = process.inputStream
-        
-        // 尝试从BitmapPool获取可复用的Bitmap
-        val pooledBitmap = acquire()
-        
-        // 如果有可复用的Bitmap，尝试复用它
-        val bitmap = if (pooledBitmap != null && !pooledBitmap.isRecycled) {
-            try {
-                // 使用BitmapFactory.Options的inBitmap选项复用Bitmap
-                val options = BitmapFactory.Options().apply {
-                    inBitmap = pooledBitmap
-                    inMutable = true
-                    inSampleSize = scale
-                }
-                BitmapFactory.decodeStream(inputStream, null, options)
-            } catch (_: Exception) {
-                // 如果复用失败，则创建新的Bitmap
-                BitmapFactory.decodeStream(inputStream)
-            }
-        } else {
-            // 如果没有可复用的Bitmap，则创建新的Bitmap
-            BitmapFactory.decodeStream(inputStream)
+        var acquiredBitmapFromPool: Bitmap? = null
+        val options = BitmapFactory.Options().apply {
+            inJustDecodeBounds = false
+            inSampleSize = scale // BitmapFactory handles the scaling based on this sample size
         }
-        
-        inputStream.close()
-        return bitmap!!
+
+        try {
+            acquiredBitmapFromPool = BitmapPool.acquire(targetWidth, targetHeight)
+            if (acquiredBitmapFromPool != null) {
+                options.inBitmap = acquiredBitmapFromPool // Attempt to reuse the acquired bitmap
+            }
+
+            val decodedBitmap = BitmapFactory.decodeStream(inputStream, null, options)
+
+            if (decodedBitmap == null) {
+                // Decoding failed
+                if (acquiredBitmapFromPool != null) {
+                    BitmapPool.recycle(acquiredBitmapFromPool)
+                    acquiredBitmapFromPool = null // Mark as handled to prevent double recycling in catch block
+                }
+                throw IllegalStateException("Failed to decode bitmap from process stream.")
+            }
+
+            // Decoding succeeded, decodedBitmap is not null
+            if (acquiredBitmapFromPool != null && decodedBitmap !== acquiredBitmapFromPool) {
+                // A bitmap was acquired from the pool, but BitmapFactory created a new one.
+                // Recycle the acquired one as it was not used.
+                BitmapPool.recycle(acquiredBitmapFromPool)
+                acquiredBitmapFromPool = null // Mark as handled
+            }
+            // If acquiredBitmapFromPool was successfully reused (decodedBitmap === acquiredBitmapFromPool), it's returned.
+            // If acquiredBitmapFromPool was null, decodedBitmap is a newly created bitmap.
+            return decodedBitmap
+
+        } catch (e: Exception) {
+            // An exception occurred during the process (e.g., from acquire, decodeStream, or explicit throw)
+            if (acquiredBitmapFromPool != null) {
+                // If a bitmap was acquired from the pool and an error occurred before it was
+                // properly handled (returned or recycled), recycle it here to prevent leaks.
+                BitmapPool.recycle(acquiredBitmapFromPool)
+            }
+            println("Error in readBitmap: ${e.message}") // Log the error
+            throw e // Re-throw the exception to be handled by the caller
+        } finally {
+            try {
+                inputStream.close() // Always try to close the input stream
+            } catch (ioe: java.io.IOException) {
+                println("Error closing input stream in readBitmap: ${ioe.message}")
+            }
+            try {
+                process.waitFor() // Wait for the native process to complete, similar to readResult
+            } catch (ie: InterruptedException) {
+                Thread.currentThread().interrupt() // Restore interruption status
+                println("Process wait interrupted in readBitmap: ${ie.message}")
+            } catch (e: Exception) {
+                println("Error waiting for process in readBitmap: ${e.message}")
+            }
+        }
     }
 
     fun readResult(process: Process): String {

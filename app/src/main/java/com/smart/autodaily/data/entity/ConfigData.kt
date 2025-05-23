@@ -1,6 +1,7 @@
 package com.smart.autodaily.data.entity
 
 import android.graphics.Bitmap
+import com.smart.autodaily.command.CommandExecutor
 
 data class ConfigData(
     //截图前延迟
@@ -28,7 +29,7 @@ data class ConfigData(
     //最大重试次数
     val maxRetryNum : Int,
     val minScreen : Int,
-
+    var executor : CommandExecutor?
 ){
     var beforeHash : ByteArray = byteArrayOf()
     var pkgName = ""
