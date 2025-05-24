@@ -1,5 +1,6 @@
 package com.smart.autodaily.service
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -43,6 +44,7 @@ class MediaProjectionService : Service() {
         startForeground(ForegroundServiceId.MEDIA_PROJECTION_SERVICE_ID, notification)
     }
 
+    @SuppressLint("ImplicitSamInstance")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == "STOP_FOREGROUND_SERVICE") {
             applicationContext.stopService(Intent(applicationContext, MediaProjectionService::class.java))

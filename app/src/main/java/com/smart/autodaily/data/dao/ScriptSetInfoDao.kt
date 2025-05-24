@@ -43,7 +43,7 @@ interface ScriptSetInfoDao {
 
     //获取全局设置
     @Query("select * from script_set_info where script_id=0 order by script_id,sort")
-    fun getGlobalSet() : List<ScriptSetInfo>
+    suspend fun getGlobalSet() : List<ScriptSetInfo>
 
     //获取脚本全局设置
     @Query("select * from script_set_info where script_id=:scriptId and flow_id=0")

@@ -40,11 +40,7 @@ object RootUtil {
     }
 
     fun execVoidCommand(command: String) {
-        try {
-            Runtime.getRuntime().exec(arrayOf("su", "-c", command))
-        } catch (e: Exception) {
-            println("execVoidCommand error: ${e.message}")
-        }
+        Runtime.getRuntime().exec(command)
     }
 
     fun execArr(command: Array<out String>?): String? {
@@ -53,8 +49,51 @@ object RootUtil {
         return execLine(fullCommand)
     }
 
-    fun execCap(command: String?,scale : Int): Bitmap {
-        return readBitmap(Runtime.getRuntime().exec(command),scale)
+    fun execCap(command: String?,width:Int, height:Int, scale : Int): Bitmap {
+        val process = Runtime.getRuntime().exec(command)
+        val inputStream = process.inputStream
+        var acquiredBitmapFromPool: Bitmap? = null
+        val options = BitmapFactory.Options().apply {
+            inJustDecodeBounds = false
+            inSampleSize = scale // BitmapFactory handles the scaling based on this sample size
+        }
+        try {
+            acquiredBitmapFromPool = BitmapPool.acquire(width, height)
+            if (acquiredBitmapFromPool != null) {
+                options.inBitmap = acquiredBitmapFromPool // Attempt to reuse the acquired bitmap
+            }
+
+            val decodedBitmap = BitmapFactory.decodeStream(inputStream, null, options)
+
+            if (decodedBitmap == null) {
+                // Decoding failed
+                if (acquiredBitmapFromPool != null) {
+                    BitmapPool.recycle(acquiredBitmapFromPool)
+                    acquiredBitmapFromPool = null // Mark as handled to prevent double recycling in catch block
+                }
+                throw IllegalStateException("Failed to decode bitmap from process stream.")
+            }
+
+            // Decoding succeeded, decodedBitmap is not null
+            if (acquiredBitmapFromPool != null && decodedBitmap !== acquiredBitmapFromPool) {
+                BitmapPool.recycle(acquiredBitmapFromPool)
+                acquiredBitmapFromPool = null // Mark as handled
+            }
+            return decodedBitmap
+
+        } catch (e: Exception) {
+            // An exception occurred during the process (e.g., from acquire, decodeStream, or explicit throw)
+            if (acquiredBitmapFromPool != null) {
+                // If a bitmap was acquired from the pool and an error occurred before it was
+                // properly handled (returned or recycled), recycle it here to prevent leaks.
+                BitmapPool.recycle(acquiredBitmapFromPool)
+            }
+            //println("Error in readBitmap: ${e.message}") // Log the error
+            throw e // Re-throw the exception to be handled by the caller
+        } finally {
+            inputStream.close()
+            process.waitFor()
+        }
     }
 
     private fun escapeArg(arg: String): String {
@@ -62,12 +101,6 @@ object RootUtil {
             return "\"$arg\""
         }
         return arg
-    }
-    fun readBitmap(process: Process,scale : Int): Bitmap {
-        val inputStream = process.inputStream
-        val bitmap = BitmapFactory.decodeStream(inputStream)
-        inputStream.close()
-        return bitmap
     }
 
 

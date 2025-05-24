@@ -28,7 +28,6 @@ object BitmapPool {
      * 获取一个指定规格的Bitmap对象，优先从对象池中获取
      * @param width 目标Bitmap宽度
      * @param height 目标Bitmap高度
-     * @param config 目标Bitmap配置
      * @return Bitmap对象，如果对应规格的对象池为空则返回null
      */
     fun acquire(width: Int, height: Int): Bitmap? {

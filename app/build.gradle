@@ -1,8 +1,10 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
-    id 'com.google.devtools.ksp' version '1.9.23-1.0.20'
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.9.23'
+    alias(libs.plugins.compose.compiler)
+    id('com.google.devtools.ksp')
+    id('org.jetbrains.kotlin.plugin.serialization')
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -43,9 +45,12 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = '17'
+    composeOptions {
+        kotlinCompilerExtensionVersion = "2.1.21" // 确保与 Kotlin 版本兼容
     }
+    /*kotlinOptions {
+        jvmTarget = '17'
+    }*/
     buildFeatures {
         compose true
         aidl true           // 启用aidl
@@ -55,9 +60,6 @@ android {
         main {
             aidl.srcDirs = ['src/main/aidl']
         }
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion '1.5.11'
     }
     packagingOptions {
         resources {
@@ -94,6 +96,10 @@ dependencies {
     implementation libs.androidx.room.runtime
     implementation libs.androidx.room.migration
     ksp libs.androidx.room.compiler
+    //dagger
+    implementation libs.hilt.android
+    ksp(libs.hilt.android.compiler)
+
     //日志
 
     //分页

@@ -99,7 +99,7 @@ object  RunScript {
     //val globalSetList =  MutableStateFlow<List<ScriptSetInfo>>(emptyList())
     //var scriptRunCoroutineScope = CoroutineScope(Dispatchers.IO)
 
-    fun initGlobalSet(){
+    suspend fun initGlobalSet(){
         appDb.scriptSetInfoDao.getGlobalSet().associateBy {
             it.setId
         }.let {
@@ -110,6 +110,7 @@ object  RunScript {
     suspend fun runScript(){
         workType.value = globalSetMap.value[8]?.setValue ?:""
         workType.value.let {
+            initScriptData(appDb.scriptInfoDao.getAllScriptByChecked())
             when(it) {
                 WORK_TYPE00 ->{
                     SnackbarUtil.show("未设置工作模式！")
@@ -121,12 +122,12 @@ object  RunScript {
                 WORK_TYPE02 -> {
                     //_isRunning.value = 2//启动服务
                     ServiceUtil.runUserService(appCtx)
-                    initScriptData(appDb.scriptInfoDao.getAllScriptByChecked())
+                    //initScriptData(appDb.scriptInfoDao.getAllScriptByChecked())
                     ServiceUtil.waitShizukuService()
                     if(ShizukuUtil.grant && ShizukuUtil.iUserService != null){
                         isRunning.intValue = 1//运行中
                         Lom.waitWriteLog()
-                        Lom.n( INFO, "初始化全局设置" )
+                        Lom.n( INFO, "初始化全局设置shizuku" )
                         initConfData()
                         ShellConfig.useRoot = false
                         conf.executor = ShizukuExecutor()
@@ -141,12 +142,13 @@ object  RunScript {
                 }
 
                 WORK_TYPE03 -> {
+                    isRunning.intValue = 1//运行中
                     Lom.waitWriteLog()
-                    Lom.n( INFO, "初始化全局设置" )
+                    Lom.n( INFO, "初始化全局设置root" )
                     initConfData()
-                    runScriptByAdb()
                     ShellConfig.useRoot = true
                     conf.executor = RootExecutor()
+                    runScriptByAdb()
                     isRunning.intValue = 0
                 }
                 else-> {
@@ -163,7 +165,7 @@ object  RunScript {
             _globalSetMap.value[4]?.run { this.setValue?.toFloat()?.times(60000)?.toLong() }?: 600000L,
             _globalSetMap.value[10]?.checkedFlag == true,
             _globalSetMap.value[1]?.checkedFlag == true,
-            globalSetMap.value[9]?.setValue?.toFloat()?:0f,
+            _globalSetMap.value[9]?.setValue?.toFloat()?:0f,
             _globalSetMap.value[6]?.setValue?.toInt()?.let { it * 32 }?:640,
             remRebootTime = System.currentTimeMillis(),
             10000L,

@@ -103,9 +103,10 @@ private fun matchColorAndSetPoints(sai: ScriptActionInfo,ocrRes : Array<DetectRe
     }
     //非第一个，排序
     if (sai.labelPos>0 && firFilter.size > 1){
+        val errorValue = if(conf.capScale == 1){20} else 10
         firFilter = firFilter.sortedWith(
             compareBy(
-                { (it.yCenter / 10).roundToInt()} ,{ (it.xCenter / 10).roundToInt() }
+                { (it.yCenter / errorValue).roundToInt()} ,{ (it.xCenter / errorValue).roundToInt() }
             )
         )
         val idx = (sai.labelPos-1).coerceAtMost(firFilter.size-1)
@@ -138,9 +139,10 @@ fun setPointsByLabel(sai: ScriptActionInfo, detectRes: Array<DetectResult>){
         return
     }
     if (sai.labelPos>0){
+        val errorValue = if(conf.capScale == 1){20} else 10
         firFilter = firFilter.sortedWith(
             compareBy(
-                { (it.yCenter / 20).roundToInt()} ,{ (it.xCenter / 20).roundToInt() }
+                { (it.yCenter / errorValue).roundToInt()} ,{ (it.xCenter / errorValue).roundToInt() }
             )
         )
         val idx = (sai.labelPos-1).coerceAtMost(firFilter.size-1)
@@ -154,5 +156,5 @@ fun setPointsByLabel(sai: ScriptActionInfo, detectRes: Array<DetectResult>){
 }
 
 fun getPoint(detect : DetectResult) : Point{
-    return Point((detect.xCenter + conf.random).toInt(), (detect.yCenter + conf.random).toInt())
+    return Point((detect.xCenter * conf.capScale + conf.random).toInt(), (detect.yCenter * conf.capScale  + conf.random).toInt())
 }

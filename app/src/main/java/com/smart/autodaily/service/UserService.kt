@@ -4,8 +4,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.smart.autodaily.IUserService
 import com.smart.autodaily.utils.BitmapPool
-import com.smart.autodaily.utils.ScreenCaptureUtil
-import splitties.init.appCtx
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import kotlin.system.exitProcess
@@ -41,24 +39,16 @@ class UserService: IUserService.Stub(){
         return  execLine(command.toString())
     }
 
-    override fun execCap(command:String?,scale : Int): Bitmap {
-        return readBitmap(Runtime.getRuntime().exec(command),scale)
-    }
-
-    fun readBitmap(process: Process, scale: Int): Bitmap {
-        val screen = ScreenCaptureUtil.getDisplayMetrics(appCtx)
-        val targetWidth = screen.widthPixels / scale
-        val targetHeight = screen.heightPixels / scale
-
+    override fun execCap(command:String?,width:Int, height:Int, scale:Int): Bitmap {
+        val process = Runtime.getRuntime().exec(command)
         val inputStream = process.inputStream
         var acquiredBitmapFromPool: Bitmap? = null
         val options = BitmapFactory.Options().apply {
             inJustDecodeBounds = false
             inSampleSize = scale // BitmapFactory handles the scaling based on this sample size
         }
-
         try {
-            acquiredBitmapFromPool = BitmapPool.acquire(targetWidth, targetHeight)
+            acquiredBitmapFromPool = BitmapPool.acquire(width, height)
             if (acquiredBitmapFromPool != null) {
                 options.inBitmap = acquiredBitmapFromPool // Attempt to reuse the acquired bitmap
             }
@@ -76,13 +66,9 @@ class UserService: IUserService.Stub(){
 
             // Decoding succeeded, decodedBitmap is not null
             if (acquiredBitmapFromPool != null && decodedBitmap !== acquiredBitmapFromPool) {
-                // A bitmap was acquired from the pool, but BitmapFactory created a new one.
-                // Recycle the acquired one as it was not used.
                 BitmapPool.recycle(acquiredBitmapFromPool)
                 acquiredBitmapFromPool = null // Mark as handled
             }
-            // If acquiredBitmapFromPool was successfully reused (decodedBitmap === acquiredBitmapFromPool), it's returned.
-            // If acquiredBitmapFromPool was null, decodedBitmap is a newly created bitmap.
             return decodedBitmap
 
         } catch (e: Exception) {
@@ -92,22 +78,11 @@ class UserService: IUserService.Stub(){
                 // properly handled (returned or recycled), recycle it here to prevent leaks.
                 BitmapPool.recycle(acquiredBitmapFromPool)
             }
-            println("Error in readBitmap: ${e.message}") // Log the error
+            //println("Error in readBitmap: ${e.message}") // Log the error
             throw e // Re-throw the exception to be handled by the caller
         } finally {
-            try {
-                inputStream.close() // Always try to close the input stream
-            } catch (ioe: java.io.IOException) {
-                println("Error closing input stream in readBitmap: ${ioe.message}")
-            }
-            try {
-                process.waitFor() // Wait for the native process to complete, similar to readResult
-            } catch (ie: InterruptedException) {
-                Thread.currentThread().interrupt() // Restore interruption status
-                println("Process wait interrupted in readBitmap: ${ie.message}")
-            } catch (e: Exception) {
-                println("Error waiting for process in readBitmap: ${e.message}")
-            }
+            inputStream.close()
+            process.waitFor()
         }
     }
 

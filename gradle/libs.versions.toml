@@ -1,34 +1,37 @@
 [versions]
 agp = "8.9.1"
 freereflection = "3.1.0"
-kotlin = "1.9.23"
+kotlin = "2.1.21"
 coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
-lifecycleRuntimeKtx = "2.8.7"
+lifecycleRuntimeKtx = "2.9.0"
 activityCompose = "1.10.1"
-composeBom = "2025.04.00"
+composeBom = "2025.05.01"
 liveeventbus = "1.8.14"
-navigationCompose = "2.8.9"
+navigationCompose = "2.9.0"
 #下拉刷新使用
-materialAndroid = "1.7.8"
+materialAndroid = "1.8.2"
 #opencv = "4.10.0"
-roomCompiler = "2.6.1"
-roomKtx = "2.6.1"
-roomMigration = "2.6.1"
-roomRuntime = "2.6.1"
-pagingCompose = "3.3.5"
+roomCompiler = "2.7.1"
+roomKtx = "2.7.1"
+roomMigration = "2.7.1"
+roomRuntime = "2.7.1"
+pagingCompose = "3.3.6"
 retrofit = "2.11.0"
 converterGson = "2.11.0"
-lifecycleViewmodelKtx = "2.8.7"
+lifecycleViewmodelKtx = "2.9.0"
 okhttp = "5.0.0-alpha.14"
 splitties = "3.0.0"
 shizukuApi  = "13.1.5"
 shizukuProvider = "13.1.5"
 threetenabp = "1.4.8"
 
-datastore = "1.1.4"
+datastore = "1.1.7"
+hiltAndroid = "2.56.2"
+hiltAndroidCompiler = "2.56.2"
+hiltAndroidGradlePlugin = "2.56.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -73,8 +76,17 @@ threetenabp = { module = "com.jakewharton.threetenabp:threetenabp", version.ref 
 
 # DataStore - 键值对存储
 datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+# hilt
+hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hiltAndroid" }
+hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hiltAndroidCompiler" }
+hilt-android-gradle-plugin = { group = "com.google.dagger", name = "hilt-android-gradle-plugin", version.ref = "hiltAndroidGradlePlugin" }
+
+#kotlin-compose
+
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
-jetbrainsKotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+jetbrainsKotlinAndroid= { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+
 
