@@ -20,17 +20,9 @@ interface IUserService {
       */
      void exit() = 1;
 
-     /**
-      * 执行命令
-      */
-     String execLine(String command) = 2;
+     android.graphics.Bitmap execCap(String command,int width,int height,int scale) = 2;
 
-     /**
-      * 执行数组中分离的命令
-      */
-     String execArr(in String[] command) = 3;
+     void execVoidComand(String command) = 3;
 
-     android.graphics.Bitmap execCap(String command,int width,int height,int scale) = 4;
-
-     void execVoidComand(String command) = 5;
+     void close() = 4;
 }

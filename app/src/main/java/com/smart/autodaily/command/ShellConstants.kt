@@ -1,9 +1,10 @@
 package com.smart.autodaily.command
 
 object ShellConstants {
+    const val END_COMMAND = "_MY_YES_" // More unique EOF marker
+    const val CAPTURE = "screencap -p 2>/dev/null; echo $END_COMMAND\n" // Redirect stderr
     const val TAP = "input tap "
     const val START = "am start -n "
-    const val CAPTURE = "screencap -p"
     const val BACK = "input keyevent BACK"
     const val STOP = "am force-stop "
     const val SWIPE = "input swipe "
@@ -15,35 +16,28 @@ object ShellConfig {
 }
 
 object ShellCommandBuilder {
-    fun build(command: String): String {
-        return if (ShellConfig.useRoot) {
-            "su -c \"$command\""
-        } else {
-            command
-        }
-    }
     // 可选：提供更语义化的构建方法
     fun tap(x: Int, y: Int): String {
-        return build("${ShellConstants.TAP}$x $y")
+        return "${ShellConstants.TAP}$x $y\n"
     }
 
     fun start(packageName: String): String {
-        return build("${ShellConstants.START}$packageName")
+        return "${ShellConstants.START}$packageName\n"
     }
 
     fun capture(): String {
-        return build(ShellConstants.CAPTURE)
+        return ShellConstants.CAPTURE
     }
 
     fun back(): String {
-        return build(ShellConstants.BACK)
+        return ShellConstants.BACK+"\n"
     }
 
     fun stop(packageName: String): String {
-        return build("${ShellConstants.STOP}$packageName")
+        return "${ShellConstants.STOP}$packageName\n"
     }
 
     fun swipe(x1: Int, y1: Int, x2: Int, y2: Int, time : Int): String {
-        return build("${ShellConstants.SWIPE}$x1 $y1 $x2 $y2 $time")
+        return "${ShellConstants.SWIPE}$x1 $y1 $x2 $y2 $time\n"
     }
 }

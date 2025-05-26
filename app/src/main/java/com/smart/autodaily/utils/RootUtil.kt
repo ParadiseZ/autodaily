@@ -2,160 +2,380 @@ package com.smart.autodaily.utils
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.util.Log
-import java.io.BufferedReader
-import java.io.DataOutputStream
+import com.smart.autodaily.command.ShellConstants
+import com.smart.autodaily.handler.INFO
+import java.io.ByteArrayOutputStream
 import java.io.IOException
-import java.io.InputStreamReader
+import java.io.InputStream
+import java.io.OutputStreamWriter
+import java.io.PipedInputStream
+import java.io.PipedOutputStream
 
 
 object RootUtil {
+    private var process: Process? = null
+    private var outputStream: OutputStreamWriter? = null
+    private var inputStream: InputStream? = null
 
-    private const val TAG = "RootUtil"
-    fun execLine(command: String): String? {
-        var result: String? = null
+    val END_MARKER_BYTES = "${ShellConstants.END_COMMAND}\n".toByteArray(Charsets.ISO_8859_1)
 
-        // 尝试 su -c 方式
-        result = try {
-            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
-            readResult(process)
-        } catch (_: Exception) {
-            null
+    //private const val STALE_DATA_CLEAR_POLL_DELAY_MS = 20L
+    private const val STALE_DATA_CLEAR_MAX_ATTEMPTS = 5
+    //private const val INITIAL_STALE_DATA_CLEAR_DELAY_MS = 50L
+
+    private const val MAX_TRY_NUM = 20
+
+    val pngHead =  byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)
+
+
+    //private fun tryClearStaleDataFrom(stream: InputStream?, caller: String) {
+    private fun tryClearStaleDataFrom(stream: InputStream?) {
+        if (stream == null) return
+        // Lom.d(TAG, "[$caller] Attempting to clear stale data...") // Example of a debug log
+        val tempBuffer = ByteArray(128)
+        var readAttempt = 0
+        //var totalBytesCleared = 0
+        try {
+            // Give a brief moment for any async output to arrive
+            //Thread.sleep(INITIAL_STALE_DATA_CLEAR_DELAY_MS)
+            while (stream.available() > 0) {
+                readAttempt++
+                //val numRead = stream.read(tempBuffer)
+                if (stream.read(tempBuffer) > 0) {
+                    continue
+                    //totalBytesCleared += numRead
+                } else { // numRead == 0 (should not happen if available > 0) or numRead == -1 (EOF)
+                    break
+                }
+                if(readAttempt > STALE_DATA_CLEAR_MAX_ATTEMPTS){
+                    break
+                }
+                /*if (readAttempt < STALE_DATA_CLEAR_MAX_ATTEMPTS && stream.available() > 0) { // Check available again before sleep
+                    //Thread.sleep(STALE_DATA_CLEAR_POLL_DELAY_MS)
+                } else {
+                    break
+                }*/
+            }
+            // if (totalBytesCleared > 0) {
+            //     Lom.n(INFO, "[$caller] Cleared $totalBytesCleared bytes of stale data.")
+            // }
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+            //Lom.n(ERROR, "[$caller] Interrupted while clearing stale data: ${e.message}")
+        } catch (e: Exception) {
+            //Lom.n(ERROR, "[$caller] Exception while clearing stale data: ${e.message}")
+            throw e
         }
+    }
 
-        // 如果失败，尝试交互式方式
-        if (result == null) {
-            result = try {
-                val process = Runtime.getRuntime().exec("su")
-                val outputStream = process.outputStream
-                outputStream.write("$command\nexit\n".toByteArray())
-                outputStream.flush()
-                readResult(process)
-            } catch (e: Exception) {
-                null
+    fun rootValid() : Boolean{
+        if(process == null){
+            try {
+                start()
+            }catch (_ : Exception){
+                return false
             }
         }
+        return true
+    }
 
-        return result
+    fun start() {
+        if (process == null) {
+            try {
+                //Lom.n(INFO, "[RootUtil] Starting su process...")
+                process = Runtime.getRuntime().exec("su")
+                inputStream = process?.inputStream
+                outputStream = OutputStreamWriter(process?.outputStream, Charsets.UTF_8)
+                //Lom.n(INFO, "[RootUtil] su process started.")
+            } catch (e: Exception) {
+                //Lom.n(ERROR, "[RootUtil] Failed to start su process: ${e.message}")
+                process = null
+                inputStream = null
+                outputStream = null
+                throw e
+            }
+        }
+    }
+
+    // Helper function to find a byte array within another byte array
+    fun indexOfByteArray(data: ByteArray, pattern: ByteArray, startIndex: Int = 0): Int {
+        if (pattern.isEmpty()) return startIndex
+        if (data.isEmpty()) return -1
+        for (i in startIndex..(data.size - pattern.size)) {
+            var match = true
+            for (j in pattern.indices) {
+                if (data[i + j] != pattern[j]) {
+                    match = false
+                    break
+                }
+            }
+            if (match) return i
+        }
+        return -1
+    }
+
+    private fun getCapInputStream(command: String): InputStream{
+        val pipedInputStream = PipedInputStream()
+        val pipeOut = PipedOutputStream(pipedInputStream)
+        val searchBuffer = ByteArrayOutputStream()
+
+        Thread {
+            var threadSuccess = false
+            var markerFound = false
+            try {
+                //Lom.n(INFO, "[getCapInputStream] Thread started. Writing command to su: $command")
+                outputStream?.write(command)
+                outputStream?.flush()
+                //Lom.n(INFO, "[getCapInputStream] Command flushed to su process.")
+
+                val buffer = ByteArray(8192)
+                var bytesRead: Int
+                
+                while (true) {
+                    bytesRead = inputStream?.read(buffer) ?: -1
+                    //Lom.n(INFO, "[getCapInputStream] Read $bytesRead bytes from su inputStream.")
+
+                    if (bytesRead == -1) {
+                        //Lom.n(INFO, "[getCapInputStream] EOF reached on su inputStream. searchBuffer contains ${searchBuffer.size()} bytes.")
+                        // Marker not found and EOF reached, any data in searchBuffer is considered the stream's content (or part of it)
+                        // This branch will be hit if screencap output does not end with the expected marker before EOF.
+                        break // Exit loop, finally block will handle writing remaining buffer if necessary
+                    }
+
+                    searchBuffer.write(buffer, 0, bytesRead)
+                    //Lom.n(INFO, "[getCapInputStream] Wrote $bytesRead bytes to searchBuffer. Total size: ${searchBuffer.size()}.")
+                    val currentData = searchBuffer.toByteArray()
+                    // Log first 16 bytes of currentData for debugging if it's reasonably small, or just a part of it
+                    // val previewBytes = currentData.take(32).toByteArray()
+                    // Lom.n(INFO, "[getCapInputStream] Current searchBuffer data (first 32 bytes hex): ${previewBytes.joinToString("") { "%02x".format(it) }}")
+
+                    val markerPos = indexOfByteArray(currentData, END_MARKER_BYTES)
+
+                    if (markerPos != -1) {
+                        //Lom.n(INFO, "[getCapInputStream] END_MARKER found at position $markerPos in searchBuffer (size ${currentData.size}).")
+                        val dataToWrite = currentData.copyOfRange(0, markerPos)
+                        //Lom.n(INFO, "[getCapInputStream] Preparing to write ${dataToWrite.size} bytes (data before marker) to PipedOutputStream.")
+                        //Lom.n(INFO, "[getCapInputStream] Data to write (first 16 bytes hex): ${dataToWrite.take(16).toByteArray().joinToString("") { "%02x".format(it) }}")
+                        pipeOut.write(dataToWrite)
+                        //Lom.n(INFO, "[getCapInputStream] Successfully wrote ${dataToWrite.size} bytes to PipedOutputStream.")
+                        markerFound = true
+                        threadSuccess = true
+                        break
+                    } else {
+                        // Marker not yet found, check if searchBuffer is too large (to prevent OOM)
+                        if (searchBuffer.size() > END_MARKER_BYTES.size + 16384) { // Increased threshold slightly: marker + 2 * buffer_size
+                            val dataToFlush = currentData // Use currentData which is searchBuffer.toByteArray()
+                            // Retain a tail part that is larger than the marker itself plus some buffer
+                            val tailSizeToKeep = END_MARKER_BYTES.size + buffer.size 
+                            val flushLength = dataToFlush.size - tailSizeToKeep
+
+                            if (flushLength > 0) {
+                                //Lom.n(INFO, "[getCapInputStream] searchBuffer too large (${searchBuffer.size()}). Flushing $flushLength bytes.")
+                                //Lom.n(INFO, "[getCapInputStream] Flushing data (first 16 bytes hex): ${dataToFlush.take(16).toByteArray().joinToString("") { "%02x".format(it) }}")
+                                pipeOut.write(dataToFlush, 0, flushLength)
+                                searchBuffer.reset() 
+                                searchBuffer.write(dataToFlush, flushLength, dataToFlush.size - flushLength) // Write back the tail
+                                //Lom.n(INFO, "[getCapInputStream] searchBuffer size after partial flush and re-add tail: ${searchBuffer.size()}.")
+                            } else {
+                                //Lom.n(INFO, "[getCapInputStream] searchBuffer large (${searchBuffer.size()}) but flushLength is not positive ($flushLength), not flushing. This might indicate tailSizeToKeep is too large or an issue.")
+                            }
+                        }
+                        // Lom.n(INFO, "[getCapInputStream] Marker not found yet, continuing read loop.")
+                    }
+                }
+            } catch (e: Exception) {
+                //Lom.n(ERROR, "[getCapInputStream] Exception in reader thread: ${e.message}")
+                // Log the stack trace for better debugging
+                e.printStackTrace()
+                threadSuccess = false // Explicitly mark as not successful
+            } finally {
+                //Lom.n(INFO, "[getCapInputStream] Entering finally block. Marker found: $markerFound, Thread success: $threadSuccess, searchBuffer size: ${searchBuffer.size()}")
+                try {
+                    if (!markerFound && searchBuffer.size() > 0) { 
+                        // This case means EOF was hit OR an exception occurred, and marker was not found.
+                        // Write all remaining data from searchBuffer.
+                        val remainingData = searchBuffer.toByteArray()
+                        //Lom.n(INFO, "[getCapInputStream] In finally: Marker NOT found. Writing ${remainingData.size} remaining bytes from searchBuffer.")
+                        //Lom.n(INFO, "[getCapInputStream] Remaining data to write (first 16 bytes hex): ${remainingData.take(16).toByteArray().joinToString("") { "%02x".format(it) }}")
+                        pipeOut.write(remainingData)
+                        //Lom.n(INFO, "[getCapInputStream] Successfully wrote ${remainingData.size} bytes from finally block.")
+                    }
+                    //Lom.n(INFO, "[getCapInputStream] Reader thread finishing. Closing PipedOutputStream (pipeOut).")
+                    pipeOut.close()
+                } catch (ioe: IOException) {
+                    //Lom.n(ERROR, "[getCapInputStream] IOException closing PipedOutputStream in finally: ${ioe.message}")
+                    ioe.printStackTrace()
+                }
+            }
+        }.start()
+        return pipedInputStream
+    }
+
+    fun close() {
+        //Lom.n(INFO, "[RootUtil] Closing su process and streams.")
+        try {
+            outputStream?.write("exit\n")
+            outputStream?.flush()
+        } catch (_: IOException) { /* Ignore */ }
+        try {
+            outputStream?.close()
+        } catch (_: IOException) { /* Ignore */ }
+        try {
+            inputStream?.close()
+        } catch (_: IOException) { /* Ignore */ }
+        
+        process?.destroy()
+        process = null
+        outputStream = null
+        inputStream = null
+        Lom.d(INFO, "[RootUtil] su process and streams closed.")
     }
 
     fun execVoidCommand(command: String) {
-        Runtime.getRuntime().exec(command)
+        start()
+        if (outputStream == null) {
+             //Lom.n(ERROR, "[execVoidCommand] outputStream is null. Cannot execute: $command")
+             //return // Or throw exception
+            throw Exception("outputStream is null")
+        }
+        try {
+            //Lom.n(INFO, "[execVoidCommand] Executing: $command")
+            //outputStream?.write("$command\n") // Ensure newline for command execution
+            //outputStream?.write("echo ${ShellConstants.END_COMMAND}\n") // Standard end marker
+            outputStream?.write(command)
+            outputStream?.flush()
+            
+            // Basic consumption of the marker, can be improved if needed
+            // This is a simplified wait, for more critical commands, a robust read-until-marker is better.
+            //Thread.sleep(200) // Short fixed delay for command to complete and marker to be echoed
+            //tryClearStaleDataFrom(inputStream, "execVoidCommand") // Clear餘留
+            tryClearStaleDataFrom(inputStream) // Clear餘留
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+            //Lom.n(ERROR, "[execVoidCommand] Interrupted: $command. Error: ${e.message}")
+        } catch (_: Exception) {
+            //Lom.n(ERROR, "[execVoidCommand] Failed to execute: $command. Error: ${e.message}")
+            // Consider if close() should be called here on failure
+            throw Exception("exec $command failed")
+        }
     }
 
-    fun execArr(command: Array<out String>?): String? {
-        if (command.isNullOrEmpty()) return null
-        val fullCommand = command.joinToString(" ") { escapeArg(it) }
-        return execLine(fullCommand)
-    }
+    fun execCap(command: String, width:Int, height:Int, scale : Int): Bitmap {
+        start()
+        if (outputStream == null || inputStream == null) {
+            //throw IllegalStateException("RootUtil su process not started or streams are null for execCap.")
+            throw IllegalStateException("su process error")
+        }
+        // Lom.n(INFO, "[execCap] Preparing to execute: $command")
 
-    fun execCap(command: String?,width:Int, height:Int, scale : Int): Bitmap {
-        val process = Runtime.getRuntime().exec(command)
-        val inputStream = process.inputStream
+        var finalImageData: ByteArray? = null
+        var attempt = 0
+        //var lastKnownImageDataSize = 0
+        while (attempt < MAX_TRY_NUM) {
+            attempt++
+            tryClearStaleDataFrom(inputStream)
+            //Lom.n(INFO, "[execCap] Attempt #$attempt to capture screen.")
+            /*if (attempt > 1) {
+                // Lom.n(INFO, "[execCap] Retrying: Clearing stale data before attempt #$attempt")
+                tryClearStaleDataFrom(inputStream)
+                //Thread.sleep(150)
+            } else {
+                tryClearStaleDataFrom(inputStream)
+            }*/
+
+            val currentImageData = getCapInputStream(command).readBytes()
+            //lastKnownImageDataSize = currentImageData.size
+
+            // Lom.n(INFO, "[execCap] Attempt #$attempt: data size: ${currentImageData.size}")
+            var isValidAttempt = false
+            if (currentImageData.isNotEmpty()) {
+                // Only log extensive details if it's NOT a valid attempt, to reduce noise on success
+                val isValidPngHeader = currentImageData.size >= 8 && 
+                                     currentImageData.take(8).toByteArray().contentEquals(
+                                         pngHead
+                                     )
+
+                if (isValidPngHeader && currentImageData.size > 1000) { 
+                    isValidAttempt = true
+                }/*else {
+                    // Log details on failure to validate
+                    Lom.n(ERROR, "[execCap] Attempt #$attempt: Invalid data. Size: ${currentImageData.size}, PNG Header OK: $isValidPngHeader")
+                    if (currentImageData.size >= 8 && !isValidPngHeader) {
+                         Lom.n(ERROR, "[execCap] Invalid PNG header (first 8 bytes hex): ${currentImageData.take(8).toByteArray().joinToString("") { "%02x".format(it) }}")
+                    }
+                     // Optionally log first few bytes as string if small and not PNG
+                    // if (!isValidPngHeader && currentImageData.size < 200) {
+                    //     Lom.n(ERROR, "[execCap] Data (first ~100 bytes as string): ${String(currentImageData.take(100).toByteArray(), Charsets.UTF_8)}")
+                    // }
+                }*/
+            }/* else {
+                Lom.n(ERROR, "[execCap] Attempt #$attempt: Received empty data.")
+            }*/
+
+            if (isValidAttempt) {
+                finalImageData = currentImageData
+                //Lom.n(INFO, "[execCap] Successfully captured screen on attempt #$attempt. Size: ${finalImageData.size}")
+                break 
+            }/* else {
+                //Lom.n(ERROR, "[execCap] Attempt #$attempt failed. Retrying if attempts left ($attempt/$maxAttempts).")
+                if (attempt < maxAttempts) {
+                    Thread.sleep(300) 
+                }
+            }*/
+        }
+
+        if (finalImageData == null) {
+            /*val errorMessage = "Failed to capture screen after $maxAttempts attempts. Last data size: $lastKnownImageDataSize"
+            Lom.n(ERROR, "[execCap] $errorMessage")
+            throw IllegalStateException(errorMessage)*/
+            throw IllegalStateException("Failed to capture screen after $MAX_TRY_NUM attempts")
+        }
+
+        // Conditional saving of image for debugging - typically commented out in production
+        /*
+        Lom.n(INFO, "[execCap] Saving screencap data (size: ${finalImageData.size}) for debugging.")
+        try {
+            val timestamp = System.currentTimeMillis()
+            val cacheDir = appCtx.externalCacheDir ?: appCtx.cacheDir
+            val file = File(cacheDir, "screencap_debug_${timestamp}_${finalImageData.size}bytes.png")
+            java.io.FileOutputStream(file).use { fos ->
+                fos.write(finalImageData)
+            }
+            Lom.n(INFO, "[execCap] Screencap data saved to: ${file.absolutePath}")
+        } catch (e: Exception) {
+            Lom.n(ERROR, "[execCap] Failed to save debug screencap data: ${e.message}")
+        }
+        */
+
         var acquiredBitmapFromPool: Bitmap? = null
         val options = BitmapFactory.Options().apply {
             inJustDecodeBounds = false
-            inSampleSize = scale // BitmapFactory handles the scaling based on this sample size
+            inSampleSize = scale
         }
         try {
             acquiredBitmapFromPool = BitmapPool.acquire(width, height)
             if (acquiredBitmapFromPool != null) {
-                options.inBitmap = acquiredBitmapFromPool // Attempt to reuse the acquired bitmap
+                options.inBitmap = acquiredBitmapFromPool
             }
-
-            val decodedBitmap = BitmapFactory.decodeStream(inputStream, null, options)
+            val decodedBitmap = BitmapFactory.decodeByteArray(finalImageData, 0, finalImageData.size, options)
 
             if (decodedBitmap == null) {
-                // Decoding failed
-                if (acquiredBitmapFromPool != null) {
-                    BitmapPool.recycle(acquiredBitmapFromPool)
-                    acquiredBitmapFromPool = null // Mark as handled to prevent double recycling in catch block
-                }
-                throw IllegalStateException("Failed to decode bitmap from process stream.")
+                //Lom.n(ERROR, "[execCap] BitmapFactory.decodeByteArray returned null for ${finalImageData.size} bytes.")
+                // BitmapPool handling: if acquiredBitmapFromPool was used and decoding failed, 
+                // it's generally safe to recycle it. If it wasn't used (options.inBitmap was null), this does nothing.
+                BitmapPool.recycle(acquiredBitmapFromPool) // Safe to call even if null
+                throw IllegalStateException("BitmapFactory.decodeByteArray returned null after successful data capture.")
             }
 
-            // Decoding succeeded, decodedBitmap is not null
             if (acquiredBitmapFromPool != null && decodedBitmap !== acquiredBitmapFromPool) {
-                BitmapPool.recycle(acquiredBitmapFromPool)
-                acquiredBitmapFromPool = null // Mark as handled
+                BitmapPool.recycle(acquiredBitmapFromPool) // Recycle if a new bitmap was decoded
             }
             return decodedBitmap
-
+    
         } catch (e: Exception) {
-            // An exception occurred during the process (e.g., from acquire, decodeStream, or explicit throw)
-            if (acquiredBitmapFromPool != null) {
-                // If a bitmap was acquired from the pool and an error occurred before it was
-                // properly handled (returned or recycled), recycle it here to prevent leaks.
-                BitmapPool.recycle(acquiredBitmapFromPool)
-            }
-            //println("Error in readBitmap: ${e.message}") // Log the error
-            throw e // Re-throw the exception to be handled by the caller
-        } finally {
-            inputStream.close()
-            process.waitFor()
-        }
-    }
-
-    private fun escapeArg(arg: String): String {
-        if (arg.contains(' ')) {
-            return "\"$arg\""
-        }
-        return arg
-    }
-
-
-    private fun readResult(process: Process): String {
-        val stringBuilder = StringBuilder()
-        try {
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
-            var line: String?
-            while ((reader.readLine().also { line = it }) != null) {
-                stringBuilder.append(line).append("\n")
-            }
-            reader.close()
-            process.waitFor()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return stringBuilder.toString()
-    }
-
-
-    /**
-     * 执行需要root权限的命令.
-     *
-     * @param command 要执行的命令字符串.
-     * @return 命令执行的结果 (true 表示成功, false 表示失败).
-     */
-    fun executeCommand(command: String): Boolean {
-        var process: Process? = null
-        var os: DataOutputStream? = null
-        return try {
-            // 启动一个带有 'su' 的新进程
-            process = Runtime.getRuntime().exec("su")
-            os = DataOutputStream(process.outputStream)
-
-            // 发送要执行的命令到 shell
-            os.writeBytes(command + "\n")
-            os.flush()
-
-            // 发送 'exit' 以结束 shell 会话
-            os.writeBytes("exit\n")
-            os.flush()
-
-            // 等待命令执行完成
-            val exitCode = process.waitFor()
-            exitCode == 0
-        } catch (e: IOException) {
-            Log.e(TAG, "Failed to execute command", e)
-            false
-        } catch (e: InterruptedException) {
-            Log.e(TAG, "Process interrupted", e)
-            false
-        } finally {
-            // 关闭流和进程
-            os?.close()
-            process?.destroy()
+            BitmapPool.recycle(acquiredBitmapFromPool) // Ensure recycle on any exception during decoding
+            //Lom.n(ERROR, "[execCap] Exception during bitmap decoding: ${e.message}")
+            throw e // Re-throw
         }
     }
 }

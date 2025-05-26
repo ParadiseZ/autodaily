@@ -9,8 +9,13 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.smart.autodaily.R
+import com.smart.autodaily.handler.INFO
 import com.smart.autodaily.handler.RunScript
+import com.smart.autodaily.handler.isRunning
+import com.smart.autodaily.utils.Lom
+import com.smart.autodaily.utils.RootUtil
 import com.smart.autodaily.utils.runScope
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
 
 class ForegroundService : Service() {
@@ -24,6 +29,14 @@ class ForegroundService : Service() {
         super.onCreate()
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, createNotification())
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        RootUtil.close()
+        runScope.coroutineContext.cancelChildren()
+        isRunning.intValue=0
+        Lom.n(INFO ,"前台服务被销毁，停止运行")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

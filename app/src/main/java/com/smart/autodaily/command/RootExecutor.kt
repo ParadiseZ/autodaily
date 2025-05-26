@@ -22,7 +22,7 @@ class RootExecutor : CommandExecutor {
     }
     override fun execVoidCommand(command: String) {
         try {
-            RootUtil.execVoidCommand(ShellCommandBuilder.build(command))
+            RootUtil.execVoidCommand(command)
         }catch(e : Exception){
             exceptionHandler(e)
         }
@@ -32,6 +32,7 @@ class RootExecutor : CommandExecutor {
         runScope.coroutineContext.cancelChildren()
         isRunning.intValue = 0
         Lom.n(ERROR, "Root执行器执行失败，停止运行${e.message}")
-        e.printStackTrace()
+        RootUtil.close()
+        //e.printStackTrace()
     }
 }

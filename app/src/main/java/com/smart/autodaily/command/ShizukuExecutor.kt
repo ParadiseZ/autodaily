@@ -23,7 +23,7 @@ class ShizukuExecutor : CommandExecutor {
 
     override fun execVoidCommand(command: String) {
         try {
-            ShizukuUtil.iUserService?.execVoidComand(ShellCommandBuilder.build(command))
+            ShizukuUtil.iUserService?.execVoidComand(command)
         }catch(e : Exception){
             exceptionHandler(e)
         }
@@ -33,6 +33,7 @@ class ShizukuExecutor : CommandExecutor {
         runScope.coroutineContext.cancelChildren()
         isRunning.intValue = 0
         Lom.n(ERROR, "Shizuku执行器执行失败，停止运行${e.message}")
+        ShizukuUtil.iUserService?.close()
         e.printStackTrace()
     }
 }

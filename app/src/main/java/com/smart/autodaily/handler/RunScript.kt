@@ -45,6 +45,7 @@ import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.data.entity.ScriptSetRunStatus
 import com.smart.autodaily.navpkg.AutoDaily
 import com.smart.autodaily.utils.Lom
+import com.smart.autodaily.utils.RootUtil
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.ShizukuUtil
@@ -93,12 +94,6 @@ object  RunScript {
     private val _globalSetMap = MutableStateFlow<Map<Int, ScriptSetInfo>>(emptyMap())
     val globalSetMap : StateFlow<Map<Int, ScriptSetInfo>> get() = _globalSetMap
 
-
-    //val scriptCheckedList : StateFlow<List<ScriptInfo>> = _scriptCheckedList
-    //var scriptSetList : List<ScriptInfo> = emptyList()
-    //val globalSetList =  MutableStateFlow<List<ScriptSetInfo>>(emptyList())
-    //var scriptRunCoroutineScope = CoroutineScope(Dispatchers.IO)
-
     suspend fun initGlobalSet(){
         appDb.scriptSetInfoDao.getGlobalSet().associateBy {
             it.setId
@@ -122,7 +117,6 @@ object  RunScript {
                 WORK_TYPE02 -> {
                     //_isRunning.value = 2//启动服务
                     ServiceUtil.runUserService(appCtx)
-                    //initScriptData(appDb.scriptInfoDao.getAllScriptByChecked())
                     ServiceUtil.waitShizukuService()
                     if(ShizukuUtil.grant && ShizukuUtil.iUserService != null){
                         isRunning.intValue = 1//运行中
@@ -142,6 +136,12 @@ object  RunScript {
                 }
 
                 WORK_TYPE03 -> {
+                    isRunning.intValue = 2
+                    if(!RootUtil.rootValid()){
+                        isRunning.intValue = 0//启动服务失败
+                        SnackbarUtil.show("未获取到root权限！")
+                        return
+                    }
                     isRunning.intValue = 1//运行中
                     Lom.waitWriteLog()
                     Lom.n( INFO, "初始化全局设置root" )
