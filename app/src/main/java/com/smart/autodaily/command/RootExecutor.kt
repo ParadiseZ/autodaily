@@ -3,6 +3,7 @@ package com.smart.autodaily.command
 import android.graphics.Bitmap
 import com.smart.autodaily.handler.ERROR
 import com.smart.autodaily.handler.isRunning
+import com.smart.autodaily.utils.BitmapPool
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.RootUtil
 import com.smart.autodaily.utils.ScreenCaptureUtil
@@ -33,6 +34,7 @@ class RootExecutor : CommandExecutor {
         isRunning.intValue = 0
         Lom.n(ERROR, "Root执行器执行失败，停止运行${e.message}")
         RootUtil.close()
+        BitmapPool.clear()
         //e.printStackTrace()
     }
 }

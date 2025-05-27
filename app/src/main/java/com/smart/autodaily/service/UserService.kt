@@ -9,6 +9,7 @@ import kotlin.system.exitProcess
 
 class UserService: IUserService.Stub(){
     override fun destroy() {
+        BitmapPool.clear()
         exitProcess(0)
     }
 

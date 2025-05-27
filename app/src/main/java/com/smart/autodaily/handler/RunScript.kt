@@ -44,6 +44,7 @@ import com.smart.autodaily.data.entity.ScriptRunStatus
 import com.smart.autodaily.data.entity.ScriptSetInfo
 import com.smart.autodaily.data.entity.ScriptSetRunStatus
 import com.smart.autodaily.navpkg.AutoDaily
+import com.smart.autodaily.utils.BitmapPool
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.RootUtil
 import com.smart.autodaily.utils.ScreenCaptureUtil
@@ -257,7 +258,7 @@ object  RunScript {
                         conf.beforeHash = getMd5Hash(capture)
                         //释放截图
                         // 使用BitmapPool回收Bitmap对象而不是直接调用recycle
-                        com.smart.autodaily.utils.BitmapPool.recycle(conf.capture)
+                        BitmapPool.recycle(conf.capture)
                         conf.capture = null
                         //debugPrintScriptActionLabels(detectRes, detectLabels)
                         if (detectLabels.isEmpty() && txtLabels.isEmpty()) {

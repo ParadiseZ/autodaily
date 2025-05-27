@@ -3,6 +3,7 @@ package com.smart.autodaily.command
 import android.graphics.Bitmap
 import com.smart.autodaily.handler.ERROR
 import com.smart.autodaily.handler.isRunning
+import com.smart.autodaily.utils.BitmapPool
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ShizukuUtil
@@ -32,8 +33,8 @@ class ShizukuExecutor : CommandExecutor {
     override fun exceptionHandler(e: Exception) {
         runScope.coroutineContext.cancelChildren()
         isRunning.intValue = 0
+        BitmapPool.clear()
         Lom.n(ERROR, "Shizuku执行器执行失败，停止运行${e.message}")
-        ShizukuUtil.iUserService?.close()
         e.printStackTrace()
     }
 }

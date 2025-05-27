@@ -16,6 +16,8 @@ import com.smart.autodaily.constant.Screen
 import com.smart.autodaily.ui.conponent.floatingView
 import com.smart.autodaily.ui.navigation.AppNavHost
 import com.smart.autodaily.ui.theme.AutoDailyTheme
+import com.smart.autodaily.utils.BitmapPool
+import com.smart.autodaily.utils.RootUtil
 import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.binderScope
@@ -76,6 +78,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         binderScope.cancel()
         //main
         cancel()
+        BitmapPool.clear()
+        RootUtil.close()
     }
 }
 

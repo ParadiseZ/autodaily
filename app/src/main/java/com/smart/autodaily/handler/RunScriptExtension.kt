@@ -5,6 +5,7 @@ import com.smart.autodaily.command.Operation
 import com.smart.autodaily.data.entity.DetectResult
 import com.smart.autodaily.data.entity.Point
 import com.smart.autodaily.data.entity.ScriptActionInfo
+import com.smart.autodaily.utils.BitmapPool
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.getMd5Hash
 import com.smart.autodaily.utils.getPicture
@@ -63,11 +64,12 @@ private fun hasResponse(): Boolean {
     // Compare with initial screenshot
     val newMd5 = getMd5Hash(newCapture)
     if(newMd5.contentEquals(conf.beforeHash)){
+        BitmapPool.recycle(newCapture)
         return false
     }
     conf.beforeHash = newMd5
         // 先回收旧的Bitmap对象
-    com.smart.autodaily.utils.BitmapPool.recycle(conf.capture)
+    BitmapPool.recycle(conf.capture)
     // 设置新的Bitmap对象
     conf.capture = newCapture
     return true
