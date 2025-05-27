@@ -160,7 +160,7 @@ object  RunScript {
     }
     private fun initConfData(){
         conf = ConfigData(
-            _globalSetMap.value[3]?.setValue?.toFloat()?.times(1000)?.toLong()?:1500L,
+            _globalSetMap.value[3]?.setValue?.toFloat()?.times(1000)?.toLong()?:1000L,
             _globalSetMap.value[59]?.checkedFlag == true,
             _globalSetMap.value[5]?.run { this.setValue?.toFloat() }?:0.5f,
             _globalSetMap.value[4]?.run { this.setValue?.toFloat()?.times(60000)?.toLong() }?: 600000L,
@@ -236,12 +236,12 @@ object  RunScript {
                     while (isRunning.intValue == 1){
                         //超时重启
                         isToReboot(si.packageName)
-                        val time1 = System.currentTimeMillis()
+                        //val time1 = System.currentTimeMillis()
                         //截图延迟
                         val capture = if (conf.capture == null || conf.capture!!.isRecycled) {
                                         getPicture(conf.capScale)?:continue
                                     } else conf.capture!!
-                        Lom.d( ERROR, "截图耗时${System.currentTimeMillis()-time1}" )
+                        //Lom.d( ERROR, "截图耗时${System.currentTimeMillis()-time1}" )
 
                         val detectRes = model.detectYolo(capture, si.classesNum).filter { it!=null }//.filter { it.prob > conf.similarScore }
                             .toTypedArray()
@@ -265,29 +265,26 @@ object  RunScript {
                             //Lom.d(INFO,"未识别到内容")
                             continue
                         }
-                        if(Lom.enableConsole){
+                        /*if(Lom.enableConsole){
                             for (result in detectRes.filter { it.label == 0 }) {
                                 print(result.ocr?.txt+" ")
                                 print(result.ocr?.label?.toList())
                                 println(result.ocr?.colorArr?.toList())
                             }
                             println(detectLabels.toList())
-                        }
+                        }*/
                         /*if(enableLog && logSet.value=="详细"){
                             for (result in detectRes.filter { it.label == 0 }) {
                                 Lom.d("Text:",result.ocr?.txt+",Label:"+result.ocr?.label?.toList()?.plus(" ").toString() + ",Color:"+result.ocr?.colorArr?.toList().toString())
                             }
                             Lom.d("DetectLabel","${detectLabels.toList()}")
-                        }
-*/
-
-                        //conf.curHash = getMd5Hash(capture)
+                        }*/
                         when(tryAction(scriptActionArrayList, detectLabels, detectRes, txtLabels)){
                             1 ->{
                                 //finish类
                                 Lom.n(INFO, "结束:${set.setName}")
                                 // 使用BitmapPool回收Bitmap对象而不是直接调用recycle
-                                com.smart.autodaily.utils.BitmapPool.recycle(conf.capture)
+                                BitmapPool.recycle(conf.capture)
                                 conf.capture = null
                                 return@setForEach
                             }
@@ -313,7 +310,7 @@ object  RunScript {
                     }
                 }//set for each
                 // 使用BitmapPool回收Bitmap对象而不是直接调用recycle
-                com.smart.autodaily.utils.BitmapPool.recycle(conf.capture)
+                BitmapPool.recycle(conf.capture)
                 conf.capture = null
                 //记录是否完成
                 if (conf.recordStatus){

@@ -72,6 +72,7 @@ private fun hasResponse(): Boolean {
     BitmapPool.recycle(conf.capture)
     // 设置新的Bitmap对象
     conf.capture = newCapture
+    BitmapPool.recycle(newCapture)
     return true
 }
 
