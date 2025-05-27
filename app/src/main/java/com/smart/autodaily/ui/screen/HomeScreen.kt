@@ -356,16 +356,20 @@ fun HomeScreen(
                         onClick = {
                             newDialog.value = false
                             SnackbarUtil.show("正在更新，请稍作等待！")
+                            isRunning.intValue = 2
                             homeViewModel.viewModelScope.launch {
                                 try {
                                     currentScriptInfo.value?.let {
                                         homeViewModel.deleteScript(it,0)
                                         homeViewModel.appViewModel.downScriptByScriptId(it)
+                                        isRunning.intValue = 0
                                         SnackbarUtil.show("更新成功！")
                                     }?:{
+                                        isRunning.intValue = 0
                                         SnackbarUtil.show("更新成功！")
                                     }
                                 }catch (_:Exception){
+                                    isRunning.intValue = 0
                                     SnackbarUtil.show("更新失败！请重新下载！")
                                 }
                             }

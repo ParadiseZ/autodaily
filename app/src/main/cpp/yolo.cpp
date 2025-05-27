@@ -244,6 +244,11 @@ void Yolo::detect(const cv::Mat& bgr, std::vector<Object>& objects,std::vector<T
 
     int count = picked.size();
     //objects.resize(count);
+    cv::Mat hsvMat;
+    cv::Mat tmpMat;
+    cv::Vec3b hsvPixel;
+    int tmpX=0;
+    int tmpY=0;
     for (int i = 0; i < count; i++)
     {
         Object obj = proposals[picked[i]];
@@ -271,14 +276,27 @@ void Yolo::detect(const cv::Mat& bgr, std::vector<Object>& objects,std::vector<T
             if (dstWidth > 1056 || dstWidth < 40){//48*22
                 continue;
             }
-            cv::Vec3b pixel = bgr.ptr<cv::Vec3b>(int(obj.rect.y))[std::max(int(obj.rect.x)-5, 0)];
-            int color = CrnnNet::colorMapping(pixel[0],pixel[1],pixel[2]);
+            tmpX = int(obj.rect.x);
+            tmpY = int(obj.rect.y);
+            tmpMat = cv::Mat(1, 1, CV_8UC3, bgr.at<cv::Vec3b>(tmpY, tmpX));
+            cv::cvtColor(tmpMat, hsvMat, cv::COLOR_RGB2HSV);
+            hsvPixel = hsvMat.at<cv::Vec3b>(0, 0);
+            int color2 = CrnnNet::colorMapping(hsvPixel[0],hsvPixel[1],hsvPixel[2]);
+
+            tmpX = std::max(tmpX-5, 0);
+            tmpMat = cv::Mat(1, 1, CV_8UC3, bgr.at<cv::Vec3b>(tmpY,tmpX));
+            cv::cvtColor(tmpMat, hsvMat, cv::COLOR_RGB2HSV);
+            hsvPixel = hsvMat.at<cv::Vec3b>(0, 0);
+            int color = CrnnNet::colorMapping(hsvPixel[0],hsvPixel[1],hsvPixel[2]);
 
             cv::Mat roi = bgr(obj.rect).clone();
             cv::resize(roi,roi, cv::Size(dstWidth, g_crnn->target_size));
-            txts.emplace_back(TextLine{roi, {} ,{},{}, {color}, obj});
+            txts.emplace_back(TextLine{roi, {} ,{},{}, {color,color2}, obj});
+
         } else{
             objects.push_back(obj);
         }
     }
+    tmpMat.release();
+    hsvMat.release();
 }

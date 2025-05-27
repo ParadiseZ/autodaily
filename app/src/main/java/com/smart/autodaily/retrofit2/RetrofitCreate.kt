@@ -11,9 +11,9 @@ object RetrofitCreate {
     //private const val MEDIA_TYPE = "application/json"
 
     private val okHttpClient = OkHttpClient.Builder()
-        .callTimeout(150, TimeUnit.SECONDS)
+        .callTimeout(330, TimeUnit.SECONDS)
         .connectTimeout(15,TimeUnit.SECONDS)
-        .readTimeout(2, TimeUnit.MINUTES)    // 读取响应数据
+        .readTimeout(5, TimeUnit.MINUTES)    // 读取响应数据
         .writeTimeout(30, TimeUnit.SECONDS)   // 发送请求数据
         .addInterceptor(AuthInterceptor())
         .build()
