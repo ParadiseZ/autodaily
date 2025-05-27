@@ -23,6 +23,4 @@ interface IUserService {
      android.graphics.Bitmap execCap(String command,int width,int height,int scale) = 2;
 
      void execVoidComand(String command) = 3;
-
-     void close() = 4;
 }

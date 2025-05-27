@@ -2,7 +2,8 @@ package com.smart.autodaily.command
 
 object ShellConstants {
     const val END_COMMAND = "_MY_YES_" // More unique EOF marker
-    const val CAPTURE = "screencap -p 2>/dev/null; echo $END_COMMAND\n" // Redirect stderr
+    const val CAPTURE = "screencap -p" // Redirect stderr
+    const val CAP_ROOT = "$CAPTURE 2>/dev/null; echo $END_COMMAND\n" // Redirect stderr
     const val TAP = "input tap "
     const val START = "am start -n "
     const val BACK = "input keyevent BACK"
@@ -26,7 +27,7 @@ object ShellCommandBuilder {
     }
 
     fun capture(): String {
-        return ShellConstants.CAPTURE
+        return if(ShellConfig.useRoot) ShellConstants.CAP_ROOT else ShellConstants.CAPTURE
     }
 
     fun back(): String {
