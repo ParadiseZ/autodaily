@@ -29,6 +29,9 @@ interface ScriptActionInfoDao {
         return result
     }
 
+    @Query("update script_action_info set execute_max = :executeMax where script_id = :scriptId and id in (:acIds)")
+    fun updateExecuteMax(scriptId : Int, acIds:List<Int>,executeMax:Int)
+
 /*    @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
     @Query("select " +
             "a.id, a.script_id, a.set_id, b.set_value, a.pic_id, a.action_string, d.pic_path as picPath" +

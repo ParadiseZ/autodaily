@@ -32,4 +32,11 @@ class ScriptSetViewModel  (application: Application) : BaseViewModel(application
             }
         }
     }
+    fun updateActionExecuteMax(ssi: ScriptSetInfo){
+        viewModelScope.launch {
+            ssi.actionIds?.split(",")?.map { it.toInt() }?.toList()?.let {
+                appDb.scriptActionInfoDao.updateExecuteMax(ssi.scriptId, it, ssi.setValue!!.toInt())
+            }
+        }
+    }
 }
