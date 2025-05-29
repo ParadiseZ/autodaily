@@ -51,7 +51,6 @@ import com.smart.autodaily.utils.ScreenCaptureUtil
 import com.smart.autodaily.utils.ServiceUtil
 import com.smart.autodaily.utils.ShizukuUtil
 import com.smart.autodaily.utils.SnackbarUtil
-import com.smart.autodaily.utils.getMd5Hash
 import com.smart.autodaily.utils.getPicture
 import com.smart.autodaily.utils.isBetweenHour
 import com.smart.autodaily.utils.partScope
@@ -169,8 +168,6 @@ object  RunScript {
             _globalSetMap.value[9]?.setValue?.toFloat()?:0f,
             _globalSetMap.value[6]?.setValue?.toInt()?.let { it * 32 }?:640,
             remRebootTime = System.currentTimeMillis(),
-            10000L,
-            2,
             ScreenCaptureUtil.getDisplayMetrics(appCtx).run {
                 this.widthPixels.coerceAtMost(this.heightPixels)
             },
@@ -183,7 +180,8 @@ object  RunScript {
             conf.capScale = 2
         }
         Lom.d("config", conf.toString())
-        _scriptCheckedList.value.forEach scriptForEach@{ si->
+        for(si in _scriptCheckedList.value){
+        //_scriptCheckedList.value.forEach scriptForEach@{ si->
             skipFlowIds.clear()
             skipAcIds.clear()
             allActionMap.clear()
@@ -198,14 +196,14 @@ object  RunScript {
                     runScope.coroutineContext.cancelChildren()
                     return
                 }
-                //insertFirstDetect(si.classesNum, si.packageName)
                 //所有选择的set
                 val scriptSet = getScriptSets(si.scriptId)
                 if (conf.recordStatus){
                     val date = LocalDate.now().toString()
                     if(appDb.scriptRunStatusDao.countByFlowIdAndType(si.scriptId, scriptSet[0].flowIdType, date) > 0 ){
                         Lom.n(INFO, "当前时间段已执行，跳过：${si.scriptName}")
-                        return@scriptForEach
+                        //return@scriptForEach
+                        continue
                     }
                 }
                 /*println("scriptSet")
@@ -220,12 +218,13 @@ object  RunScript {
                     Lom.d(INFO, "返回操作数量${backActionArrayList.size}")
                 }
                 Lom.d( INFO, "详细设置初始化完毕" )
-                scriptSet.forEach setForEach@ { forSet->
+                for(forSet in scriptSet){
                     set = forSet
                     //跳跃或有今天的执行记录，则遍历下一条
                     if(conf.recordStatus && appDb.scriptSetRunStatusDao.countByFlowIdAndType(set.scriptId,set.flowId!!, set.flowIdType, LocalDate.now().toString()) > 0 ){
                         Lom.n(INFO, "当前时间段已执行，跳过：${set.setName}")
-                        return@setForEach
+                        //return@setForEach
+                        continue
                     }
                     Lom.n(INFO, "本次任务：${set.setId} ${set.setName}")
                     //遍历的操作合集
@@ -236,12 +235,7 @@ object  RunScript {
                     while (isRunning.intValue == 1){
                         //超时重启
                         isToReboot(si.packageName)
-                        //val time1 = System.currentTimeMillis()
-                        //截图延迟
-                        val capture = if (conf.capture == null || conf.capture!!.isRecycled) {
-                                        getPicture(conf.capScale)?:continue
-                                    } else conf.capture!!
-                        //Lom.d( ERROR, "截图耗时${System.currentTimeMillis()-time1}" )
+                        val capture =getPicture(conf.capScale)?:continue
 
                         val detectRes = model.detectYolo(capture, si.classesNum).filter { it!=null }//.filter { it.prob > conf.similarScore }
                             .toTypedArray()
@@ -254,15 +248,9 @@ object  RunScript {
                                 it.ocr.label
                             }.toTypedArray()
                         }
-                        //MD5计算
-                        conf.beforeHash = getMd5Hash(capture)
-                        //释放截图
-                        // 使用BitmapPool回收Bitmap对象而不是直接调用recycle
-                        BitmapPool.recycle(conf.capture)
-                        conf.capture = null
-                        //debugPrintScriptActionLabels(detectRes, detectLabels)
+                        BitmapPool.recycle(capture)
                         if (detectLabels.isEmpty() && txtLabels.isEmpty()) {
-                            //Lom.d(INFO,"未识别到内容")
+                            Lom.d(INFO,"未识别到内容")
                             continue
                         }
                         /*if(Lom.enableConsole){
@@ -283,10 +271,8 @@ object  RunScript {
                             1 ->{
                                 //finish类
                                 Lom.n(INFO, "结束:${set.setName}")
-                                // 使用BitmapPool回收Bitmap对象而不是直接调用recycle
-                                BitmapPool.recycle(conf.capture)
-                                conf.capture = null
-                                return@setForEach
+                                break
+                                //return@setForEach
                             }
                             2 ->{
                                 //整个操作执行结束
@@ -308,16 +294,15 @@ object  RunScript {
                         }
                         delay(conf.intervalTime)
                     }
+                    if (isRunning.intValue == 0) break
                 }//set for each
-                // 使用BitmapPool回收Bitmap对象而不是直接调用recycle
-                BitmapPool.recycle(conf.capture)
-                conf.capture = null
+                if (isRunning.intValue == 0) break
                 //记录是否完成
                 if (conf.recordStatus){
                     setScriptStatus(set)
                 }
                 Lom.n(INFO , "${si.scriptName} 结束")
-                return@scriptForEach
+                //return@scriptForEach
             }else{
                 si.currentRunNum = 0
                 si.nextRunDate = LocalDate.now().toString()
@@ -423,13 +408,6 @@ object  RunScript {
                         model.hsvToColor(hsv[0], hsv[1], hsv[2])
                     }.toSet()
                 }
-                /*it.rgbExc?.let { color->
-                    it.hsvExc = color.split(";").map { rgbStr->
-                        val co = rgbStr.split(",").map { rgb-> rgb.toShort() }.toList()
-                        val hsv = rgbToHsv(co)
-                        ModelUtil.model.hsvToColor(hsv[0], hsv[1], hsv[2]).toShort()
-                    }.toSet()
-                }*/
                 it
             }
             if(res.addFlag){

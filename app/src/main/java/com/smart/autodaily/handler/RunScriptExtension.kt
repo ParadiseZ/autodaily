@@ -1,14 +1,10 @@
 package com.smart.autodaily.handler
 
-import com.smart.autodaily.command.AdbClick
 import com.smart.autodaily.command.Operation
 import com.smart.autodaily.data.entity.DetectResult
 import com.smart.autodaily.data.entity.Point
 import com.smart.autodaily.data.entity.ScriptActionInfo
-import com.smart.autodaily.utils.BitmapPool
 import com.smart.autodaily.utils.Lom
-import com.smart.autodaily.utils.getMd5Hash
-import com.smart.autodaily.utils.getPicture
 import kotlin.math.roundToInt
 
 fun execClick(sai: ScriptActionInfo, detectRes: Array<DetectResult>, cmd : Operation) : Int {
@@ -21,59 +17,18 @@ fun execClick(sai: ScriptActionInfo, detectRes: Array<DetectResult>, cmd : Opera
     if (sai.point == null) {
         return 5
     }
-    // Initialize retry counter
-    var retryCount = 0
-    while (retryCount < conf.maxRetryNum) {
-        // Execute click operation
-        when (cmd.operation) {
-            is AdbClick -> {
-                if (sai.executeMax > 0) {
-                    sai.executeCur += 1
-                    Lom.d(INFO, "准备第${sai.executeCur}次点击")
-                    if (sai.executeCur >= sai.executeMax) {
-                        Lom.d(INFO, "已达到最大点击次数，设置跳过")
-                        sai.executeCur = 0
-                        sai.skipFlag = true
-                    }
-                }
-                Lom.d(INFO, "点击${sai.point?:cmd.operation.point}")
-                cmd.exec(sai)
-            }
+    if (sai.executeMax > 0) {
+        sai.executeCur += 1
+        Lom.d(INFO, "准备第${sai.executeCur}次点击")
+        if (sai.executeCur >= sai.executeMax) {
+            Lom.d(INFO, "已达到最大点击次数，设置跳过")
+            sai.executeCur = 0
+            sai.skipFlag = true
         }
-        
-        // Wait for response with timeout
-        val startTime = System.currentTimeMillis()
-        while (System.currentTimeMillis() - startTime < conf.retryDelay) {
-            // Check for response using initial hash
-            Thread.sleep(conf.intervalTime) // Check every 500ms
-            if (hasResponse()) {
-                return 2 // Success
-            }
-        }
-        retryCount++
-        Lom.n(INFO, "点击未响应，第${retryCount}次重试")
     }
-
-    // If we get here, all retries failed
-    return 4 // Operation failed
-}
-
-// Helper function to check for response after click
-private fun hasResponse(): Boolean {
-    val newCapture = getPicture(conf.capScale) ?: return false
-    // Compare with initial screenshot
-    val newMd5 = getMd5Hash(newCapture)
-    if(newMd5.contentEquals(conf.beforeHash)){
-        BitmapPool.recycle(newCapture)
-        return false
-    }
-    conf.beforeHash = newMd5
-        // 先回收旧的Bitmap对象
-    BitmapPool.recycle(conf.capture)
-    // 设置新的Bitmap对象
-    conf.capture = newCapture
-    BitmapPool.recycle(newCapture)
-    return true
+    Lom.d(INFO, "点击${sai.point}")
+    cmd.exec(sai)
+    return 2 // Operation failed 4
 }
 
 fun checkColor(sai: ScriptActionInfo,ocrRes : Array<DetectResult>) : Boolean{
