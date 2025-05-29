@@ -9,6 +9,7 @@ enum class SettingType {
     SLIDER_SECOND,
     SLIDER_FOURTH,
     SLIDER_FIFTH,
+    SLIDER_SIXTH,
     TITLE,
     SLIDER_THIRD,
     DROPDOWN_MENU

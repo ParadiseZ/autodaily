@@ -4,9 +4,12 @@ plugins {
     alias(libs.plugins.compose.compiler)
     id('com.google.devtools.ksp')
     id('org.jetbrains.kotlin.plugin.serialization')
-    id("com.google.dagger.hilt.android")
+    //id("com.google.dagger.hilt.android")
+    id 'androidx.room'
 }
-
+room {
+    schemaDirectory("$projectDir/schemas")
+}
 android {
     namespace 'com.smart.autodaily'
     compileSdk 35
@@ -25,8 +28,8 @@ android {
 
         externalNativeBuild {
             ndk {
-                //abiFilters 'arm64-v8a','x86_64'
-                abiFilters 'arm64-v8a'
+                abiFilters 'arm64-v8a','x86_64'
+                //abiFilters 'arm64-v8a'
                 //abiFilters 'x86_64'
             }
             cmake {
@@ -97,8 +100,8 @@ dependencies {
     implementation libs.androidx.room.migration
     ksp libs.androidx.room.compiler
     //dagger
-    implementation libs.hilt.android
-    ksp(libs.hilt.android.compiler)
+    //implementation libs.hilt.android
+    //ksp libs.hilt.android.compiler
 
     //日志
 

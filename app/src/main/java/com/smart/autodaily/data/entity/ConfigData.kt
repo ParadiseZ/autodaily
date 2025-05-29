@@ -1,6 +1,5 @@
 package com.smart.autodaily.data.entity
 
-import android.graphics.Bitmap
 import com.smart.autodaily.command.CommandExecutor
 
 data class ConfigData(
@@ -22,17 +21,9 @@ data class ConfigData(
     val detectSize : Int,
     //当前记忆的系统时间
     var remRebootTime : Long,
-    //循环截图识别标志
-    //var loopFlag: Boolean,
-    //重试延迟
-    val retryDelay : Long,
-    //最大重试次数
-    val maxRetryNum : Int,
     val minScreen : Int,
     var executor : CommandExecutor?
 ){
-    var beforeHash : ByteArray = byteArrayOf()
     var pkgName = ""
-    var capture : Bitmap?=null
     var capScale : Int = 1
 }

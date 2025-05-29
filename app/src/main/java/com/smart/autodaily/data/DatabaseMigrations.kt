@@ -9,18 +9,14 @@ object DatabaseMigrations {
 
     val migrations: Array<Migration> by lazy {
         arrayOf(
-            migration_10_11
+            migration_1_2
         )
     }
 
-    private val migration_10_11 = object : Migration(10, 11) {
+    private val migration_1_2 = object : Migration(1, 2) {
         override fun migrate(db: SupportSQLiteDatabase) {
-            /*db.execSQL("DROP TABLE txtTocRules")
-            db.execSQL(
-                """CREATE TABLE txtTocRules(id INTEGER NOT NULL, 
-                    name TEXT NOT NULL, rule TEXT NOT NULL, serialNumber INTEGER NOT NULL, 
-                    enable INTEGER NOT NULL, PRIMARY KEY (id))"""
-            )*/
+            //需要改变执行次数的action id列表，英文,分割
+            db.execSQL("ALTER TABLE script_set_info ADD COLUMN action_ids TEXT")
         }
     }
 

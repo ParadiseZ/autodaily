@@ -1,5 +1,6 @@
 package com.smart.autodaily.data
 
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -31,8 +32,8 @@ val appDb by lazy {
         .addCallback(AppDb.dbCallback)
         .build()
 }
-@Database(version = 1,
-    exportSchema = false,
+@Database(version = 2,
+    exportSchema = true,
     entities = [
         ScriptInfo::class,
         ScriptSetInfo::class,
@@ -41,9 +42,9 @@ val appDb by lazy {
         ScriptSetRunStatus::class,
         ScriptRunStatus::class,
         AppInfo::class],
-/*    autoMigrations = [
-        AutoMigration(from = 2, to = 3)
-    ]*/
+        autoMigrations = [
+            AutoMigration(from = 1, to = 2)
+        ]
 )
 abstract class AppDb  :  RoomDatabase(){
     abstract val scriptInfoDao : ScriptInfoDao
@@ -69,9 +70,9 @@ abstract class AppDb  :  RoomDatabase(){
             }
 
         }
-
+/*
         private fun initData(db: SupportSQLiteDatabase){
-            /*@Language("sql")
+            *//*@Language("sql")
             val insertScriptSetGlobalSql = """
                 INSERT INTO script_set_info 
                 (script_id, set_id, checked_flag, set_type, set_name, set_desc, set_parent_id, set_level, set_default_value, set_value, set_range, set_step, is_show, result_flag, once_flag) 
@@ -87,7 +88,7 @@ abstract class AppDb  :  RoomDatabase(){
                     (0,9,'true','SLIDER_THIRD','随机点击范围','',-1,1,'5','5','1,10',9,'true','false','false')
                     (0,10,'true','CHECK_BOX','使用gpu推理','',-1,1,'true','true','','','true','false','false')
             """.trimIndent()
-            db.execSQL(insertScriptSetGlobalSql)*/
-        }
+            db.execSQL(insertScriptSetGlobalSql)*//*
+        }*/
     }
 }

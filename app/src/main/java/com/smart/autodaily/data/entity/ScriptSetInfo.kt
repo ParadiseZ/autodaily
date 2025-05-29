@@ -29,7 +29,8 @@ data class ScriptSetInfo(
     @ColumnInfo(name = "is_max_level") @SerializedName("is_max_level") val isMaxLevel: Int = 0,//是否最底层，1代表需要执行本条设置，2代表如果选择，此时子设置如果未选择则执行本设置，选择则执行子设置（即流程，比如本设置是扫荡副本，子设置是否购买体力）
     @ColumnInfo(name = "flow_parent_id") @SerializedName("flow_parent_id") val flowParentId: String?,//父流程id,以此查询组合哪些script_action_info表中的流程操作
     @ColumnInfo(name = "flow_id_type") @SerializedName("flow_id_type") val flowIdType: Int,//流程类型，以此判定本时间段，是否执行本设置。比如晚上执行全部设置，但早上只执行一部分，两条设置基本一致
-    @ColumnInfo(name = "back_flag") @SerializedName("back_flag") val backFlag: Int = 0//是否是返回类操作，以此将其整合到返回操作集合，在非正常流程时尝试执行
+    @ColumnInfo(name = "back_flag") @SerializedName("back_flag") val backFlag: Int = 0,//是否是返回类操作，以此将其整合到返回操作集合，在非正常流程时尝试执行
+    @ColumnInfo(name = "action_ids") @SerializedName("action_ids") val actionIds: String?//需要改变执行次数的actionid列表，英文,分割
 ){
     @Ignore
     var flowParentIdList : List<Int> = emptyList()
