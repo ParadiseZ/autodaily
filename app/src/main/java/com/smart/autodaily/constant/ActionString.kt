@@ -26,4 +26,8 @@ object ActionString {
     const val DROP_SET_NEXT = "dropsetnext"
     const val REBOOT = "reboot"
     const val RM_SKIP_ACIDS = "mrmacids"
+
+    //250530
+    const val CLICK_PERCENT = "clickPer"
+    const val SWIPE_PERCENT = "swipePer"
 }
