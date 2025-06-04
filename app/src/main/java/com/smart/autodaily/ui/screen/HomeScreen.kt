@@ -363,6 +363,7 @@ fun HomeScreen(
                                     currentScriptInfo.value?.let {
                                         homeViewModel.deleteScript(it,0)
                                         homeViewModel.appViewModel.downScriptByScriptId(it)
+                                        homeViewModel.appViewModel.loadScriptAll()
                                         isRunning.intValue = 0
                                         SnackbarUtil.show("更新成功！")
                                     }?:{

@@ -28,12 +28,13 @@ class HomeViewModel(application: Application) : BaseViewModel(application = appl
                 if (type == 1){//删除
                     appDb.scriptInfoDao.deleteByScriptId(sc.scriptId)
                     appDb.scriptSetInfoDao.deleteScriptSetInfoByScriptId(sc.scriptId)
+                    val externalParamFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_PARAM)
+                    val externalBinFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_BIN)
+                    deleteFile(externalBinFile)
+                    deleteFile(externalParamFile)
                 }
                 appDb.scriptActionInfoDao.deleteByScriptId(sc.scriptId)
-                val externalParamFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_PARAM)
-                val externalBinFile = File(appCtx.getExternalFilesDir("") , sc.modelPath+"/"+ MODEL_BIN)
-                deleteFile(externalBinFile)
-                deleteFile(externalParamFile)
+
             }
         } catch (e: Exception) {
             e.printStackTrace()

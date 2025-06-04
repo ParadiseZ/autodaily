@@ -189,6 +189,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                     deleteFile(externalBinFile)
                     Lom.n(ERROR, "下载${scriptInfo.scriptName}模型文件失败")
                     scriptInfo.process.intValue = -1
+                    scriptInfo.downState.intValue = 0
                 }
             }
         }
