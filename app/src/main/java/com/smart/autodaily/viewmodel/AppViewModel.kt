@@ -14,14 +14,17 @@ import com.smart.autodaily.data.entity.ScriptActionInfo
 import com.smart.autodaily.data.entity.ScriptInfo
 import com.smart.autodaily.data.entity.UserInfo
 import com.smart.autodaily.data.entity.request.Request
+import com.smart.autodaily.data.entity.resp.DownloadScriptInfo
 import com.smart.autodaily.data.entity.resp.Response
 import com.smart.autodaily.handler.ERROR
+import com.smart.autodaily.handler.INFO
 import com.smart.autodaily.handler.isRunning
 import com.smart.autodaily.utils.DownloadManager
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.SnackbarUtil
 import com.smart.autodaily.utils.cancelChildrenJob
 import com.smart.autodaily.utils.deleteFile
+import com.smart.autodaily.utils.getMd5Str
 import com.smart.autodaily.utils.logScope
 import com.smart.autodaily.utils.runScope
 import com.smart.autodaily.utils.updateScriptSet
@@ -123,26 +126,39 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     //下载
     suspend fun downScriptByScriptId(scriptInfo : ScriptInfo) : Boolean {
         runCatching {
-            if(scriptInfo.scriptId!=0){
-                downloadModel(scriptInfo)
+            val downRes = downByScriptId(scriptInfo)
+            if(scriptInfo.scriptId != 0){
+                downRes?.let {
+                    downloadModel(scriptInfo, it)
+                }
             }
-            downByScriptId(scriptInfo)
             return true
-        }.onFailure {
+        }.onFailure { e->
+            e.printStackTrace()
             return false
         }
         return true
     }
 
     //下载模型
-    private suspend fun downloadModel(scriptInfo : ScriptInfo) {
+    private suspend fun downloadModel(scriptInfo : ScriptInfo,downRes :  DownloadScriptInfo) {
         val modelFilePath = File(appCtx.getExternalFilesDir(""), scriptInfo.modelPath)
-        val externalParamFile = File(modelFilePath, MODEL_PARAM)
-        //删除旧文件
-        deleteFile(externalParamFile)
         if (!modelFilePath.exists()){
             modelFilePath.mkdirs()
         }
+        val externalParamFile = File(modelFilePath, MODEL_PARAM)
+        val externalBinFile = File(modelFilePath , MODEL_BIN)
+        if(externalParamFile.exists()){
+            val paramMd5Local = getMd5Str(externalParamFile)
+            val binMd5Local = getMd5Str(externalBinFile)
+            if (paramMd5Local == downRes.paramMd5 && binMd5Local == downRes.binMd5){
+                Lom.d(INFO, "${scriptInfo.scriptName}模型无变化，跳过下载")
+                return
+            }
+        }
+        //删除旧文件
+        deleteFile(externalParamFile)
+
         DownloadManager.download(scriptInfo.scriptId, externalParamFile,"param").collect{
             when (it) {
                 is DownloadState.InProgress -> {
@@ -156,7 +172,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                 }
             }
         }
-        val externalBinFile = File(modelFilePath , MODEL_BIN)
+
         //删除旧文件
         deleteFile(externalBinFile)
         DownloadManager.download(scriptInfo.scriptId, externalBinFile,"bin").collect{
@@ -177,13 +193,13 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
     }
 
     //下载脚本数据
-    private suspend fun downByScriptId(scriptInfo: ScriptInfo) {
+    private suspend fun downByScriptId(scriptInfo: ScriptInfo): DownloadScriptInfo? {
         val siNew = RemoteApi.searchDownRetrofit.dlScriptInfo(scriptInfo.scriptId)
         val result = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptInfo.scriptId)
         var scriptAction = Response<List<ScriptActionInfo>>()
         //var globalScriptSetResult = Response<List<ScriptSetInfo>>()
         var setIds : List<Int> = emptyList()
-        if(scriptInfo.scriptId !=0){
+        if(scriptInfo.scriptId != 0){
             scriptAction = RemoteApi.searchDownRetrofit.downloadActionInfoByScriptId(scriptInfo.scriptId)
             val localScriptSetGlobal = appDb.scriptSetInfoDao.countScriptSetByScriptId(0)
             if (localScriptSetGlobal == 0) {
@@ -191,7 +207,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                 val siGlobal = RemoteApi.searchDownRetrofit.dlScriptInfo(0)
                 val setGlobal = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(0)
                 appDb.runInTransaction{
-                    siGlobal.data?.let { si->
+                    siGlobal.data?.scriptInfo?.let { si->
                         //scriptInfo
                         si.isDownloaded = 1
                         si.lastVersion?.let {
@@ -212,7 +228,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
 
         //val scriptSetDownload = RemoteApi.searchDownRetrofit.downScriptSetByScriptId(scriptId)
         appDb.runInTransaction{
-            siNew.data?.let { si->
+            siNew.data?.scriptInfo?.let { si->
                 //scriptInfo
                 si.isDownloaded = 1
                 si.lastVersion?.let {
@@ -243,6 +259,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                 appDb.scriptSetInfoDao.deleteScriptSetByIds(setList[0].scriptId,setIds)
             }
         }
+        return siNew.data
     }
 
     fun getScriptInfoGlobal(): ScriptInfo?{

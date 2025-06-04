@@ -12,7 +12,7 @@ import java.io.File
 import java.io.IOException
 
 object DownloadManager {
-    suspend fun download(scriptId: Int, file: File, fileType: String): Flow<DownloadState> {
+    fun download(scriptId: Int, file: File, fileType: String): Flow<DownloadState> {
         return flow {
             val response = RemoteApi.searchDownRetrofit.downloadModel(scriptId, fileType).execute()
             if (response.isSuccessful) {

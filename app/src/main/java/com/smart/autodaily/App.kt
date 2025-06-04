@@ -18,6 +18,7 @@ import com.smart.autodaily.utils.hasNotificationPermission
 import com.smart.autodaily.utils.partScope
 import com.smart.autodaily.utils.updateScope
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.weishu.reflection.Reflection
 import splitties.systemservices.notificationManager
@@ -44,11 +45,11 @@ class App : Application() {
         }
         
         partScope.launch {
+            //延迟连接数据库
+            delay(2000)
             //初始化全局设置
             RunScript.initGlobalSet()
             try {
-                // 延迟检查更新
-                //delay(5000)
                 deleteRunStatus()
                 checkScriptUpdate()
             } catch (_: Exception) {
