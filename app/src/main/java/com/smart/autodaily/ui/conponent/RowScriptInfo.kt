@@ -100,7 +100,7 @@ fun RowScriptInfo(
             Spacer(modifier = Modifier.width( Ui.SPACE_5 ))
         }
         Spacer(modifier = modifier.height(Ui.SPACE_5))
-        if (processShow.value && process>0 && process!=100){
+        if (processShow.value && process >= 0 && process < 100) {
             Row (
                 modifier = Modifier
                     .fillMaxWidth()
@@ -116,7 +116,7 @@ fun RowScriptInfo(
             Spacer(modifier = modifier.height(Ui.SPACE_5))
         }
         if ( process == -1 ){
-            scriptInfo.downState.intValue =1
+            scriptInfo.downState.intValue = 1
         }
     }
 }

@@ -182,6 +182,8 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
                     scriptInfo.process.intValue = it.progress
                 }
                 is DownloadState.Success -> {
+                    // 下载成功，更新状态为已下载
+                    scriptInfo.downState.intValue = 1
                 }
                 is DownloadState.Error -> {
                     deleteFile(externalBinFile)

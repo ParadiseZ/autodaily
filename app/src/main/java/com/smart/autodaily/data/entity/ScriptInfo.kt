@@ -31,7 +31,7 @@ data class ScriptInfo(
     @ColumnInfo(name = "lang") var lang: Int = 0, // 语言
 ){
     @Ignore
-    var process = mutableIntStateOf(0)  //下载进度条
+    var process = mutableIntStateOf(-2)  //下载进度条
     @Ignore
     var downState = mutableIntStateOf(isDownloaded)  //下载标志
 }
