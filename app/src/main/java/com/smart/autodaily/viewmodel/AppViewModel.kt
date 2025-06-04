@@ -92,7 +92,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
         _user.value = userInfo
     }
     //加载本地所有数据
-    private fun loadScriptAll(){
+    fun loadScriptAll(){
         viewModelScope.launch {
             withContext(Dispatchers.IO){
                 appDb.scriptInfoDao.getLocalScriptAll().collectLatest {

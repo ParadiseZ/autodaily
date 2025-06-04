@@ -115,8 +115,5 @@ fun RowScriptInfo(
             }
             Spacer(modifier = modifier.height(Ui.SPACE_5))
         }
-        if ( process == -1 ){
-            scriptInfo.downState.intValue = 1
-        }
     }
 }

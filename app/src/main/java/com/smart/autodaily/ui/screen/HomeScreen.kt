@@ -312,6 +312,7 @@ fun HomeScreen(
                             currentScriptInfo.value?.let { scriptInfo->
                                 homeViewModel.deleteScript(scriptInfo,1)
                             }
+                            homeViewModel.appViewModel.loadScriptAll()
                             openDialog.value = false
                             SnackbarUtil.show("删除成功！")
                         }
