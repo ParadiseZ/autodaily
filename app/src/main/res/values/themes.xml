@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.AutoDaily" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.AutoDaily" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- 设置状态栏背景颜色 -->
+        <item name="android:statusBarColor">@color/white</item>
+        <!-- 通知系统状态栏背景为浅色，应使用深色前景（文字/图标） -->
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
 </resources>
