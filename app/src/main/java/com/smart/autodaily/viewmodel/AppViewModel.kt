@@ -148,7 +148,7 @@ class AppViewModel (application: Application) : AndroidViewModel(application){
         }
         val externalParamFile = File(modelFilePath, MODEL_PARAM)
         val externalBinFile = File(modelFilePath , MODEL_BIN)
-        if(externalParamFile.exists()){
+        if(externalParamFile.exists() &&  externalBinFile.exists()){
             val paramMd5Local = getMd5Str(externalParamFile)
             val binMd5Local = getMd5Str(externalBinFile)
             if (paramMd5Local == downRes.paramMd5 && binMd5Local == downRes.binMd5){
