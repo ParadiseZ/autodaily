@@ -12,6 +12,7 @@ import com.smart.autodaily.R
 import com.smart.autodaily.handler.INFO
 import com.smart.autodaily.handler.RunScript
 import com.smart.autodaily.handler.isRunning
+import com.smart.autodaily.utils.BitmapPool
 import com.smart.autodaily.utils.Lom
 import com.smart.autodaily.utils.RootUtil
 import com.smart.autodaily.utils.runScope
@@ -36,6 +37,7 @@ class ForegroundService : Service() {
         RootUtil.close()
         runScope.coroutineContext.cancelChildren()
         isRunning.intValue=0
+        BitmapPool.clear()
         Lom.n(INFO ,"前台服务被销毁，停止运行")
     }
 

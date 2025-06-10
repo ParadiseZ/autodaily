@@ -1,4 +1,7 @@
 package com.smart.autodaily.utils
+
+import kotlin.math.roundToInt
+
 fun rgbToHsv(rgb: List<Short>): List<Short> {
     val r = rgb[0].toFloat() / 255f
     val g = rgb[1].toFloat() / 255f
@@ -25,8 +28,8 @@ fun rgbToHsv(rgb: List<Short>): List<Short> {
         }
     }
     return listOf(
-        (h / 2f).toInt().toShort(),
-        (s * 255).toInt().toShort(),
-        (v * 255).toInt().toShort()
+        (h / 2f).roundToInt().toShort(),    // H: 0-360 → 0-180
+        (s * 255).roundToInt().toShort(),   // S: 0.0-1.0 → 0-255
+        (v * 255).roundToInt().toShort()     // V: 0.0-1.0 → 0-255
     )
 }
