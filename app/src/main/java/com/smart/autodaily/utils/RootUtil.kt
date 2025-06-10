@@ -223,6 +223,7 @@ object RootUtil {
         val options = BitmapFactory.Options().apply {
             inJustDecodeBounds = false
             inSampleSize = scale
+            inMutable = true
         }
         try {
             acquiredBitmapFromPool = BitmapPool.acquire(width, height)

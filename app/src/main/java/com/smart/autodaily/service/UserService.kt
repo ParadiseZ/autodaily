@@ -27,6 +27,7 @@ class UserService: IUserService.Stub(){
         val options = BitmapFactory.Options().apply {
             inJustDecodeBounds = false
             inSampleSize = scale // BitmapFactory handles the scaling based on this sample size
+            inMutable = true
         }
         try {
             acquiredBitmapFromPool = BitmapPool.acquire(width, height)
