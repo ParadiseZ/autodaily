@@ -194,10 +194,6 @@ object  RunScript {
                         continue
                     }
                 }
-                /*println("scriptSet")
-                scriptSet.forEach {
-                    println(it)
-                }*/
                 val backActionArrayList : ArrayList<ScriptActionInfo> = arrayListOf()
                 if (conf.tryBackAction){
                     backActionArrayList.addAll(
@@ -206,6 +202,7 @@ object  RunScript {
                     Lom.d(INFO, "返回操作数量${backActionArrayList.size}")
                 }
                 Lom.d( INFO, "详细设置初始化完毕" )
+                //println("set:"+scriptSet.map { it.setId })
                 for(forSet in scriptSet){
                     set = forSet
                     //跳跃或有今天的执行记录，则遍历下一条
@@ -219,6 +216,7 @@ object  RunScript {
                     val scriptAction = appDb.scriptActionInfoDao.getCheckedBySetId( set.scriptId, set.flowParentIdList, set.flowIdType )
                     val scriptActionArrayList = actionsInit(scriptAction,allActionMap)
                     Lom.d( INFO, "操作初始化完毕，准备截图识别" )
+                    //println("actionId:"+scriptActionArrayList.toList())
                     //遍历的返回操作合集
                     while (isRunning.intValue == 1){
                         //超时重启
