@@ -437,7 +437,8 @@ object  RunScript {
                                         if (sai.executeCur >= sai.executeMax) {
                                             Lom.d(INFO, "已达到最大滑动次数，设置跳过")
                                             sai.executeCur = 0
-                                            sai.skipFlag = true
+                                            skipAcIds.add(sai.id)
+                                            //sai.skipFlag = true
                                         }
                                     }
                                     cmd.exec(sai)
@@ -453,7 +454,8 @@ object  RunScript {
                                         if (sai.executeCur >= sai.executeMax) {
                                             Lom.d(INFO, "已达到最大滑动次数，设置跳过")
                                             sai.executeCur = 0
-                                            sai.skipFlag = true
+                                            skipAcIds.add(sai.id)
+                                            //sai.skipFlag = true
                                         }
                                     }
                                     cmd.exec(sai)

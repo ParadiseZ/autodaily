@@ -119,7 +119,8 @@ class AdbSwipe : Command{
 class Skip : Command{
     override fun exec(sai: ScriptActionInfo): Boolean {
         Lom.d(INFO , "跳过${sai.flowId} ${sai.pageDesc}")
-        sai.skipFlag = true
+        skipAcIds.add(sai.id)
+        //sai.skipFlag = true
         return false
     }
 }
