@@ -30,4 +30,8 @@ object ActionString {
     //250530
     const val CLICK_PERCENT = "clickPer"
     const val SWIPE_PERCENT = "swipePer"
+
+    //250617
+    const val RELATIVE_FIND_AND_CLICK = "relFAC"
+    const val RELATIVE_LABEL_FIND_AND_CLICK = "relLabFAC"
 }

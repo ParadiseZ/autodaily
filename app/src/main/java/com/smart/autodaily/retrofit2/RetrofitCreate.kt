@@ -6,8 +6,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object RetrofitCreate {
-    //private const val BASE_URL = "http://192.168.123.133:8080"
-    private const val BASE_URL = "https://autodaily.icu/"
+    private const val BASE_URL = "http://192.168.123.208:9090"
+    //private const val BASE_URL = "https://autodaily.icu/"
     //private const val MEDIA_TYPE = "application/json"
 
     private val okHttpClient = OkHttpClient.Builder()

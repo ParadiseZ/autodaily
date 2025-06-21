@@ -2,7 +2,6 @@ package com.smart.autodaily.handler
 
 import androidx.collection.mutableIntSetOf
 import androidx.compose.runtime.mutableIntStateOf
-import com.smart.autodaily.command.AdbClick
 import com.smart.autodaily.command.AddPosById
 import com.smart.autodaily.command.DropdownMenuNext
 import com.smart.autodaily.command.FinishFlowId
@@ -10,6 +9,8 @@ import com.smart.autodaily.command.MinusPosById
 import com.smart.autodaily.command.NotFlowId
 import com.smart.autodaily.command.Operation
 import com.smart.autodaily.command.Reboot
+import com.smart.autodaily.command.RelFAC
+import com.smart.autodaily.command.RelLabFAC
 import com.smart.autodaily.command.Return
 import com.smart.autodaily.command.RootExecutor
 import com.smart.autodaily.command.ShellConfig
@@ -216,7 +217,7 @@ object  RunScript {
                     val scriptAction = appDb.scriptActionInfoDao.getCheckedBySetId( set.scriptId, set.flowParentIdList, set.flowIdType )
                     val scriptActionArrayList = actionsInit(scriptAction,allActionMap)
                     Lom.d( INFO, "操作初始化完毕，准备截图识别" )
-                    //println("actionId:"+scriptActionArrayList.toList())
+                    //println("actionId:"+scriptActionArrayList.map { it.id })
                     //遍历的返回操作合集
                     while (isRunning.intValue == 1){
                         //超时重启
@@ -243,7 +244,9 @@ object  RunScript {
                             for (result in detectRes.filter { it.label == 0 }) {
                                 print(result.ocr?.txt+" ")
                                 print(result.ocr?.label?.toList())
-                                println(result.ocr?.colorArr?.toList())
+                                print(result.ocr?.colorArr?.toList())
+                                print("["+result.rect.x.toString() + ","+result.rect.y.toString()+","+result.rect.width.toString() + ","+ result.rect.height.toString())
+                                println("("+result.xCenter.toString() + ","+ result.yCenter.toString()+")")
                             }
                             println(detectLabels.toList())
                         }*/
@@ -418,108 +421,128 @@ object  RunScript {
                 conf.remRebootTime = System.currentTimeMillis()
                 sai.pageDesc?.let { Lom.n(INFO, "✔\uFE0F【${it}】") }
                 sai.command.onEach cmdForEach@{ cmd ->
-                    when (cmd) {
-                        is Operation ->{
-                            when (cmd.type) {
-                                //点击
-                                1 -> {
-                                    val exeRes = execClick(sai,detectRes,cmd)
-                                    if (exeRes in 4..5){
-                                        return exeRes
-                                    }
-                                }
-                                //点击中央/percent
-                                2 -> {
-                                    Lom.n(INFO , "点击 ${(cmd.operation as AdbClick).point}")
-                                    if (sai.executeMax > 0){
-                                        sai.executeCur += 1
-                                        Lom.d(INFO, "第${sai.executeCur}次滑动结束")
-                                        if (sai.executeCur >= sai.executeMax) {
-                                            Lom.d(INFO, "已达到最大滑动次数，设置跳过")
-                                            sai.executeCur = 0
-                                            skipAcIds.add(sai.id)
-                                            //sai.skipFlag = true
+                    try {
+                        when (cmd) {
+                            is Operation ->{
+                                when (cmd.type) {
+                                    //点击
+                                    1 -> {
+                                        val exeRes = execClick(sai,detectRes,cmd)
+                                        if (exeRes in 4..5){
+                                            return exeRes
                                         }
                                     }
-                                    cmd.exec(sai)
-                                }
-                                //滑动/percent
-                                3 ->{
-                                    sai.swipePoint?.let {
-                                        Lom.n(INFO , "滑动 ${it.x},${it.y}->${it.width},${it.height}")
-                                    }
-                                    if (sai.executeMax > 0){
-                                        sai.executeCur += 1
-                                        Lom.d(INFO, "第${sai.executeCur}次滑动结束")
-                                        if (sai.executeCur >= sai.executeMax) {
-                                            Lom.d(INFO, "已达到最大滑动次数，设置跳过")
-                                            sai.executeCur = 0
-                                            skipAcIds.add(sai.id)
-                                            //sai.skipFlag = true
+                                    //点击中央/percent
+                                    2 -> {
+                                        if (sai.executeMax > 0){
+                                            sai.executeCur += 1
+                                            Lom.d(INFO, "第${sai.executeCur}次点击结束")
+                                            if (sai.executeCur >= sai.executeMax) {
+                                                Lom.d(INFO, "已达到大点击次数，设置跳过")
+                                                sai.executeCur = 0
+                                                skipAcIds.add(sai.id)
+                                                //sai.skipFlag = true
+                                            }
                                         }
+                                        cmd.exec(sai)
                                     }
-                                    cmd.exec(sai)
-                                }
-                            }
-                        }
-                        is Return -> {
-                            when (cmd.type) {
-                                ActionString.FINISH -> {
-                                    if (conf.recordStatus){
-                                        setScriptSetStatus(set, sai, sai.flowId)
+                                    //滑动/percent
+                                    3 ->{
+                                        sai.swipePoint?.let {
+                                            Lom.n(INFO , "滑动 ${it.x},${it.y}->${it.width},${it.height}")
+                                        }
+                                        if (sai.executeMax > 0){
+                                            sai.executeCur += 1
+                                            Lom.d(INFO, "第${sai.executeCur}次滑动结束")
+                                            if (sai.executeCur >= sai.executeMax) {
+                                                Lom.d(INFO, "已达到最大滑动次数，设置跳过")
+                                                sai.executeCur = 0
+                                                skipAcIds.add(sai.id)
+                                                //sai.skipFlag = true
+                                            }
+                                        }
+                                        cmd.exec(sai)
                                     }
-                                    return 1
                                 }
                             }
-                        }
-                        is FinishFlowId ->{
-                            Lom.n(INFO , "结束流程ID ${cmd.flowId}")
-                            setScriptSetStatus(set, sai, cmd.flowId)
-                        }
-                        is NotFlowId->{
-                            if (set.flowId == cmd.notFlowId){
-                                skipAcIds.add(sai.id)
-                                return@scriptAction
-                            }
-                        }
-                        is AddPosById->{
-                            actionList.forEach { tmp ->
-                                if (tmp.id == cmd.saiId){
-                                    Lom.n(INFO , "saiId ${cmd.saiId}点击目标向后递增")
-                                    tmp.labelPos += 1
+                            is Return -> {
+                                when (cmd.type) {
+                                    ActionString.FINISH -> {
+                                        if (conf.recordStatus){
+                                            setScriptSetStatus(set, sai, sai.flowId)
+                                        }
+                                        return 1
+                                    }
                                 }
                             }
-                        }
-                        is DropdownMenuNext->{
-                            partScope.launch {
-                                val set = appDb.scriptSetInfoDao.getScriptSetById(cmd.setId)
-                                if (set!=null && set.setDefaultValue!=null && set.setValue!=null){
-                                    val allSetValue = set.setDefaultValue.split(",")
-                                    val curIdx = allSetValue.indexOf(set.setValue)
-                                    val nextIndex = if (curIdx == -1) 0 else (curIdx + 1) % allSetValue.size
-                                    Lom.n(INFO ,"设置[${set.setName}]由${set.setValue}更改为${allSetValue[nextIndex]}")
-                                    set.setValue = allSetValue[nextIndex]
-                                    appDb.scriptSetInfoDao.update(set)
+                            is FinishFlowId ->{
+                                Lom.n(INFO , "结束流程ID ${cmd.flowId}")
+                                setScriptSetStatus(set, sai, cmd.flowId)
+                            }
+                            is NotFlowId->{
+                                if (set.flowId == cmd.notFlowId){
+                                    skipAcIds.add(sai.id)
+                                    return@scriptAction
                                 }
                             }
-                        }
-                        is MinusPosById->{
-                            actionList.forEach { tmp ->
-                                if (tmp.id == cmd.saiId){
-                                    tmp.labelPos -= 1
+                            is AddPosById->{
+                                actionList.forEach { tmp ->
+                                    if (tmp.id == cmd.saiId){
+                                        Lom.n(INFO , "saiId ${cmd.saiId}点击目标向后递增")
+                                        tmp.labelPos += 1
+                                    }
                                 }
+                            }
+                            is DropdownMenuNext->{
+                                partScope.launch {
+                                    val set = appDb.scriptSetInfoDao.getScriptSetById(cmd.setId)
+                                    if (set!=null && set.setDefaultValue!=null && set.setValue!=null){
+                                        val allSetValue = set.setDefaultValue.split(",")
+                                        val curIdx = allSetValue.indexOf(set.setValue)
+                                        val nextIndex = if (curIdx == -1) 0 else (curIdx + 1) % allSetValue.size
+                                        Lom.n(INFO ,"设置[${set.setName}]由${set.setValue}更改为${allSetValue[nextIndex]}")
+                                        set.setValue = allSetValue[nextIndex]
+                                        appDb.scriptSetInfoDao.update(set)
+                                    }
+                                }
+                            }
+                            is MinusPosById->{
+                                actionList.forEach { tmp ->
+                                    if (tmp.id == cmd.saiId){
+                                        tmp.labelPos -= 1
+                                    }
 
+                                }
+                            }
+                            is Reboot->{
+                                Lom.n(INFO , "重启中...")
+                                cmd.exec(sai)
+                            }
+                            is RelFAC->{
+                                cmd.setDetectRes(detectRes)
+                                cmd.exec(sai)
+                                Lom.d(INFO , "设置的目标点位...${sai.point}")
+                                if (sai.point == null){
+                                    return@scriptAction
+                                }
+                            }
+                            is RelLabFAC ->{
+                                cmd.setDetectRes(detectRes)
+                                cmd.exec(sai)
+                                Lom.d(INFO , "Lab设置的目标点位...${sai.point}")
+                                if (sai.point == null){
+                                    return@scriptAction
+                                }
+                            }
+                            else -> {
+                                //skip、sleep等
+                                cmd.exec(sai)
                             }
                         }
-                        is Reboot->{
-                            Lom.n(INFO , "重启中...")
-                            cmd.exec(sai)
-                        }
-                        else -> {
-                            //skip、sleep等
-                            cmd.exec(sai)
-                        }
+                    }catch (e: Exception){
+                        Lom.d(ERROR,e.message?:"执行操作异常")
                     }
+
                 }
                 return 2
             }

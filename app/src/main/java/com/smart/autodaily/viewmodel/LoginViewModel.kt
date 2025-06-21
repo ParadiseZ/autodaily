@@ -28,10 +28,9 @@ class LoginViewModel(app: Application): BaseViewModel(app) {
             }
             return loginResult
         }catch (e: IOException){
-            return Response.error("网络异常，登录失败")
+            return Response.error("网络异常，登录失败:${e.message}")
         }catch (e: Exception){
-            println(e.message)
-            return Response.error("未知异常，登录失败")
+            return Response.error("未知异常，登录失败：${e.message}")
         }
     }
 }

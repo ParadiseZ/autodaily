@@ -12,6 +12,8 @@ import com.smart.autodaily.command.MinusPosById
 import com.smart.autodaily.command.NotFlowId
 import com.smart.autodaily.command.Operation
 import com.smart.autodaily.command.Reboot
+import com.smart.autodaily.command.RelFAC
+import com.smart.autodaily.command.RelLabFAC
 import com.smart.autodaily.command.Return
 import com.smart.autodaily.command.RmSkipAcId
 import com.smart.autodaily.command.RmSkipAcIdList
@@ -89,6 +91,14 @@ fun initActionFun(scriptActionInfo: ScriptActionInfo){
                         action.startsWith( ActionString.VER_SWIPE ) ->{
                             val type =  action.substring(   ActionString.VER_SWIPE.length ).toInt()
                             when(type){
+                                0 -> {
+                                    val x =  (dm.widthPixels/2 ).toFloat()
+                                    scriptActionInfo.swipePoint = Rect( x, (dm.heightPixels/8 * 3).toFloat(), x,  (dm.heightPixels/8 * 5).toFloat() )
+                                }
+                                9 ->{
+                                    val x =  (dm.widthPixels/2 ).toFloat()
+                                    scriptActionInfo.swipePoint = Rect( x, (dm.heightPixels/8 * 5).toFloat(), x,  (dm.heightPixels/8 * 3).toFloat() )
+                                }
                                 1 -> {
                                     val x =  (dm.widthPixels/4).toFloat()
                                     scriptActionInfo.swipePoint = Rect( x, (dm.heightPixels/8 * 3).toFloat(), x,  (dm.heightPixels/8 * 5).toFloat()  )
@@ -127,6 +137,14 @@ fun initActionFun(scriptActionInfo: ScriptActionInfo){
                         action.startsWith( ActionString.HOR_SWIPE ) ->{
                             val type =  action.substring(   ActionString.HOR_SWIPE.length ).toInt()
                             when(type){
+                                0 -> {
+                                    val x =  (dm.widthPixels/2 ).toFloat()
+                                    scriptActionInfo.swipePoint = Rect( x, (dm.heightPixels/4).toFloat(), x,  (dm.heightPixels/2).toFloat() )
+                                }
+                                9 ->{
+                                    val x =  (dm.widthPixels/2 ).toFloat()
+                                    scriptActionInfo.swipePoint = Rect( x, (dm.heightPixels/2).toFloat(), x,  (dm.heightPixels/4).toFloat() )
+                                }
                                 1 -> {
                                     val x =  (dm.widthPixels/8 ).toFloat()
                                     scriptActionInfo.swipePoint = Rect( x, (dm.heightPixels/4).toFloat(), x,  (dm.heightPixels/2).toFloat() )
@@ -216,6 +234,18 @@ fun initActionFun(scriptActionInfo: ScriptActionInfo){
                             val pointFloat = action.substring(ActionString.SWIPE_PERCENT.length+1, action.length-1).split(",").map { it.toFloat() }
                             scriptActionInfo.swipePoint = Rect(dm.widthPixels * pointFloat[0],dm.heightPixels * pointFloat[1], dm.widthPixels * pointFloat[2], dm.heightPixels * pointFloat[3])
                             scriptActionInfo.command.add(Operation(3, AdbSwipe()))
+                        }
+
+                        action.startsWith(ActionString.RELATIVE_FIND_AND_CLICK) ->{
+                            val funStr = action.substring(ActionString.RELATIVE_FIND_AND_CLICK.length+1, action.length-1).split(",").map { it.toInt() }
+                            scriptActionInfo.command.add(RelFAC(funStr[0],funStr[1],funStr[2],funStr[3]))
+                            scriptActionInfo.command.add(Operation( 2, AdbClick()))
+                        }
+
+                        action.startsWith(ActionString.RELATIVE_LABEL_FIND_AND_CLICK) ->{
+                            val funStr = action.substring(ActionString.RELATIVE_LABEL_FIND_AND_CLICK.length+1, action.length-1).split(",").map { it.toInt() }
+                            scriptActionInfo.command.add(RelLabFAC(funStr[0],funStr[1],funStr[2],funStr[3]))
+                            scriptActionInfo.command.add(Operation( 2, AdbClick()))
                         }
                     }
                 }
